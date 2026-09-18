@@ -1,0 +1,28 @@
+import { useParallax } from '../hooks/useParallax';
+import Reveal from './Reveal';
+import './About.css';
+
+export default function About() {
+  const visual = useParallax(0.1);
+
+  return (
+    <section className="about" id="about">
+      <div className="about-inner">
+        <Reveal className="about-text">
+          <p className="eyebrow">Über uns</p>
+          <h2>Mehr als nur ein Kiosk.</h2>
+          <p className="lead">
+            Bei Snack Point Kaufbeuren erwartet dich ein herzlicher Empfang, frische Ware und ein
+            Service, der weit über den klassischen Kiosk hinausgeht. Ob schneller Snack zwischendurch,
+            Paket abholen oder Lottoschein abgeben — hier bist du in besten Händen.
+          </p>
+        </Reveal>
+        <Reveal className="about-visual" delay={0.1}>
+          <div className="glow-card" ref={visual}>
+            <img src="/logo.jpg" alt="Snack Point" />
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}

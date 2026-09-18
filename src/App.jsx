@@ -1,0 +1,27 @@
+import ProgressBar from './components/ProgressBar';
+import Header from './components/Header';
+import Hero from './components/Hero';
+import About from './components/About';
+import Services from './components/Services';
+import NewProducts from './components/NewProducts';
+import Reviews from './components/Reviews';
+import Location from './components/Location';
+import Footer from './components/Footer';
+
+export default function App() {
+  return (
+    <>
+      <ProgressBar />
+      <Header />
+      <main>
+        <Hero />
+        <About />
+        <Services />
+        <NewProducts />
+        <Reviews />
+        <Location />
+      </main>
+      <Footer />
+    </>
+  );
+}
