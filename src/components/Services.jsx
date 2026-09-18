@@ -24,7 +24,7 @@ function ServiceCard({ service, delay }) {
 
 export default function Services() {
   return (
-    <section className="services" id="services">
+    <section className="services" id="services" data-character-target="services">
       <Reveal as="p" className="eyebrow center">Leistungen</Reveal>
       <Reveal as="h2" className="section-title center">Alles unter einem Dach.</Reveal>
 

@@ -23,7 +23,7 @@ export default function Reviews() {
   const loopedReviews = [...reviews, ...reviews];
 
   return (
-    <section className="reviews" id="reviews">
+    <section className="reviews" id="reviews" data-character-target="reviews">
       <Reveal as="p" className="eyebrow center">Bewertungen</Reveal>
       <Reveal as="h2" className="section-title center">Das sagen unsere Kunden.</Reveal>
 

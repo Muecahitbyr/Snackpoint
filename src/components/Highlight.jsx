@@ -11,7 +11,7 @@ const FLOATERS = [
 
 export default function Highlight() {
   return (
-    <section className="highlight">
+    <section className="highlight" data-character-target="highlight">
       <div className="highlight-floaters">
         {FLOATERS.map((f, i) => (
           <span

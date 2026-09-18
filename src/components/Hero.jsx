@@ -32,7 +32,7 @@ export default function Hero() {
   }
 
   return (
-    <section className="hero" id="home" ref={heroRef} onMouseMove={handleMouseMove}>
+    <section className="hero" id="home" ref={heroRef} onMouseMove={handleMouseMove} data-character-target="hero">
       <div className="hero-spotlight" />
       <div className="hero-blob blob-1" ref={blob1} />
       <div className="hero-blob blob-2" ref={blob2} />
@@ -61,7 +61,7 @@ export default function Hero() {
         </Reveal>
 
         <Reveal className="hero-actions">
-          <a className="btn btn-primary" href="#new">Neue Waren entdecken</a>
+          <a className="btn btn-primary" href="#new" data-character-target="cta-hero">Neue Waren entdecken</a>
           <a className="btn btn-ghost" href="#location">Öffnungszeiten &amp; Adresse</a>
         </Reveal>
 

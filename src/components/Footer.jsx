@@ -3,7 +3,7 @@ import './Footer.css';
 
 export default function Footer() {
   return (
-    <footer className="footer">
+    <footer className="footer" data-character-target="footer">
       <div className="footer-inner">
         <div className="footer-brand">
           <img src="/logo.jpg" alt="Snack Point Logo" />

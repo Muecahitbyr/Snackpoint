@@ -6,9 +6,9 @@ export default function About() {
   const visual = useParallax(0.1);
 
   return (
-    <section className="about" id="about">
+    <section className="about" id="about" data-character-target="about">
       <div className="about-inner">
-        <Reveal className="about-text">
+        <Reveal className="about-text" data-character-target="about-text">
           <p className="eyebrow">Über uns</p>
           <h2>Mehr als nur ein Kiosk.</h2>
           <p className="lead">

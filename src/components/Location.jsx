@@ -4,7 +4,7 @@ import './Location.css';
 
 export default function Location() {
   return (
-    <section className="location" id="location">
+    <section className="location" id="location" data-character-target="location">
       <div className="location-inner">
         <Reveal className="location-info">
           <p className="eyebrow">Standort</p>
@@ -30,7 +30,13 @@ export default function Location() {
               <p>5.0 von 5 · 4.945 Rezensionen auf Google</p>
             </div>
           </div>
-          <a className="btn btn-primary" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
+          <a
+            className="btn btn-primary"
+            href={MAPS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-character-target="cta-location"
+          >
             In Google Maps öffnen
           </a>
         </Reveal>

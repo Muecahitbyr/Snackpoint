@@ -1,0 +1,39 @@
+.character-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.character-figure {
+  position: relative;
+  width: clamp(140px, 16vw, 260px);
+  height: clamp(170px, 20vw, 320px);
+  transform-origin: 50% 100%;
+}
+
+.character-pose {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 100%;
+  filter: drop-shadow(0 16px 22px rgba(0, 0, 0, 0.25));
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+}
+
+.character-pose:first-child {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .character-figure {
+    width: clamp(90px, 26vw, 150px);
+    height: clamp(110px, 30vw, 190px);
+  }
+}
