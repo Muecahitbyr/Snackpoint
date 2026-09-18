@@ -7,6 +7,7 @@ import {
   validateCharacterScenes,
   type PoseId,
   type CharacterScene,
+  type Side,
 } from '../components/character/characterScenes';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -15,8 +16,53 @@ if (import.meta.env.DEV) {
   validateCharacterScenes(characterScenes);
 }
 
+// Reserved space so a scale/position spring overshoot can never visually
+// clip past the true viewport edge — see the "never cut off" note below.
+const OVERSHOOT_BUFFER = 26;
+const EDGE_MARGIN = 10;
+const TOP_MARGIN = 88; // stays clear of the fixed header
+const BOTTOM_MARGIN = 14;
+
 function getTarget(key: string): HTMLElement | null {
   return document.querySelector<HTMLElement>(`[data-character-target="${key}"]`);
+}
+
+/** Resolves env(safe-area-inset-*) to real px via a throwaway probe element — the only reliable way to read them from JS. */
+function readSafeAreaInsets() {
+  const probe = document.createElement('div');
+  probe.style.cssText =
+    'position:fixed;inset:0;pointer-events:none;visibility:hidden;' +
+    'padding-top:env(safe-area-inset-top,0px);padding-right:env(safe-area-inset-right,0px);' +
+    'padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);';
+  document.body.appendChild(probe);
+  const cs = getComputedStyle(probe);
+  const insets = {
+    top: parseFloat(cs.paddingTop) || 0,
+    right: parseFloat(cs.paddingRight) || 0,
+    bottom: parseFloat(cs.paddingBottom) || 0,
+    left: parseFloat(cs.paddingLeft) || 0,
+  };
+  probe.remove();
+  return insets;
+}
+
+/** Preloads every pose and asks the browser to decode it off the main thread before first use, so the intro never stalls on image work and pose swaps never flash a blank frame. */
+function preloadPoses(): Promise<void> {
+  const jobs = Object.values(POSE_SRC).map((src) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = src;
+    if (typeof img.decode === 'function') {
+      return img.decode().catch(() => undefined);
+    }
+    return new Promise<void>((resolve) => {
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+    });
+  });
+  // Never block the entrance forever on a slow network — proceed after a cap.
+  const timeout = new Promise<void>((resolve) => setTimeout(resolve, 700));
+  return Promise.race([Promise.all(jobs).then(() => undefined), timeout]);
 }
 
 interface CharacterRefs {
@@ -30,6 +76,7 @@ export function useCharacterAnimation({ container, figure, imgA, imgB }: Charact
   const activeImgRef = useRef<'A' | 'B'>('A');
   const currentPoseRef = useRef<PoseId | null>('greet');
   const idleTweenRef = useRef<gsap.core.Tween | null>(null);
+  const currentSceneRef = useRef<{ scene: CharacterScene; targetKey?: string; pose?: PoseId; flip?: boolean } | null>(null);
 
   useLayoutEffect(() => {
     const containerEl = container.current;
@@ -38,13 +85,8 @@ export function useCharacterAnimation({ container, figure, imgA, imgB }: Charact
     const imgBEl = imgB.current;
     if (!containerEl || !figureEl || !imgAEl || !imgBEl) return;
 
-    // Preload every pose once so switching never flickers a blank frame.
-    Object.values(POSE_SRC).forEach((src) => {
-      const im = new Image();
-      im.src = src;
-    });
-
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let safeArea = readSafeAreaInsets();
 
     function setPose(pose: PoseId) {
       if (currentPoseRef.current === pose) return;
@@ -54,244 +96,310 @@ export function useCharacterAnimation({ container, figure, imgA, imgB }: Charact
       const prevEl = showingA ? imgAEl : imgBEl;
       nextEl!.src = POSE_SRC[pose];
       gsap.set(nextEl, { opacity: 0 });
-      gsap.to(nextEl, { opacity: 1, duration: 0.3, ease: 'power1.out' });
-      gsap.to(prevEl, { opacity: 0, duration: 0.3, ease: 'power1.out' });
+      // Every pose was already decoded up front (preloadPoses), so this paints
+      // on the very next frame — the crossfade itself hides any residual cost.
+      gsap.to(nextEl, { opacity: 1, duration: 0.28, ease: 'power1.out' });
+      gsap.to(prevEl, { opacity: 0, duration: 0.28, ease: 'power1.out' });
       activeImgRef.current = showingA ? 'B' : 'A';
     }
 
     if (reduceMotion) {
       // Minimal, static presentation: a small fixed corner badge, no scroll-driven motion.
-      // Sizing comes entirely from CSS (character.css breakpoints) — no extra JS scale.
       setPose('greet');
       const w = figureEl.offsetWidth;
       const h = figureEl.offsetHeight;
       gsap.set(containerEl, {
-        x: window.innerWidth - w - 16,
-        y: window.innerHeight - h - 16,
+        x: window.innerWidth - w - EDGE_MARGIN - safeArea.right,
+        y: window.innerHeight - h - EDGE_MARGIN - safeArea.bottom,
         opacity: 0,
       });
       gsap.to(containerEl, { opacity: 0.95, duration: 1, delay: 0.4 });
       return;
     }
 
-    const ctx = gsap.context(() => {
-      gsap.set(containerEl, { opacity: 0, scale: 0.8, x: -200, y: 120 });
+    let ctx: gsap.Context | undefined;
+    let cancelled = false;
 
-      const mm = gsap.matchMedia();
+    preloadPoses().then(() => {
+      if (cancelled) return;
 
-      mm.add(
-        {
-          isDesktop: '(min-width: 1101px)',
-          isTablet: '(min-width: 641px) and (max-width: 1100px)',
-          isMobile: '(max-width: 640px)',
-        },
-        (context) => {
-          const conditions = context.conditions as { isTablet: boolean; isMobile: boolean };
-          const tierScale = conditions.isMobile ? 0.55 : conditions.isTablet ? 0.75 : 1;
-          const isCompactTier = conditions.isMobile || conditions.isTablet;
+      ctx = gsap.context(() => {
+        gsap.set(containerEl, { opacity: 0, scale: 0.82, rotation: -6, x: -260, y: 140, force3D: true });
 
-          function computePosition(scene: CharacterScene, targetKey?: string, scale = 1) {
-            const compact = isCompactTier && scene.compactAnchor;
-            // Compact mode only swaps which side it stands on (e.g. "left" -> "below"),
-            // not which target it tracks: a stacked mobile grid has cards too close
-            // together for per-card "below" positioning to fit without overlap, so it
-            // stays parked relative to anchorTarget (the whole grid) just like desktop,
-            // only changing pose per active item instead of physically chasing it.
-            const effectiveAnchor = compact ? scene.compactAnchor! : scene.anchor;
-            const w = (figureEl!.offsetWidth || 200) * scale;
-            const h = (figureEl!.offsetHeight || 280) * scale;
-            const margin = 8;
-            const baseOffsetY = isCompactTier && scene.compactOffsetY !== undefined ? scene.compactOffsetY : scene.offsetY ?? 0;
+        const mm = gsap.matchMedia();
 
-            if (effectiveAnchor === 'corner') {
-              // Doesn't depend on any element rect at all — for targets much taller
-              // than the viewport (e.g. a stacked mobile grid), that's the point:
-              // nothing to drift out of sync with as the user keeps scrolling. Each
-              // scene can still nudge the baseline via (compact)offsetY.
-              return {
-                x: window.innerWidth - w - margin - 2,
-                y: window.innerHeight * 0.66 - h / 2 + baseOffsetY * tierScale,
-              };
+        mm.add(
+          {
+            isDesktop: '(min-width: 1101px)',
+            isTablet: '(min-width: 641px) and (max-width: 1100px)',
+            isMobile: '(max-width: 640px)',
+          },
+          (context) => {
+            const conditions = context.conditions as { isDesktop: boolean; isTablet: boolean; isMobile: boolean };
+            const isCompact = conditions.isMobile || conditions.isTablet;
+
+            function computePosition(scene: CharacterScene, targetKey: string | undefined, scale: number) {
+              const w = (figureEl!.offsetWidth || 200) * scale;
+              const h = (figureEl!.offsetHeight || 280) * scale;
+              const vw = document.documentElement.clientWidth;
+              const vh = window.innerHeight;
+
+              // Safe, unconditional bounds — every branch below feeds into this
+              // same clamp, so "off-screen" simply cannot happen, overshoot
+              // included (OVERSHOOT_BUFFER reserves room for the spring's peak).
+              const minX = EDGE_MARGIN + safeArea.left + OVERSHOOT_BUFFER;
+              const maxXRaw = vw - w - EDGE_MARGIN - safeArea.right - OVERSHOOT_BUFFER;
+              const maxX = Math.max(minX, maxXRaw);
+              const minY = TOP_MARGIN;
+              const maxYRaw = vh - h - BOTTOM_MARGIN - safeArea.bottom - OVERSHOOT_BUFFER;
+              const maxY = Math.max(minY, maxYRaw);
+
+              if (scene.center) {
+                const el = getTarget(targetKey ?? scene.section);
+                const rect = el?.getBoundingClientRect();
+                const oy = ((isCompact ? scene.mobileOffsetY ?? scene.offsetY : scene.offsetY) ?? 0);
+                let x = rect ? rect.left + rect.width / 2 - w / 2 : vw / 2 - w / 2;
+                let y = (rect ? rect.top : vh / 2) + oy;
+                x = Math.min(Math.max(x, minX), maxX);
+                y = Math.min(Math.max(y, minY), maxY);
+                return { x, y };
+              }
+
+              const side: Side = (isCompact ? scene.mobileSide ?? scene.side : scene.side);
+              const align = (isCompact ? scene.mobileAlign ?? scene.align : scene.align) ?? 'center';
+              const ox = (isCompact ? scene.mobileOffsetX ?? scene.offsetX : scene.offsetX) ?? 0;
+              const oy = (isCompact ? scene.mobileOffsetY ?? scene.offsetY : scene.offsetY) ?? 0;
+
+              const key = isCompact && scene.anchorTarget ? scene.anchorTarget : targetKey ?? scene.section;
+              const el = getTarget(key);
+              if (!el) return null;
+              const rect = el.getBoundingClientRect();
+
+              let x = side === 'left' ? rect.left - w + ox : rect.right + ox;
+
+              let y: number;
+              if (align === 'top') y = rect.top + oy;
+              else if (align === 'bottom') y = rect.bottom - h + oy;
+              else y = rect.top + rect.height / 2 - h / 2 + oy;
+
+              x = Math.min(Math.max(x, minX), maxX);
+              y = Math.min(Math.max(y, minY), maxY);
+              return { x, y };
             }
 
-            const el = getTarget(scene.anchorTarget ?? targetKey ?? scene.section);
-            if (!el) return null;
-            const rect = el.getBoundingClientRect();
-            // offsetWidth/Height are transform-agnostic (unlike getBoundingClientRect,
-            // which reflects whatever scale is mid-flight from the previous scene), so
-            // multiplying by the target scale here is the only way to get a stable,
-            // race-free size for the anchor math.
-            const ox = (scene.offsetX ?? 0) * tierScale;
-            const oy = baseOffsetY * tierScale + (compact && effectiveAnchor === 'below' ? 30 : 0);
-            let x: number;
-            let y: number;
-
-            switch (effectiveAnchor) {
-              case 'left':
-                x = rect.left - w + ox;
-                y = rect.top + rect.height / 2 - h / 2 + oy;
-                break;
-              case 'right':
-                x = rect.right + ox;
-                y = rect.top + rect.height / 2 - h / 2 + oy;
-                break;
-              case 'above':
-                x = rect.left + rect.width / 2 - w / 2 + ox;
-                y = rect.top - h + oy;
-                break;
-              case 'below':
-                x = rect.left + rect.width / 2 - w / 2 + ox;
-                y = rect.bottom + oy;
-                break;
-              default:
-                x = rect.left + rect.width / 2 - w / 2 + ox;
-                y = rect.top + rect.height / 2 - h / 2 + oy;
+            function startIdle() {
+              idleTweenRef.current?.kill();
+              idleTweenRef.current = gsap.to(figureEl, {
+                y: '+=8',
+                rotation: 1.5,
+                duration: 2.2,
+                ease: 'sine.inOut',
+                yoyo: true,
+                repeat: -1,
+              });
             }
 
-            // If the target itself leaves too little side gutter (common on phones
-            // and tablets, where hero/section content runs almost full-width), the
-            // usual "stand just outside the target's edge" math has nowhere to go
-            // and the viewport clamp below would pull the character back on top of
-            // the content instead. Detect that up front and hug the screen edge
-            // instead, rather than clamping into an overlap.
-            const gutterRight = window.innerWidth - rect.right;
-            const gutterLeft = rect.left;
-            const tightGutter = (conditions.isMobile || conditions.isTablet) && (
-              (effectiveAnchor === 'right' && gutterRight < w) ||
-              (effectiveAnchor === 'left' && gutterLeft < w)
-            );
-            if (tightGutter) {
-              x = effectiveAnchor === 'left' ? margin + 2 : window.innerWidth - w - margin - 2;
+            function stopIdle() {
+              idleTweenRef.current?.kill();
+              idleTweenRef.current = null;
+              gsap.set(figureEl, { rotation: 0 });
             }
-            x = Math.max(margin, Math.min(x, window.innerWidth - w - margin));
-            y = Math.max(64, Math.min(y, window.innerHeight - h - margin));
-            return { x, y };
-          }
 
-          function startIdle() {
-            idleTweenRef.current?.kill();
-            idleTweenRef.current = gsap.to(figureEl, {
-              y: '+=8',
-              rotation: 1.5,
-              duration: 2.2,
-              ease: 'sine.inOut',
-              yoyo: true,
-              repeat: -1,
-            });
-          }
+            function arriveAt(
+              scene: CharacterScene,
+              targetKey?: string,
+              poseOverride?: PoseId,
+              flipOverride?: boolean,
+              opts: { flourish?: boolean } = {}
+            ) {
+              const flourish = opts.flourish ?? true;
+              const scale = scene.scale ?? 1;
+              const pos = computePosition(scene, targetKey, scale);
+              if (!pos) return;
+              currentSceneRef.current = { scene, targetKey, pose: poseOverride, flip: flipOverride };
+              stopIdle();
+              setPose(poseOverride ?? scene.pose);
+              const flip = flipOverride ?? scene.flip ?? false;
+              const finalScaleX = flip ? -scale : scale;
 
-          function stopIdle() {
-            idleTweenRef.current?.kill();
-            idleTweenRef.current = null;
-            gsap.set(figureEl, { rotation: 0 });
-          }
+              const tl = gsap.timeline();
 
-          function arriveAt(
-            scene: CharacterScene,
-            targetKey?: string,
-            poseOverride?: PoseId,
-            flipOverride?: boolean
-          ) {
-            // CSS (clamp() in character.css) already shrinks the figure per breakpoint,
-            // so only the per-scene relative size is applied here — multiplying by
-            // tierScale too would shrink it twice and make it nearly invisible on phones.
-            const scale = scene.scale ?? 1;
-            const pos = computePosition(scene, targetKey, scale);
-            if (!pos) return;
-            stopIdle();
-            setPose(poseOverride ?? scene.pose);
-            const flip = flipOverride ?? scene.flip ?? false;
+              if (!flourish) {
+                // A resize/orientation correction: reposition cleanly, no personality beats.
+                tl.to(containerEl, {
+                  x: pos.x,
+                  y: pos.y,
+                  scaleX: finalScaleX,
+                  scaleY: scale,
+                  rotation: 0,
+                  opacity: 1,
+                  duration: 0.35,
+                  ease: 'power2.out',
+                  overwrite: 'auto',
+                });
+                if (scene.idle) tl.call(startIdle);
+                return;
+              }
 
-            const tl = gsap.timeline();
-            // anticipation: brief squash before committing to the move
-            tl.to(containerEl, { scale: scale * 0.9, duration: 0.16, ease: 'power1.in' })
-              .to(
-                containerEl,
-                {
+              // Anticipation: a brief squash (shrinking only — never risks overflow)
+              // before committing to the move.
+              tl.to(containerEl, { scale: scale * 0.9, rotation: flip ? 4 : -4, duration: 0.14, ease: 'power1.in', overwrite: 'auto' })
+                // The move itself: power3.out approaches the target and stops —
+                // no overshoot on position, so it can never travel past the
+                // already-safe clamped bounds computed above.
+                .to(containerEl, {
                   x: pos.x,
                   y: pos.y,
                   opacity: 1,
-                  scaleX: flip ? -scale : scale,
+                  duration: 0.62,
+                  ease: 'power3.out',
+                }, '<0.02')
+                // The "personality" overshoot lives on scale/rotation only — both
+                // bounded modestly and already covered by OVERSHOOT_BUFFER above.
+                .to(containerEl, {
+                  scaleX: finalScaleX,
                   scaleY: scale,
-                  duration: 0.85,
-                  ease: 'back.out(1.5)',
-                },
-                '<0.04'
-              );
+                  rotation: 0,
+                  duration: 0.5,
+                  ease: 'back.out(1.7)',
+                }, '<0.05');
 
-            if (scene.action === 'attention') {
-              tl.to(containerEl, { x: `+=${flip ? -7 : 7}`, duration: 0.11, yoyo: true, repeat: 5, ease: 'power1.inOut' }, '+=0.08');
+              if (scene.action === 'attention') {
+                tl.to(containerEl, { x: `+=${flip ? -7 : 7}`, duration: 0.11, yoyo: true, repeat: 5, ease: 'power1.inOut' }, '+=0.08');
+              }
+
+              if (scene.action === 'outro') {
+                tl.to(containerEl, { x: '+=150', opacity: 0.4, duration: 1.2, ease: 'power2.inOut' }, '+=0.35');
+              }
+
+              if (scene.idle) {
+                tl.call(startIdle);
+              }
             }
 
-            if (scene.action === 'outro') {
-              tl.to(containerEl, { x: '+=150', opacity: 0.4, duration: 1.2, ease: 'power2.inOut' }, '+=0.35');
-            }
+            characterScenes.forEach((scene) => {
+              if (scene.compactSkip && isCompact) return;
+              const triggerEl = getTarget(scene.section);
+              if (!triggerEl) return;
 
-            if (scene.idle) {
-              tl.call(startIdle);
+              const useSubtargets = scene.subtargets && scene.subtargets.length && !isCompact;
+
+              if (scene.subtargets && scene.subtargets.length && isCompact) {
+                // Phone/tablet: still cycle pose per item for variety, but stay
+                // parked beside the whole group (arriveAt resolves position via
+                // anchorTarget whenever isCompact is true, ignoring targetKey).
+                let lastIdx = -1;
+                const count = scene.subtargets.length;
+                ScrollTrigger.create({
+                  trigger: triggerEl,
+                  start: scene.start ?? 'top 70%',
+                  end: scene.end ?? 'bottom bottom',
+                  onEnter: () => {
+                    lastIdx = 0;
+                    arriveAt(scene, undefined, scene.pose, false);
+                  },
+                  onEnterBack: () => {
+                    lastIdx = count - 1;
+                    const flip = lastIdx % 2 === 1;
+                    arriveAt(scene, undefined, flip ? 'point-left' : 'point-right', flip);
+                  },
+                  onUpdate: (self) => {
+                    const idx = Math.min(count - 1, Math.floor(self.progress * count));
+                    if (idx !== lastIdx) {
+                      lastIdx = idx;
+                      const flip = idx % 2 === 1;
+                      arriveAt(scene, undefined, flip ? 'point-left' : 'point-right', flip);
+                    }
+                  },
+                });
+              } else if (useSubtargets) {
+                let lastIdx = -1;
+                ScrollTrigger.create({
+                  trigger: triggerEl,
+                  start: scene.start ?? 'top 70%',
+                  end: scene.end ?? 'bottom bottom',
+                  onEnter: () => {
+                    lastIdx = 0;
+                    arriveAt(scene, scene.subtargets![0], scene.pose, false);
+                  },
+                  onEnterBack: () => {
+                    lastIdx = scene.subtargets!.length - 1;
+                    arriveAt(scene, scene.subtargets![lastIdx], 'point-left', true);
+                  },
+                  onUpdate: (self) => {
+                    const idx = Math.min(
+                      scene.subtargets!.length - 1,
+                      Math.floor(self.progress * scene.subtargets!.length)
+                    );
+                    if (idx !== lastIdx) {
+                      lastIdx = idx;
+                      const flip = idx % 2 === 1;
+                      arriveAt(scene, scene.subtargets![idx], flip ? 'point-left' : 'point-right', flip);
+                    }
+                  },
+                });
+              } else {
+                ScrollTrigger.create({
+                  trigger: triggerEl,
+                  start: scene.start ?? 'top 75%',
+                  end: scene.end ?? 'bottom 25%',
+                  onEnter: () => arriveAt(scene),
+                  onEnterBack: () => arriveAt(scene),
+                });
+              }
+            });
+
+            // Corrects the current scene's position on resize/orientation change
+            // (a tier-crossing resize is already handled by matchMedia itself,
+            // which reverts and reruns this whole setup) — debounced so a drag-
+            // resize doesn't recompute on every intermediate frame.
+            let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+            function handleResize() {
+              if (resizeTimer) clearTimeout(resizeTimer);
+              resizeTimer = setTimeout(() => {
+                safeArea = readSafeAreaInsets();
+                const current = currentSceneRef.current;
+                if (!current) return;
+                arriveAt(current.scene, current.targetKey, current.pose, current.flip, { flourish: false });
+              }, 150);
             }
+            window.addEventListener('resize', handleResize);
+            window.addEventListener('orientationchange', handleResize);
+
+            return () => {
+              stopIdle();
+              if (resizeTimer) clearTimeout(resizeTimer);
+              window.removeEventListener('resize', handleResize);
+              window.removeEventListener('orientationchange', handleResize);
+            };
           }
+        );
 
-          characterScenes.forEach((scene) => {
-            if (scene.compactSkip && isCompactTier) return;
-            const triggerEl = getTarget(scene.section);
-            if (!triggerEl) return;
-
-            // On phone/tablet a tall single-column grid has too little room between
-            // items for continuous per-card tracking without overlapping neighbours
-            // (each recompute is based on the viewport at that instant, and the
-            // character then sits still — in fixed viewport coordinates — while the
-            // page keeps scrolling underneath it until the next one). Simpler and
-            // safer: park it once, beside the whole group, pose fixed.
-            const useSubtargets = scene.subtargets && scene.subtargets.length && !(isCompactTier && scene.compactAnchor);
-
-            if (useSubtargets) {
-              let lastIdx = -1;
-              ScrollTrigger.create({
-                trigger: triggerEl,
-                start: scene.start ?? 'top 70%',
-                end: scene.end ?? 'bottom bottom',
-                onEnter: () => {
-                  lastIdx = 0;
-                  arriveAt(scene, scene.subtargets![0], scene.pose, false);
-                },
-                onEnterBack: () => {
-                  lastIdx = scene.subtargets!.length - 1;
-                  arriveAt(scene, scene.subtargets![lastIdx], 'point-left', true);
-                },
-                onUpdate: (self) => {
-                  const idx = Math.min(
-                    scene.subtargets!.length - 1,
-                    Math.floor(self.progress * scene.subtargets!.length)
-                  );
-                  if (idx !== lastIdx) {
-                    lastIdx = idx;
-                    const flip = idx % 2 === 1;
-                    arriveAt(scene, scene.subtargets![idx], flip ? 'point-left' : 'point-right', flip);
-                  }
-                },
-              });
-            } else {
-              ScrollTrigger.create({
-                trigger: triggerEl,
-                start: scene.start ?? 'top 75%',
-                end: scene.end ?? 'bottom 25%',
-                onEnter: () => arriveAt(scene),
-                onEnterBack: () => arriveAt(scene),
-              });
-            }
-          });
-
-          return () => stopIdle();
-        }
-      );
-
-      ScrollTrigger.refresh();
-    }, containerEl);
+        // A refresh() forces an immediate layout pass across every trigger's
+        // target element — measured to be the single biggest cause of dropped
+        // frames during the entrance under CPU throttling, since it's expensive
+        // regardless of when it runs. A short fixed delay just moves the stall
+        // into a different part of the same still-active timeline. Waiting for
+        // both web fonts to settle (font swaps can shift layout, which is the
+        // one real reason this refresh matters) and genuine main-thread idle
+        // time pushes it safely past the whole entrance instead.
+        const runRefresh = () => ScrollTrigger.refresh();
+        const scheduleIdle: (cb: () => void) => number =
+          typeof window.requestIdleCallback === 'function'
+            ? (cb) => window.requestIdleCallback(cb, { timeout: 1500 })
+            : (cb) => window.setTimeout(cb, 900);
+        const fontsReady = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts?.ready;
+        Promise.resolve(fontsReady).finally(() => {
+          if (cancelled) return;
+          scheduleIdle(runRefresh);
+        });
+      }, containerEl);
+    });
 
     return () => {
+      cancelled = true;
       idleTweenRef.current?.kill();
-      ctx.revert();
+      ctx?.revert();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { useScrollProgress } from '../hooks/useScrollProgress';
+import { useEffect, useRef, useState } from 'react';
 import { MAPS_URL } from '../data/constants';
 import './Header.css';
 
@@ -11,8 +10,28 @@ const LINKS = [
 ];
 
 export default function Header() {
-  const { scrolled } = useScrollProgress();
+  const navRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    let ticking = false;
+
+    function update() {
+      navRef.current?.classList.toggle('scrolled', window.scrollY > 40);
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        requestAnimationFrame(update);
+        ticking = true;
+      }
+    }
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : '';
@@ -22,7 +41,7 @@ export default function Header() {
   }, [menuOpen]);
 
   return (
-    <header className={`nav ${scrolled ? 'scrolled' : ''} ${menuOpen ? 'menu-open' : ''}`}>
+    <header ref={navRef} className={`nav ${menuOpen ? 'menu-open' : ''}`}>
       <div className="nav-inner">
         <a href="#home" className="brand" onClick={() => setMenuOpen(false)}>
           <img src="/logo.jpg" alt="Snack Point Logo" className="brand-logo" />

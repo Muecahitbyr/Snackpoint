@@ -15,10 +15,39 @@
   color: var(--text);
 }
 .info-row { display: flex; gap: 16px; margin-bottom: 22px; align-items: flex-start; }
-.info-icon { font-size: 1.4rem; display: inline-block; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1); }
+.info-row-hours { align-items: flex-start; }
+.info-icon { font-size: 1.4rem; display: inline-block; flex-shrink: 0; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1); }
 .info-row:hover .info-icon { transform: scale(1.25) rotate(-8deg); }
 .info-row strong { display: block; margin-bottom: 4px; color: var(--text); }
 .info-row p { color: var(--text-dim); font-size: 0.95rem; }
+
+.hours-block { flex: 1; min-width: 0; }
+.hours-table {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+}
+.hours-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 14px;
+  font-size: 0.88rem;
+}
+.hours-day { display: flex; align-items: center; gap: 8px; color: var(--text-dim); font-weight: 500; }
+.hours-time { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.hours-row.is-today {
+  background: rgba(224, 32, 31, 0.08);
+  border-radius: 10px;
+}
+.hours-row.is-today .hours-day { color: var(--accent); font-weight: 700; }
+.hours-row.is-today .hours-time { color: var(--accent); font-weight: 800; }
 .location-map {
   border-radius: var(--radius);
   overflow: hidden;

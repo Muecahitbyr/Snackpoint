@@ -1,6 +1,27 @@
 import { ADDRESS, MAPS_URL, MAPS_EMBED_URL } from '../data/constants';
+import { OPENING_HOURS, getTodayHours } from '../data/hours';
 import Reveal from './Reveal';
 import './Location.css';
+
+function OpeningHoursTable() {
+  const today = getTodayHours();
+
+  return (
+    <div className="hours-table" data-character-target="hours">
+      {OPENING_HOURS.map((entry) => {
+        const isToday = today !== null && entry.jsDay === today.jsDay;
+        return (
+          <div key={entry.day} className={`hours-row ${isToday ? 'is-today' : ''}`}>
+            <span className="hours-day">{entry.day}</span>
+            <span className="hours-time">
+              {entry.closed ? 'Geschlossen' : `${entry.open} – ${entry.close}`}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function Location() {
   return (
@@ -16,13 +37,15 @@ export default function Location() {
               <p>{ADDRESS}</p>
             </div>
           </div>
-          <div className="info-row">
+
+          <div className="info-row info-row-hours">
             <span className="info-icon">🕗</span>
-            <div>
+            <div className="hours-block">
               <strong>Öffnungszeiten</strong>
-              <p>Geschlossen · Öffnet Fr um 08:00</p>
+              <OpeningHoursTable />
             </div>
           </div>
+
           <div className="info-row">
             <span className="info-icon">⭐</span>
             <div>
@@ -35,12 +58,12 @@ export default function Location() {
             href={MAPS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            data-character-target="cta-location"
+            data-character-target="route"
           >
             In Google Maps öffnen
           </a>
         </Reveal>
-        <Reveal className="location-map" delay={0.1}>
+        <Reveal className="location-map" delay={0.1} data-character-target="map">
           <iframe
             title="Standort Snack Point Kaufbeuren"
             src={MAPS_EMBED_URL}

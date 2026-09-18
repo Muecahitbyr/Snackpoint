@@ -12,8 +12,18 @@ interface CharacterSceneProps {
 export default function CharacterScene({ figureRef, imgARef, imgBRef }: CharacterSceneProps) {
   return (
     <div ref={figureRef} className="character-figure">
-      <img ref={imgARef} className="character-pose" src={POSE_SRC.greet} alt="" aria-hidden="true" draggable={false} />
-      <img ref={imgBRef} className="character-pose" alt="" aria-hidden="true" draggable={false} />
+      <img
+        ref={imgARef}
+        className="character-pose"
+        src={POSE_SRC.greet}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        decoding="async"
+        // @ts-expect-error fetchpriority isn't in React's TS types yet, but is valid HTML
+        fetchpriority="high"
+      />
+      <img ref={imgBRef} className="character-pose" alt="" aria-hidden="true" draggable={false} decoding="async" />
     </div>
   );
 }

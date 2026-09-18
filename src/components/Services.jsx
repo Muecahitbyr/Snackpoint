@@ -7,7 +7,7 @@ function ServiceCard({ service, delay }) {
   const tilt = useTilt(8);
 
   return (
-    <Reveal className="service-card-wrap" delay={delay}>
+    <Reveal className="service-card-wrap" delay={delay} data-character-target={service.target}>
       <div
         className="service-card tilt-card"
         ref={tilt.ref}
