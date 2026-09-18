@@ -99,7 +99,14 @@ export default function CharacterCanvas() {
           orthographic
           gl={{ alpha: true, antialias: true }}
           dpr={[1, 1.5]}
-          style={{ width: '100%', height: '100%' }}
+          // react-three-fiber sets its own default styling on the actual
+          // <canvas> DOM element (not just its wrapper), which does NOT
+          // inherit `pointer-events: none` from the wrapper div below —
+          // verified via Playwright: without this, the canvas (which spans
+          // the full viewport) silently intercepts every click on the page,
+          // including the hero CTA. Must be set here, directly on Canvas's
+          // own style prop, not just the wrapper.
+          style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
         >
           <PixelCamera />
           <ambientLight intensity={1.1} />

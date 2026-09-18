@@ -473,6 +473,50 @@ CharacterScene}.tsx`, `characterScenes.ts` (2D version), `character.css`,
 images), the pose preload `<link>` in `index.html`, and the `<Character />`
 mount in `App.jsx`. No other part of the site referenced any of it directly.
 
+## Full-site QA pass — 2 real bugs found and fixed
+
+An exhaustive QA pass (21 viewport sizes 320px–2560px, real Playwright
+clicks on every interactive element, network throttling, cache, GLB-failure
+fallback, memory-leak scroll cycling, keyboard navigation, reduced motion)
+found and fixed two genuine, reproducible bugs. Both verified fixed with the
+same reproduction steps that found them, plus a full 21-size regression pass
+afterward (all clean).
+
+**1. The character canvas silently blocked every click on the page.**
+`react-three-fiber`'s `<Canvas>` sets its own styling directly on the actual
+`<canvas>` DOM element — which does **not** inherit `pointer-events: none`
+from the wrapper `<div>` around it the way a normal element would, because
+R3F's own default computes to `auto` on the canvas itself, overriding the
+wrapper. Since the canvas spans the full viewport at z-index 60, this meant
+real mouse clicks anywhere on the page could be intercepted by the (invisible,
+`aria-hidden`) canvas instead of reaching the button/link underneath —
+confirmed via Playwright's own actionability diagnostics literally naming
+the canvas as the blocker on the hero CTA. Screenshots and computed-style
+checks on the *wrapper* div (which correctly showed `none`) had masked this
+in every earlier QA pass — the bug only showed up once real `page.click()`
+calls were used instead. **Fix:** pass `pointerEvents: 'none'` directly in
+`<Canvas style={{...}}>` in `CharacterCanvas.tsx`, so it lands on the actual
+canvas element rather than relying on inheritance. Verified with real clicks
+on the hero CTA, the route button, and the mobile hamburger + menu links,
+in both normal and reduced-motion modes.
+
+**2. On tall viewports (>~1216px), the character got stuck at `route`
+instead of ending at `footer`.** `route` and `footer` sit only ~180px apart
+in the DOM. `route`'s trigger used the default `start: 'top 75%'`, while
+`footer` uses `'top 90%'`. On any viewport taller than ~1216px, the small
+fixed DOM gap between them is less than the gap those two percentages imply,
+so scrolling down crosses footer's threshold *before* route's — footer fires,
+then route fires shortly after and never hands back, since nothing re-enters
+footer's zone. A user scrolling to the very bottom of the page on e.g. an
+iPad-portrait-shaped viewport (1024×1366) or 2560×1440 ended up with the
+character parked at the route button — off-screen above — instead of the
+intended footer finale ("läuft an finale Position, dreht sich zum Nutzer,
+Wave, Idle"). **Fix:** `route-point` now sets `start: 'top 88%'` explicitly
+(`characterScenes.ts`), which reorders its threshold safely ahead of
+footer's for any realistic viewport height. Verified via a fine-grained
+scroll trace (30–40px steps) at both previously-broken sizes, confirming the
+sequence now ends at `footer-outro`, plus the same check across all 21 sizes.
+
 ## Known limitations
 
 - `TurnLeft`/`TurnRight` are loaded and playable via `api.playAnimation()`

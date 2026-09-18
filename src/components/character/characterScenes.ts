@@ -88,6 +88,16 @@ export const characterScenes: CharacterScene[] = [
   {
     id: 'route-point',
     section: 'route',
+    // route sits only ~180px above the footer in the DOM. With the default
+    // 'top 75%' start, on any viewport taller than ~1216px (e.g. 1024x1366,
+    // 2560x1440 — verified reproducible) footer's own 'top 90%' start
+    // threshold is crossed FIRST while scrolling down, so footer fires
+    // before route, and route then fires shortly after and never hands back
+    // — the character ends up parked at route instead of the intended
+    // footer finale. Starting route's trigger much earlier (top 88%, as
+    // soon as it's barely on screen) keeps its threshold safely ahead of
+    // footer's for any realistic viewport height. See CHARACTER_3D.md.
+    start: 'top 88%',
     desktop: { side: 'left', align: 'center', offsetX: -24, offsetY: -10 },
     mobile: { side: 'auto', offsetX: 0, offsetY: 0, scale: 0.6 },
   },
