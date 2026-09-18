@@ -1,6 +1,29 @@
 import { newProducts } from '../data/newProducts';
+import { useTilt } from '../hooks/useTilt';
 import Reveal from './Reveal';
 import './NewProducts.css';
+
+function ProductCard({ product, delay }) {
+  const tilt = useTilt(10);
+
+  return (
+    <Reveal className="product-card-wrap" delay={delay}>
+      <div
+        className="product-card tilt-card"
+        ref={tilt.ref}
+        onMouseMove={tilt.onMouseMove}
+        onMouseLeave={tilt.onMouseLeave}
+      >
+        <div className={`product-media ${product.gradient}`}>
+          <span>{product.emoji}</span>
+        </div>
+        <div className="badge">{product.badge}</div>
+        <h3>{product.title}</h3>
+        <p>{product.text}</p>
+      </div>
+    </Reveal>
+  );
+}
 
 export default function NewProducts() {
   return (
@@ -16,14 +39,7 @@ export default function NewProducts() {
 
       <div className="product-grid">
         {newProducts.map((product, i) => (
-          <Reveal key={product.title} className="product-card" delay={i * 0.1}>
-            <div className={`product-media ${product.gradient}`}>
-              <span>{product.emoji}</span>
-            </div>
-            <div className="badge">{product.badge}</div>
-            <h3>{product.title}</h3>
-            <p>{product.text}</p>
-          </Reveal>
+          <ProductCard key={product.title} product={product} delay={i * 0.1} />
         ))}
       </div>
     </section>

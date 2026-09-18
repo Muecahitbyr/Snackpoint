@@ -18,8 +18,12 @@ export default function About() {
           </p>
         </Reveal>
         <Reveal className="about-visual" delay={0.1}>
-          <div className="glow-card" ref={visual}>
-            <img src="/logo.jpg" alt="Snack Point" />
+          <div ref={visual}>
+            <div className="glow-card-ring">
+              <div className="glow-card">
+                <img src="/logo.jpg" alt="Snack Point" />
+              </div>
+            </div>
           </div>
         </Reveal>
       </div>

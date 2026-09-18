@@ -1,6 +1,26 @@
 import { services } from '../data/services';
+import { useTilt } from '../hooks/useTilt';
 import Reveal from './Reveal';
 import './Services.css';
+
+function ServiceCard({ service, delay }) {
+  const tilt = useTilt(8);
+
+  return (
+    <Reveal className="service-card-wrap" delay={delay}>
+      <div
+        className="service-card tilt-card"
+        ref={tilt.ref}
+        onMouseMove={tilt.onMouseMove}
+        onMouseLeave={tilt.onMouseLeave}
+      >
+        <div className={`service-icon icon-${service.gradient}`}>{service.icon}</div>
+        <h3>{service.title}</h3>
+        <p>{service.text}</p>
+      </div>
+    </Reveal>
+  );
+}
 
 export default function Services() {
   return (
@@ -10,11 +30,7 @@ export default function Services() {
 
       <div className="service-grid">
         {services.map((service, i) => (
-          <Reveal key={service.title} className="service-card" delay={i * 0.15}>
-            <div className="service-icon">{service.icon}</div>
-            <h3>{service.title}</h3>
-            <p>{service.text}</p>
-          </Reveal>
+          <ServiceCard key={service.title} service={service} delay={i * 0.15} />
         ))}
       </div>
     </section>

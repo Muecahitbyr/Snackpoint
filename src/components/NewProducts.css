@@ -1,4 +1,4 @@
-.new-products { padding: 160px 24px; background: var(--bg-alt); }
+.new-products { padding: 160px 24px; background: linear-gradient(180deg, #fff, var(--bg-warm-2)); }
 .new-header { max-width: var(--max); margin: 0 auto 60px; }
 .product-grid {
   max-width: var(--max);
@@ -6,7 +6,9 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 22px;
+  perspective: 1000px;
 }
+.product-card-wrap { perspective: 1000px; }
 .product-card {
   position: relative;
   background: var(--card);
@@ -14,16 +16,17 @@
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius);
   overflow: hidden;
-  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s;
 }
-.product-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: var(--shadow-md); }
+.product-card:hover { box-shadow: var(--shadow-glow); }
 .product-media {
   height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 3.8rem;
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
 }
+.product-card:hover .product-media { transform: scale(1.12) rotate(-4deg); }
 .grad-1 { background: linear-gradient(135deg, #f7cf5b, #f0ac23); }
 .grad-2 { background: linear-gradient(135deg, #ff6b4a, #e0201f); }
 .grad-3 { background: linear-gradient(135deg, #ffd166, #f0ac23); }
@@ -40,6 +43,11 @@
   letter-spacing: 0.06em;
   color: var(--text);
   box-shadow: var(--shadow-sm);
+  animation: badge-pulse 2.4s ease-in-out infinite;
+}
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
 }
 .product-card h3 { padding: 20px 20px 4px; font-size: 1.1rem; font-weight: 700; color: var(--text); }
 .product-card p { padding: 0 20px 24px; color: var(--text-dim); font-size: 0.88rem; }

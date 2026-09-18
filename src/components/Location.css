@@ -1,4 +1,4 @@
-.location { padding: 160px 24px; background: var(--bg-alt); }
+.location { padding: 160px 24px; background: linear-gradient(180deg, #fff, var(--bg-warm)); }
 .location-inner {
   max-width: var(--max);
   margin: 0 auto;
@@ -15,7 +15,8 @@
   color: var(--text);
 }
 .info-row { display: flex; gap: 16px; margin-bottom: 22px; align-items: flex-start; }
-.info-icon { font-size: 1.4rem; }
+.info-icon { font-size: 1.4rem; display: inline-block; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1); }
+.info-row:hover .info-icon { transform: scale(1.25) rotate(-8deg); }
 .info-row strong { display: block; margin-bottom: 4px; color: var(--text); }
 .info-row p { color: var(--text-dim); font-size: 0.95rem; }
 .location-map {

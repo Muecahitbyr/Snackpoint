@@ -1,4 +1,4 @@
-.about { padding: 160px 24px; background: var(--bg-alt); }
+.about { padding: 160px 24px; background: linear-gradient(180deg, var(--bg-warm), #fff); }
 .about-inner {
   max-width: var(--max);
   margin: 0 auto;
@@ -14,12 +14,30 @@
   margin-bottom: 6px;
   color: var(--text);
 }
-.glow-card {
+.glow-card-ring {
+  position: relative;
   aspect-ratio: 1;
   border-radius: var(--radius);
+}
+.glow-card-ring::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--accent-3), var(--accent));
+  animation: spin-ring 8s linear infinite;
+  z-index: 0;
+}
+@keyframes spin-ring {
+  to { transform: rotate(360deg); }
+}
+.glow-card {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  border-radius: var(--radius);
   background: radial-gradient(circle at 30% 30%, rgba(224,32,31,0.14), transparent 60%), var(--card);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   display: flex;
   align-items: center;
   justify-content: center;
