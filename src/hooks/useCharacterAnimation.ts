@@ -1,9 +1,19 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { characterScenes, POSE_SRC, type PoseId, type CharacterScene } from '../components/character/characterScenes';
+import {
+  characterScenes,
+  POSE_SRC,
+  validateCharacterScenes,
+  type PoseId,
+  type CharacterScene,
+} from '../components/character/characterScenes';
 
 gsap.registerPlugin(ScrollTrigger);
+
+if (import.meta.env.DEV) {
+  validateCharacterScenes(characterScenes);
+}
 
 function getTarget(key: string): HTMLElement | null {
   return document.querySelector<HTMLElement>(`[data-character-target="${key}"]`);
@@ -51,16 +61,16 @@ export function useCharacterAnimation({ container, figure, imgA, imgB }: Charact
 
     if (reduceMotion) {
       // Minimal, static presentation: a small fixed corner badge, no scroll-driven motion.
+      // Sizing comes entirely from CSS (character.css breakpoints) — no extra JS scale.
       setPose('greet');
-      const w = figureEl.offsetWidth * 0.6;
-      const h = figureEl.offsetHeight * 0.6;
+      const w = figureEl.offsetWidth;
+      const h = figureEl.offsetHeight;
       gsap.set(containerEl, {
         x: window.innerWidth - w - 16,
         y: window.innerHeight - h - 16,
-        scale: 0.6,
         opacity: 0,
       });
-      gsap.to(containerEl, { opacity: 0.92, duration: 1, delay: 0.4 });
+      gsap.to(containerEl, { opacity: 0.95, duration: 1, delay: 0.4 });
       return;
     }
 
@@ -78,8 +88,32 @@ export function useCharacterAnimation({ container, figure, imgA, imgB }: Charact
         (context) => {
           const conditions = context.conditions as { isTablet: boolean; isMobile: boolean };
           const tierScale = conditions.isMobile ? 0.55 : conditions.isTablet ? 0.75 : 1;
+          const isCompactTier = conditions.isMobile || conditions.isTablet;
 
           function computePosition(scene: CharacterScene, targetKey?: string, scale = 1) {
+            const compact = isCompactTier && scene.compactAnchor;
+            // Compact mode only swaps which side it stands on (e.g. "left" -> "below"),
+            // not which target it tracks: a stacked mobile grid has cards too close
+            // together for per-card "below" positioning to fit without overlap, so it
+            // stays parked relative to anchorTarget (the whole grid) just like desktop,
+            // only changing pose per active item instead of physically chasing it.
+            const effectiveAnchor = compact ? scene.compactAnchor! : scene.anchor;
+            const w = (figureEl!.offsetWidth || 200) * scale;
+            const h = (figureEl!.offsetHeight || 280) * scale;
+            const margin = 8;
+            const baseOffsetY = isCompactTier && scene.compactOffsetY !== undefined ? scene.compactOffsetY : scene.offsetY ?? 0;
+
+            if (effectiveAnchor === 'corner') {
+              // Doesn't depend on any element rect at all — for targets much taller
+              // than the viewport (e.g. a stacked mobile grid), that's the point:
+              // nothing to drift out of sync with as the user keeps scrolling. Each
+              // scene can still nudge the baseline via (compact)offsetY.
+              return {
+                x: window.innerWidth - w - margin - 2,
+                y: window.innerHeight * 0.66 - h / 2 + baseOffsetY * tierScale,
+              };
+            }
+
             const el = getTarget(scene.anchorTarget ?? targetKey ?? scene.section);
             if (!el) return null;
             const rect = el.getBoundingClientRect();
@@ -87,14 +121,12 @@ export function useCharacterAnimation({ container, figure, imgA, imgB }: Charact
             // which reflects whatever scale is mid-flight from the previous scene), so
             // multiplying by the target scale here is the only way to get a stable,
             // race-free size for the anchor math.
-            const w = (figureEl!.offsetWidth || 200) * scale;
-            const h = (figureEl!.offsetHeight || 280) * scale;
             const ox = (scene.offsetX ?? 0) * tierScale;
-            const oy = (scene.offsetY ?? 0) * tierScale;
+            const oy = baseOffsetY * tierScale + (compact && effectiveAnchor === 'below' ? 30 : 0);
             let x: number;
             let y: number;
 
-            switch (scene.anchor) {
+            switch (effectiveAnchor) {
               case 'left':
                 x = rect.left - w + ox;
                 y = rect.top + rect.height / 2 - h / 2 + oy;
@@ -116,12 +148,20 @@ export function useCharacterAnimation({ container, figure, imgA, imgB }: Charact
                 y = rect.top + rect.height / 2 - h / 2 + oy;
             }
 
-            const margin = 8;
-            if (conditions.isMobile) {
-              // Narrow viewports have no side gutter for the character to stand in
-              // beside centered content, so it hugs the right edge as a small badge
-              // and only its vertical position tracks the active section.
-              x = window.innerWidth - w - 10;
+            // If the target itself leaves too little side gutter (common on phones
+            // and tablets, where hero/section content runs almost full-width), the
+            // usual "stand just outside the target's edge" math has nowhere to go
+            // and the viewport clamp below would pull the character back on top of
+            // the content instead. Detect that up front and hug the screen edge
+            // instead, rather than clamping into an overlap.
+            const gutterRight = window.innerWidth - rect.right;
+            const gutterLeft = rect.left;
+            const tightGutter = (conditions.isMobile || conditions.isTablet) && (
+              (effectiveAnchor === 'right' && gutterRight < w) ||
+              (effectiveAnchor === 'left' && gutterLeft < w)
+            );
+            if (tightGutter) {
+              x = effectiveAnchor === 'left' ? margin + 2 : window.innerWidth - w - margin - 2;
             }
             x = Math.max(margin, Math.min(x, window.innerWidth - w - margin));
             y = Math.max(64, Math.min(y, window.innerHeight - h - margin));
@@ -152,7 +192,10 @@ export function useCharacterAnimation({ container, figure, imgA, imgB }: Charact
             poseOverride?: PoseId,
             flipOverride?: boolean
           ) {
-            const scale = (scene.scale ?? 1) * tierScale;
+            // CSS (clamp() in character.css) already shrinks the figure per breakpoint,
+            // so only the per-scene relative size is applied here — multiplying by
+            // tierScale too would shrink it twice and make it nearly invisible on phones.
+            const scale = scene.scale ?? 1;
             const pos = computePosition(scene, targetKey, scale);
             if (!pos) return;
             stopIdle();
@@ -190,10 +233,19 @@ export function useCharacterAnimation({ container, figure, imgA, imgB }: Charact
           }
 
           characterScenes.forEach((scene) => {
+            if (scene.compactSkip && isCompactTier) return;
             const triggerEl = getTarget(scene.section);
             if (!triggerEl) return;
 
-            if (scene.subtargets && scene.subtargets.length) {
+            // On phone/tablet a tall single-column grid has too little room between
+            // items for continuous per-card tracking without overlapping neighbours
+            // (each recompute is based on the viewport at that instant, and the
+            // character then sits still — in fixed viewport coordinates — while the
+            // page keeps scrolling underneath it until the next one). Simpler and
+            // safer: park it once, beside the whole group, pose fixed.
+            const useSubtargets = scene.subtargets && scene.subtargets.length && !(isCompactTier && scene.compactAnchor);
+
+            if (useSubtargets) {
               let lastIdx = -1;
               ScrollTrigger.create({
                 trigger: triggerEl,
