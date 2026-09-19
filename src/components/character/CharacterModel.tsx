@@ -12,6 +12,10 @@ export interface CharacterModelHandle {
   mixer: ReturnType<typeof useAnimations>['mixer'];
   headBone: Object3D | null;
   neckBone: Object3D | null;
+  /** Dev-only pointing-accuracy audit (?characterDebug=1) — not used by any
+   * production choreography logic. */
+  handBoneL: Object3D | null;
+  handBoneR: Object3D | null;
 }
 
 interface CharacterModelProps {
@@ -32,6 +36,8 @@ const CharacterModel = forwardRef<CharacterModelHandle, CharacterModelProps>(fun
 
   const headBone = useMemo(() => gltf.scene.getObjectByName(HEAD_BONE_NAME) ?? null, [gltf.scene]);
   const neckBone = useMemo(() => gltf.scene.getObjectByName(NECK_BONE_NAME) ?? null, [gltf.scene]);
+  const handBoneL = useMemo(() => gltf.scene.getObjectByName('hand.L') ?? null, [gltf.scene]);
+  const handBoneR = useMemo(() => gltf.scene.getObjectByName('hand.R') ?? null, [gltf.scene]);
 
   useImperativeHandle(ref, () => ({
     get group() {
@@ -41,6 +47,8 @@ const CharacterModel = forwardRef<CharacterModelHandle, CharacterModelProps>(fun
     mixer,
     headBone,
     neckBone,
+    handBoneL,
+    handBoneR,
   }));
 
   return (

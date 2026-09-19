@@ -64,14 +64,18 @@ interface CharacterControllerProps {
   initialPosition: [number, number, number];
   initialScale: number;
   onReady: () => void;
+  /** Dev-only: lets a sibling debug component (pointing-accuracy audit) read
+   * bone positions directly. Not used by any production logic. */
+  modelHandleRef?: MutableRefObject<CharacterModelHandle | null>;
 }
 
 /** Owns movement + clip-selection + head-tracking logic for the character
  * and publishes an imperative API (via apiRef) that useCharacterScroll drives
  * from outside the R3F tree. Rendered inside <Suspense>, so by the time it
  * mounts the GLB is already loaded. */
-export default function CharacterController({ apiRef, initialPosition, initialScale, onReady }: CharacterControllerProps) {
-  const modelRef = useRef<CharacterModelHandle>(null);
+export default function CharacterController({ apiRef, initialPosition, initialScale, onReady, modelHandleRef }: CharacterControllerProps) {
+  const ownModelRef = useRef<CharacterModelHandle>(null);
+  const modelRef = modelHandleRef ?? ownModelRef;
   const currentNameRef = useRef<AnimationName | null>(null);
   const isWalkingRef = useRef(false);
   const activeTimelineRef = useRef<gsap.core.Timeline | null>(null);

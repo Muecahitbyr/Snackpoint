@@ -1,7 +1,8 @@
-import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
-import type { OrthographicCamera as ThreeOrthographicCamera } from 'three';
+import { Component, Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Vector3, type OrthographicCamera as ThreeOrthographicCamera } from 'three';
 import CharacterController from './CharacterController';
+import type { CharacterModelHandle } from './CharacterModel';
 import { useCharacterScroll, type CharacterScrollDebugInfo } from '../../hooks/useCharacterScroll';
 import { MODEL_HEIGHT_UNITS, type CharacterControllerAPI } from './characterTypes';
 
@@ -61,11 +62,71 @@ function supportsWebGL(): boolean {
 const debugEnabled =
   import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('characterDebug') === '1';
 
+interface HandScreenPositions {
+  left: { x: number; y: number } | null;
+  right: { x: number; y: number } | null;
+}
+
+/** Dev-only pointing-accuracy audit: projects both hand bones to screen
+ * space every frame and reports them up (throttled) so the DOM overlay can
+ * draw a hand -> target line, for visually verifying a Point clip actually
+ * reaches toward the DOM element it's meant to indicate. No effect in
+ * production — this component is never mounted unless debugEnabled. */
+function PointingAudit({
+  modelHandleRef,
+  onUpdate,
+}: {
+  modelHandleRef: MutableRefObject<CharacterModelHandle | null>;
+  onUpdate: (pos: HandScreenPositions) => void;
+}) {
+  const { camera, size } = useThree();
+  const vec = useRef(new Vector3()).current; // reused every frame, never reallocated
+  const lastSentRef = useRef(0);
+
+  useFrame(() => {
+    const now = performance.now();
+    if (now - lastSentRef.current < 100) return; // ~10Hz is plenty for a debug overlay
+    lastSentRef.current = now;
+
+    const handle = modelHandleRef.current;
+    if (!handle) return;
+
+    function toScreen(bone: { getWorldPosition: (v: Vector3) => Vector3 } | null) {
+      if (!bone) return null;
+      bone.getWorldPosition(vec);
+      vec.project(camera);
+      return { x: (vec.x * 0.5 + 0.5) * size.width, y: (1 - (vec.y * 0.5 + 0.5)) * size.height };
+    }
+
+    onUpdate({ left: toScreen(handle.handBoneL), right: toScreen(handle.handBoneR) });
+  });
+
+  return null;
+}
+
 export default function CharacterCanvas() {
   const apiRef = useRef<CharacterControllerAPI | null>(null);
+  const modelHandleRef = useRef<CharacterModelHandle | null>(null);
   const [ready, setReady] = useState(false);
   const [debugInfo, setDebugInfo] = useState<CharacterScrollDebugInfo | null>(null);
+  const [handScreenPos, setHandScreenPos] = useState<HandScreenPositions>({ left: null, right: null });
+  const [targetCrosshair, setTargetCrosshair] = useState<{ x: number; y: number } | null>(null);
   const [webglOk] = useState(supportsWebGL);
+
+  // Dev-only pointing-accuracy audit: re-measure the current target element's
+  // on-screen center whenever the debug info changes (i.e. on scene change),
+  // matching the "only at scene-change, not per frame" DOM-measurement rule
+  // used everywhere else in this codebase.
+  useEffect(() => {
+    if (!debugEnabled || !debugInfo) return;
+    const el = document.querySelector<HTMLElement>(`[data-character-target="${debugInfo.target}"]`);
+    if (!el) {
+      setTargetCrosshair(null);
+      return;
+    }
+    const r = el.getBoundingClientRect();
+    setTargetCrosshair({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+  }, [debugInfo]);
 
   useCharacterScroll({
     apiRef,
@@ -114,10 +175,12 @@ export default function CharacterCanvas() {
           <Suspense fallback={null}>
             <CharacterController
               apiRef={apiRef}
+              modelHandleRef={modelHandleRef}
               initialPosition={initialPosition}
               initialScale={initialScale}
               onReady={() => setReady(true)}
             />
+            {debugEnabled && <PointingAudit modelHandleRef={modelHandleRef} onUpdate={setHandScreenPos} />}
           </Suspense>
         </Canvas>
       </CharacterErrorBoundary>
@@ -165,6 +228,31 @@ export default function CharacterCanvas() {
             pointerEvents: 'none',
           }}
         />
+      )}
+      {debugEnabled && targetCrosshair && (
+        <svg
+          style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', zIndex: 9997, pointerEvents: 'none' }}
+        >
+          {/* target crosshair: the actual DOM element center the character is meant to indicate */}
+          <line x1={targetCrosshair.x - 14} y1={targetCrosshair.y} x2={targetCrosshair.x + 14} y2={targetCrosshair.y} stroke="#ff2d55" strokeWidth={2} />
+          <line x1={targetCrosshair.x} y1={targetCrosshair.y - 14} x2={targetCrosshair.x} y2={targetCrosshair.y + 14} stroke="#ff2d55" strokeWidth={2} />
+          <circle cx={targetCrosshair.x} cy={targetCrosshair.y} r={20} fill="none" stroke="#ff2d55" strokeWidth={1.5} />
+          {/* each hand's actual projected screen position, with a line to the target —
+              a straight, short, roughly-aligned line means the arm genuinely reaches
+              toward the target; a long/misaligned line means it doesn't. */}
+          {handScreenPos.left && (
+            <>
+              <line x1={handScreenPos.left.x} y1={handScreenPos.left.y} x2={targetCrosshair.x} y2={targetCrosshair.y} stroke="#0af" strokeWidth={1.5} strokeDasharray="4 3" />
+              <circle cx={handScreenPos.left.x} cy={handScreenPos.left.y} r={6} fill="#0af" />
+            </>
+          )}
+          {handScreenPos.right && (
+            <>
+              <line x1={handScreenPos.right.x} y1={handScreenPos.right.y} x2={targetCrosshair.x} y2={targetCrosshair.y} stroke="#fb0" strokeWidth={1.5} strokeDasharray="4 3" />
+              <circle cx={handScreenPos.right.x} cy={handScreenPos.right.y} r={6} fill="#fb0" />
+            </>
+          )}
+        </svg>
       )}
     </div>
   );
