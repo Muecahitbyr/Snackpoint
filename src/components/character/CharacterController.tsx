@@ -270,6 +270,7 @@ export default function CharacterController({ apiRef, initialPosition, initialSc
         lookTargetRef.current = null;
       },
       isReady: () => !!modelRef.current?.group,
+      isWalking: () => isWalkingRef.current,
     };
 
     const mixer = modelRef.current?.mixer;

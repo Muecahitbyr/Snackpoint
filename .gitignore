@@ -4,3 +4,6 @@ dist
 *.local
 .env
 .env.*
+review-v2.1/
+.claude/
+public/models/character-v1-backup.glb

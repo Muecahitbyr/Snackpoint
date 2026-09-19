@@ -42,8 +42,9 @@ function getTargetPixelHeight(breakpoint: Breakpoint, vw: number): number {
   return clampPx(130, 34, 190, vw);
 }
 
-// Model footprint measured from output/character-animated.glb: 1.75 tall, 1.06 wide.
-const MODEL_ASPECT = 1.06 / MODEL_HEIGHT_UNITS;
+// Model footprint measured from output/character-v2.1-animated.glb: 1.784 tall, 1.06 wide
+// (practically unchanged from V1's 1.75/1.06 — new head/durag/fingers didn't widen the figure).
+const MODEL_ASPECT = 1.0595 / MODEL_HEIGHT_UNITS;
 
 function getTarget(key: string): HTMLElement | null {
   return document.querySelector<HTMLElement>(`[data-character-target="${key}"]`);
@@ -405,12 +406,12 @@ export function useCharacterScroll({ apiRef, ready, onDebugUpdate }: UseCharacte
             return getTargetPixelHeight(breakpoint, document.documentElement.clientWidth);
           }
 
-          function goToScene(scene: CharacterScene, opts: { isIntro?: boolean } = {}) {
+          function goToScene(scene: CharacterScene, opts: { isIntro?: boolean; arrivalOverride?: AnimationName } = {}) {
             const pos = computeWorldPosition(scene, breakpoint, currentPixelHeight(), insets);
             if (!pos) return;
             currentSceneRef.current = scene;
 
-            const action = scene.action ?? defaultActionForSide(pos.side);
+            const action = opts.arrivalOverride ?? scene.action ?? defaultActionForSide(pos.side);
             const velocity = Math.abs(velocityTracker.getVelocity());
             const fast = !opts.isIntro && velocity > FAST_SCROLL_VELOCITY;
             const requestedSide = resolvePlacement(scene, breakpoint, document.documentElement.clientWidth).side;
@@ -426,10 +427,7 @@ export function useCharacterScroll({ apiRef, ready, onDebugUpdate }: UseCharacte
             // loaded Google Maps iframe finishing load and nudging the hours
             // table down) — scroll-driven onUpdate alone can't catch that,
             // since nothing scrolled. Single one-shot check, not a loop.
-            if (settleTimer) clearTimeout(settleTimer);
-            settleTimer = setTimeout(() => {
-              if (currentSceneRef.current === scene) resnapScene(scene);
-            }, 900);
+            scheduleSettleCheck(scene, 900);
 
             onDebugUpdateRef.current?.({
               sceneId: scene.id,
@@ -465,9 +463,34 @@ export function useCharacterScroll({ apiRef, ready, onDebugUpdate }: UseCharacte
               end: heroScene.end ?? 'bottom 25%',
               onEnterBack: () => {
                 if (!heroIntroPlayed) return; // don't preempt the initial intro
-                goToScene(heroScene);
+                // The dramatic walk-in + Wave is a one-time introduction (see
+                // heroIntroPlayed above) — scrolling back up later just parks
+                // the character back at its hero spot without repeating the
+                // greeting.
+                goToScene(heroScene, { arrivalOverride: 'Idle' });
               },
             });
+          }
+
+          // Arms the post-arrival settle re-check (see goToScene above), but
+          // defers it instead of firing while a walkTo is still mid-flight:
+          // snapTo() kills the active GSAP timeline, which — for a walk long
+          // enough that its own arrival delay exceeds `delayMs` (the hero
+          // intro's off-screen entrance being the case that surfaced this) —
+          // was cutting the arrival clip (Wave) off before it ever started.
+          // This re-validation exists to correct for late layout shifts
+          // (e.g. the Maps iframe nudging the hours table), not to interrupt
+          // an in-progress arrival, so it's safe to just check again shortly.
+          function scheduleSettleCheck(scene: CharacterScene, delayMs: number) {
+            if (settleTimer) clearTimeout(settleTimer);
+            settleTimer = setTimeout(() => {
+              if (currentSceneRef.current !== scene) return;
+              if (apiRef.current?.isWalking()) {
+                scheduleSettleCheck(scene, 300);
+                return;
+              }
+              resnapScene(scene);
+            }, delayMs);
           }
 
           // Quick, non-walk reposition — used to keep the character's spot

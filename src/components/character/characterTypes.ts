@@ -104,11 +104,17 @@ export interface CharacterControllerAPI {
   lookAt(x: number, y: number): void;
   clearLookAt(): void;
   isReady(): boolean;
+  /** True while a walkTo's travel+arrival sequence is still in flight (from
+   * the call until its arrival clip has actually started) — lets external
+   * one-shot corrections (e.g. the scroll hook's post-arrival re-validation)
+   * avoid cutting off an in-progress walk. */
+  isWalking(): boolean;
 }
 
-// Measured directly from output/character-animated.glb (character-3d project) —
-// see character-3d/PROJECT_STATE.md. Feet sit at local Y=0.
-export const MODEL_HEIGHT_UNITS = 1.75;
+// Measured directly from output/character-v2.1-animated.glb (character-3d project) —
+// see character-3d/PROJECT_STATE.md. Feet sit at local Y=0. (V1 was 1.75; V2.1's
+// new head/durag geometry measures fractionally taller.)
+export const MODEL_HEIGHT_UNITS = 1.784;
 
 /** The rig's baked "forward" is +X in glTF space (Blender export axis convention:
  * gltf_X = blender_X, and character-3d docs record the character facing +X in
@@ -119,11 +125,12 @@ export const FACE_RIGHT_ROTATION_Y = 0;
 /** rotation.y = π points local forward at world -X, i.e. screen-left. */
 export const FACE_LEFT_ROTATION_Y = Math.PI;
 
-export const GLTF_PATH = '/models/character-animated.glb';
+export const GLTF_PATH = '/models/character-v2.1-animated.glb';
 
 // Bone names as they appear in the exported GLB (verified via pygltflib node
-// dump against output/character-animated.glb — see character-3d/README.md
-// "RIGGING" for the full 24-bone list).
+// dump against output/character-v2.1-animated.glb — see character-3d/README.md
+// "RIGGING" for the full 30-bone list, V1's 24 plus 6 Index-finger bones).
+// 'head'/'neck' are unchanged from V1, so head/neck tracking needs no changes.
 export const HEAD_BONE_NAME = 'head';
 export const NECK_BONE_NAME = 'neck';
 
