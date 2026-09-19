@@ -1,4 +1,3 @@
-import { lazy, Suspense } from 'react';
 import ProgressBar from './components/ProgressBar';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -9,24 +8,18 @@ import NewProducts from './components/NewProducts';
 import Reviews from './components/Reviews';
 import Location from './components/Location';
 import Footer from './components/Footer';
+import SnackBotWidget from './components/chatbot/SnackBotWidget';
 
-// Code-split behind the rest of the site: three.js/R3F dominate the bundle
-// (see CHARACTER_3D.md "Bundle"), so the main page JS (React, GSAP, the
-// sections) parses/executes without waiting on it. The GLB itself already
-// starts downloading immediately regardless, via the <link rel="preload">
-// in index.html, so this doesn't delay the model — only the character
-// component's own (much smaller) JS chunk loads a beat later. fallback={null}
-// means there's nothing to visually pop in; the character simply isn't
-// mounted yet for the first frame or two.
-const CharacterCanvas = lazy(() => import('./components/character/CharacterCanvas'));
+// The 3D character (src/components/character/, src/hooks/useCharacterScroll.ts)
+// has been retired in favor of the 2D chatbot below. Its files are kept in
+// place as a backup/reference, but nothing here imports or mounts them
+// anymore, so neither the GLB nor react-three-fiber end up in the live
+// bundle.
 
 export default function App() {
   return (
     <>
       <ProgressBar />
-      <Suspense fallback={null}>
-        <CharacterCanvas />
-      </Suspense>
       <Header />
       <main>
         <Hero />
@@ -38,6 +31,7 @@ export default function App() {
         <Location />
       </main>
       <Footer />
+      <SnackBotWidget />
     </>
   );
 }
