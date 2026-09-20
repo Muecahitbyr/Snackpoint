@@ -65,7 +65,7 @@ export default function Location() {
         </Reveal>
         <Reveal className="location-map" delay={0.1} data-character-target="map">
           <iframe
-            title="Standort Snack Point Kaufbeuren"
+            title="Standort SnackPoint Kaufbeuren"
             src={MAPS_EMBED_URL}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"

@@ -41,9 +41,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px;
+  padding: 40px;
 }
-.glow-card img { width: 55%; border-radius: 20px; }
+.glow-card img { width: 78%; border-radius: 20px; }
 
 @media (max-width: 860px) {
   .about-inner { grid-template-columns: 1fr; }

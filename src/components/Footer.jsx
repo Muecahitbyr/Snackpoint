@@ -6,11 +6,11 @@ export default function Footer() {
     <footer className="footer" data-character-target="footer">
       <div className="footer-inner">
         <div className="footer-brand">
-          <img src="/logo.jpg" alt="Snack Point Logo" />
-          <span>Snack Point Kaufbeuren</span>
+          <img src="/logo.jpg" alt="SnackPoint Logo" />
+          <span>SnackPoint Kaufbeuren</span>
         </div>
         <p>{ADDRESS}</p>
-        <p className="footer-copy">© 2026 Snack Point Kaufbeuren</p>
+        <p className="footer-copy">© 2026 SnackPoint Kaufbeuren</p>
       </div>
     </footer>
   );

@@ -44,8 +44,8 @@ export default function Header() {
     <header ref={navRef} className={`nav ${menuOpen ? 'menu-open' : ''}`}>
       <div className="nav-inner">
         <a href="#home" className="brand" onClick={() => setMenuOpen(false)}>
-          <img src="/logo.jpg" alt="Snack Point Logo" className="brand-logo" />
-          <span>Snack Point</span>
+          <img src="/logo.jpg" alt="SnackPoint Logo" className="brand-logo" />
+          <span>SnackPoint</span>
         </a>
         <nav className="nav-links">
           {LINKS.map((link) => (

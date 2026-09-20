@@ -12,7 +12,7 @@ export default function About() {
           <p className="eyebrow">Über uns</p>
           <h2>Mehr als nur ein Kiosk.</h2>
           <p className="lead">
-            Bei Snack Point Kaufbeuren erwartet dich ein herzlicher Empfang, frische Ware und ein
+            Bei SnackPoint Kaufbeuren erwartet dich ein herzlicher Empfang, frische Ware und ein
             Service, der weit über den klassischen Kiosk hinausgeht. Ob schneller Snack zwischendurch,
             Paket abholen oder Lottoschein abgeben — hier bist du in besten Händen.
           </p>
@@ -21,7 +21,7 @@ export default function About() {
           <div ref={visual}>
             <div className="glow-card-ring">
               <div className="glow-card">
-                <img src="/logo.jpg" alt="Snack Point" />
+                <img src="/logo.jpg" alt="SnackPoint" />
               </div>
             </div>
           </div>

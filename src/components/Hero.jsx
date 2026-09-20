@@ -51,13 +51,13 @@ export default function Hero() {
       </div>
 
       <div className="hero-content">
-        <img src="/logo.jpg" alt="Snack Point Logo" className="hero-logo" ref={logo} />
+        <img src="/logo.jpg" alt="SnackPoint Logo" className="hero-logo" ref={logo} />
         <Reveal as="p" className="eyebrow">Kiosk · Kaufbeuren</Reveal>
         <Reveal as="h1" className="hero-title">
-          Snack Point<br /><span>Kaufbeuren</span>
+          SnackPoint<br /><span>Kaufbeuren</span>
         </Reveal>
         <Reveal as="p" className="hero-subtitle">
-          Frische Snacks. Süße Neuheiten. DHL-Paketshop &amp; Lotto — alles an einem Ort.
+          Der Kiosk, der dich zum Leben erweckt.
         </Reveal>
 
         <Reveal className="hero-actions">
@@ -76,11 +76,6 @@ export default function Hero() {
             <span className="stat-label">⌀ Sternebewertung</span>
           </div>
         </Reveal>
-      </div>
-
-      <div className="scroll-hint">
-        <span>Scrollen</span>
-        <div className="scroll-line" />
       </div>
     </section>
   );
