@@ -23,3 +23,28 @@
 .footer-brand:hover img { transform: rotate(-10deg) scale(1.1); }
 .footer p { color: var(--text-dim); font-size: 0.88rem; margin-bottom: 4px; }
 .footer-copy { margin-top: 16px; font-size: 0.78rem; color: #b0b0b5; }
+
+.footer-legal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 0.82rem;
+}
+.footer-legal a,
+.footer-legal-btn {
+  color: var(--text-dim);
+  transition: color 0.2s;
+}
+.footer-legal a:hover,
+.footer-legal-btn:hover { color: var(--accent-3); }
+.footer-legal-btn {
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+.footer-legal-dot { color: var(--card-border); }

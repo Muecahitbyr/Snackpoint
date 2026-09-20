@@ -8,6 +8,7 @@ import NewProducts from './components/NewProducts';
 import Reviews from './components/Reviews';
 import Location from './components/Location';
 import Footer from './components/Footer';
+import CookieConsent from './components/CookieConsent';
 import SnackBotWidget from './components/chatbot/SnackBotWidget';
 
 // The 3D character (src/components/character/, src/hooks/useCharacterScroll.ts)
@@ -32,6 +33,7 @@ export default function App() {
       </main>
       <Footer />
       <SnackBotWidget />
+      <CookieConsent />
     </>
   );
 }

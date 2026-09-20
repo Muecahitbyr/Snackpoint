@@ -1,5 +1,6 @@
 import { ADDRESS, MAPS_URL, MAPS_EMBED_URL } from '../data/constants';
 import { OPENING_HOURS, getTodayHours } from '../data/hours';
+import { useCookieConsent } from '../hooks/useCookieConsent';
 import Reveal from './Reveal';
 import './Location.css';
 
@@ -24,6 +25,8 @@ function OpeningHoursTable() {
 }
 
 export default function Location() {
+  const { consent, accept } = useCookieConsent();
+
   return (
     <section className="location" id="location" data-character-target="location">
       <div className="location-inner">
@@ -64,12 +67,28 @@ export default function Location() {
           </a>
         </Reveal>
         <Reveal className="location-map" delay={0.1} data-character-target="map">
-          <iframe
-            title="Standort SnackPoint Kaufbeuren"
-            src={MAPS_EMBED_URL}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
+          {consent === 'accepted' ? (
+            <iframe
+              title="Standort SnackPoint Kaufbeuren"
+              src={MAPS_EMBED_URL}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          ) : (
+            <div className="map-placeholder">
+              <span className="map-placeholder-icon">🗺️</span>
+              <p>
+                Beim Laden der Karte werden Daten an Google übertragen. Wir zeigen sie erst nach deiner
+                Zustimmung.
+              </p>
+              <button type="button" className="btn btn-primary" onClick={accept}>
+                Karte laden
+              </button>
+              <a className="map-placeholder-link" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
+                Direkt in Google Maps öffnen
+              </a>
+            </div>
+          )}
         </Reveal>
       </div>
     </section>

@@ -34,7 +34,8 @@ export default function SnackBotPanel({ messages, onSend, onQuickAction, onClose
   return (
     <div className="snackbot-panel" role="dialog" aria-label="SnackPoint Assistent">
       <div className="snackbot-panel-header">
-        <div>
+        <img src="/mascot.png" alt="" className="snackbot-panel-avatar" />
+        <div className="snackbot-panel-heading">
           <p className="snackbot-panel-title">SnackPoint Assistent</p>
           <p className="snackbot-panel-subtitle">
             Frag mich z. B. nach Snacks, Zigaretten, DHL, Lotto oder Öffnungszeiten.

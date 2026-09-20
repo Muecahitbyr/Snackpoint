@@ -1,0 +1,77 @@
+.legal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 20px 24px;
+}
+.legal-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.legal-brand img { width: 34px; height: 34px; border-radius: 10px; object-fit: cover; }
+.legal-back {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--accent-3);
+}
+.legal-back:hover { text-decoration: underline; }
+
+.legal-page { min-height: 100vh; display: flex; flex-direction: column; }
+.legal-content {
+  flex: 1;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 24px 100px;
+  width: 100%;
+}
+.legal-content .eyebrow { display: block; margin-bottom: 8px; }
+.legal-content h1 {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+.legal-updated { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 40px; }
+
+.legal-content h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 36px 0 12px;
+  color: var(--text);
+}
+.legal-content h3 {
+  font-size: 1.02rem;
+  font-weight: 700;
+  margin: 22px 0 8px;
+  color: var(--text);
+}
+.legal-content p { color: var(--text-dim); font-size: 0.95rem; line-height: 1.7; margin-bottom: 12px; }
+.legal-content ul { margin: 0 0 12px 20px; color: var(--text-dim); font-size: 0.95rem; line-height: 1.7; }
+.legal-content li { margin-bottom: 4px; }
+.legal-content a { color: var(--accent-3); text-decoration: underline; }
+.legal-content strong { color: var(--text); }
+
+.legal-placeholder {
+  background: rgba(224, 32, 31, 0.08);
+  border: 1px dashed rgba(224, 32, 31, 0.35);
+  border-radius: 8px;
+  padding: 1px 6px;
+  color: var(--accent-3);
+  font-style: normal;
+}
+
+.legal-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin-bottom: 12px;
+}
+.legal-card p { margin-bottom: 6px; }
+.legal-card p:last-child { margin-bottom: 0; }

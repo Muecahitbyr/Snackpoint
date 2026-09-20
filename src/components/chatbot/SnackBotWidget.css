@@ -12,14 +12,12 @@
   width: clamp(52px, 13vw, 66px);
   height: clamp(52px, 13vw, 66px);
   border-radius: 50%;
-  border: none;
+  border: 2px solid #fff;
   cursor: pointer;
-  background: #fff;
+  background: var(--bg-alt);
   box-shadow: var(--shadow-glow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
+  overflow: hidden;
+  padding: 0;
   animation: snackbot-bob 3s ease-in-out infinite;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s;
 }
@@ -34,11 +32,9 @@
 .snackbot-fab-mascot {
   width: 100%;
   height: 100%;
-}
-
-.snackbot-arm {
-  transform-origin: 50px 32px;
-  animation: snackbot-wave 4.5s ease-in-out infinite;
+  object-fit: cover;
+  object-position: center 30%;
+  display: block;
 }
 
 .snackbot-fab-dot {
@@ -56,14 +52,6 @@
 @keyframes snackbot-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
-}
-
-@keyframes snackbot-wave {
-  0%, 88%, 100% { transform: rotate(0deg); }
-  91% { transform: rotate(-18deg); }
-  93.5% { transform: rotate(14deg); }
-  96% { transform: rotate(-10deg); }
-  98.5% { transform: rotate(4deg); }
 }
 
 @keyframes snackbot-pulse {
@@ -95,11 +83,25 @@
 .snackbot-panel-header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 12px;
   padding: 18px 18px 14px;
   background: linear-gradient(135deg, var(--accent), var(--accent-3));
   color: #fff;
+}
+
+.snackbot-panel-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 30%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.snackbot-panel-heading {
+  flex: 1;
+  min-width: 0;
 }
 
 .snackbot-panel-title {
