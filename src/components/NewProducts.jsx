@@ -42,6 +42,12 @@ export default function NewProducts() {
           <ProductCard key={product.title} product={product} delay={i * 0.1} index={i} />
         ))}
       </div>
+
+      <Reveal className="products-more" delay={newProducts.length * 0.1}>
+        <a href="/produkte.html" className="products-more-link">
+          Hier klicken, um alle Produkte zu sehen →
+        </a>
+      </Reveal>
     </section>
   );
 }

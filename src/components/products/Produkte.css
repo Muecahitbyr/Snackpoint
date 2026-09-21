@@ -1,0 +1,13 @@
+.produkte-page { min-height: 100vh; display: flex; flex-direction: column; }
+.produkte-main {
+  flex: 1;
+  padding: 140px 24px 100px;
+  background: linear-gradient(180deg, #fff, var(--bg-warm-2));
+}
+.produkte-header {
+  max-width: var(--max);
+  margin: 0 auto 50px;
+}
+.produkte-header .lead { max-width: 560px; }
+
+.produkte-grid { max-width: var(--max); margin: 0 auto; }

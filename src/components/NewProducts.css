@@ -52,6 +52,21 @@
 .product-card h3 { padding: 20px 20px 4px; font-size: 1.1rem; font-weight: 700; color: var(--text); }
 .product-card p { padding: 0 20px 24px; color: var(--text-dim); font-size: 0.88rem; }
 
+.products-more {
+  max-width: var(--max);
+  margin: 40px auto 0;
+  text-align: center;
+}
+.products-more-link {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--accent-3);
+  padding: 12px 8px;
+  transition: transform 0.25s, color 0.25s;
+}
+.products-more-link:hover { color: var(--accent); transform: translateX(4px); }
+
 @media (max-width: 980px) {
   .product-grid { grid-template-columns: repeat(2, 1fr); }
 }

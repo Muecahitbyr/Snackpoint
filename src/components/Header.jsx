@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { MAPS_URL } from '../data/constants';
 import './Header.css';
 
+// Absolute (/#services) rather than bare (#services) hashes so these links
+// also work correctly from standalone pages like /produkte.html or
+// /impressum.html, not just from the homepage itself.
 const LINKS = [
-  { href: '#services', label: 'Leistungen' },
-  { href: '#new', label: 'Neue Waren' },
-  { href: '#reviews', label: 'Bewertungen' },
-  { href: '#location', label: 'Standort' },
+  { href: '/#services', label: 'Leistungen' },
+  { href: '/#new', label: 'Neue Waren' },
+  { href: '/#reviews', label: 'Bewertungen' },
+  { href: '/#location', label: 'Standort' },
 ];
 
 export default function Header() {
@@ -43,7 +46,7 @@ export default function Header() {
   return (
     <header ref={navRef} className={`nav ${menuOpen ? 'menu-open' : ''}`}>
       <div className="nav-inner">
-        <a href="#home" className="brand" onClick={() => setMenuOpen(false)}>
+        <a href="/#home" className="brand" onClick={() => setMenuOpen(false)}>
           <img src="/logo.jpg" alt="SnackPoint Logo" className="brand-logo" />
           <span>SnackPoint</span>
         </a>

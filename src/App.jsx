@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import ProgressBar from './components/ProgressBar';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -18,6 +19,15 @@ import SnackBotWidget from './components/chatbot/SnackBotWidget';
 // bundle.
 
 export default function App() {
+  // A link like /produkte.html's "/#services" lands here via a full page
+  // load, so the browser's native scroll-to-hash fires before React has
+  // mounted the sections and finds nothing — do it again once they exist.
+  useEffect(() => {
+    if (!window.location.hash) return;
+    const el = document.querySelector(window.location.hash);
+    el?.scrollIntoView({ behavior: 'auto', block: 'start' });
+  }, []);
+
   return (
     <>
       <ProgressBar />
