@@ -11,3 +11,92 @@
 .produkte-header .lead { max-width: 560px; }
 
 .produkte-grid { max-width: var(--max); margin: 0 auto; }
+
+.produkte-controls {
+  max-width: var(--max);
+  margin: 0 auto 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.produkte-search {
+  position: relative;
+  max-width: 420px;
+}
+.produkte-search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.95rem;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.produkte-search input {
+  width: 100%;
+  border: 1px solid var(--card-border);
+  border-radius: 100px;
+  padding: 13px 42px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.produkte-search input:focus {
+  outline: none;
+  border-color: rgba(224, 32, 31, 0.4);
+}
+.produkte-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-alt);
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+.produkte-search-clear:hover { background: #fff0e0; color: var(--accent-3); }
+
+.produkte-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.produkte-filter-chip {
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 100px;
+  padding: 9px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s, border-color 0.2s;
+}
+.produkte-filter-chip:hover { transform: translateY(-2px); border-color: rgba(224, 32, 31, 0.3); }
+.produkte-filter-chip.is-active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(224, 32, 31, 0.28);
+}
+
+.produkte-empty {
+  max-width: var(--max);
+  margin: 0 auto;
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 560px) {
+  .produkte-search { max-width: none; }
+}
