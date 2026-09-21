@@ -13,7 +13,7 @@ export const services = [
   },
   {
     icon: '📦',
-    logo: null,
+    logo: '/logos/dhl.png',
     gradient: 'gold',
     title: 'DHL Paketshop',
     text: 'Pakete abgeben und abholen — schnell, freundlich und unkompliziert, ganz ohne Warteschlangen im Postamt.',
@@ -21,7 +21,7 @@ export const services = [
   },
   {
     icon: '🎰',
-    logo: null,
+    logo: '/logos/lotto.png',
     gradient: 'deep',
     title: 'Lotto',
     text: 'Offizielle Lotto-Annahmestelle: Tippscheine abgeben, Gewinne prüfen und dein Glück versuchen.',
@@ -29,7 +29,7 @@ export const services = [
   },
   {
     icon: '🥪',
-    logo: null,
+    logo: '/logos/ihle.png',
     gradient: 'red',
     title: 'Ihle',
     text: 'Frische Sandwiches, Wraps & Gebäck von Ihle — direkt bei uns im Kiosk.',

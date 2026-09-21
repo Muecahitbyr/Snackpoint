@@ -33,10 +33,20 @@
   transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
 }
 .service-card:hover .service-icon { transform: scale(1.1) rotate(-6deg); }
-.service-icon img { width: 60%; height: 60%; object-fit: contain; }
 .icon-red { background: linear-gradient(135deg, #ff6b4a, var(--accent)); }
 .icon-gold { background: linear-gradient(135deg, #f7cf5b, var(--accent-2)); }
 .icon-deep { background: linear-gradient(135deg, var(--accent), var(--accent-3)); }
+
+/* Real partner logos (DHL/Lotto/Ihle) get a plain tile instead of the
+   colorful gradient — their own brand color already carries the icon, a
+   second competing color behind it would just clash. */
+.service-icon.has-logo {
+  background: #fff;
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+  box-shadow: none;
+}
+.service-icon.has-logo img { width: 100%; height: 100%; object-fit: cover; }
 .service-card h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 10px; color: var(--text); }
 .service-card p { color: var(--text-dim); font-size: 0.95rem; }
 
