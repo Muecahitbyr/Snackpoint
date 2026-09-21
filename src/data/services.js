@@ -5,9 +5,9 @@
 export const services = [
   {
     icon: '🍫',
-    logo: null,
+    logo: '/logo.jpg',
     gradient: 'red',
-    title: 'Kiosk & Snacks',
+    title: 'Kiosk',
     text: 'Süßigkeiten, Getränke, Zeitschriften und alles für den kleinen Hunger — täglich frisch sortiert.',
     target: 'snacks',
   },
