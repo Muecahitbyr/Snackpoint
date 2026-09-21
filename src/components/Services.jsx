@@ -14,7 +14,9 @@ function ServiceCard({ service, delay }) {
         onMouseMove={tilt.onMouseMove}
         onMouseLeave={tilt.onMouseLeave}
       >
-        <div className={`service-icon icon-${service.gradient}`}>{service.icon}</div>
+        <div className={`service-icon icon-${service.gradient}`}>
+          {service.logo ? <img src={service.logo} alt={`${service.title} Logo`} /> : service.icon}
+        </div>
         <h3>{service.title}</h3>
         <p>{service.text}</p>
       </div>
