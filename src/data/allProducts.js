@@ -25,6 +25,12 @@ const RAW_PRODUCTS = [
   { emoji: '🥔', category: 'Chips & Salziges', title: 'Kartoffelchips', text: 'Knusprige Chips in vielen Geschmacksrichtungen.' },
   { emoji: '🌽', category: 'Chips & Salziges', title: 'Nachos & Dips', text: 'Knusprige Nachos mit cremigen Dips.' },
   { emoji: '🥜', category: 'Chips & Salziges', title: 'Nüsse & Studentenfutter', text: 'Herzhafte Snacks für zwischendurch.' },
+  // Sandwiches & Snacks
+  { emoji: '🥪', category: 'Sandwiches & Snacks', title: 'Belegte Sandwiches', text: 'Frisch belegte Sandwiches für den kleinen Hunger zwischendurch.' },
+  { emoji: '🌯', category: 'Sandwiches & Snacks', title: 'Wraps', text: 'Herzhafte Wraps in mehreren Variationen.' },
+  { emoji: '🥖', category: 'Sandwiches & Snacks', title: 'Baguettes', text: 'Knusprige Baguettes, frisch belegt.' },
+  { emoji: '🥐', category: 'Sandwiches & Snacks', title: 'Frisches Gebäck', text: 'Croissants & Gebäck für den Snack unterwegs.' },
+  { emoji: '🥗', category: 'Sandwiches & Snacks', title: 'Salat to go', text: 'Frischer Salat für die schnelle, leichte Mahlzeit.' },
   // Sonstiges
   { emoji: '🍿', category: 'Sonstiges', title: 'Popcorn süß & salzig', text: 'Der Snack-Klassiker fürs Kino-Feeling zuhause.' },
   { emoji: '🍦', category: 'Sonstiges', title: 'Eis am Stiel', text: 'Erfrischende Eis-Klassiker für heiße Tage.' },
