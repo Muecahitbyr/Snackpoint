@@ -18,6 +18,11 @@
   position: relative;
   aspect-ratio: 1;
   border-radius: var(--radius);
+  /* The spinning ::before is a rounded square, not a circle — while
+     rotating, its corners sweep out past its own box (up to ~41% wider at
+     45°). Without clipping here that pokes out past the card on narrow
+     viewports instead of just rotating in place. */
+  overflow: hidden;
 }
 .glow-card-ring::before {
   content: '';
@@ -47,4 +52,8 @@
 
 @media (max-width: 860px) {
   .about-inner { grid-template-columns: 1fr; }
+}
+
+.about.is-offscreen .glow-card-ring::before {
+  animation-play-state: paused;
 }

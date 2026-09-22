@@ -1,12 +1,14 @@
 import { useParallax } from '../hooks/useParallax';
+import { useInView } from '../hooks/useInView';
 import Reveal from './Reveal';
 import './About.css';
 
 export default function About() {
   const visual = useParallax(0.1);
+  const { ref: sectionRef, inView } = useInView();
 
   return (
-    <section className="about" id="about" data-character-target="about">
+    <section className={`about ${inView ? '' : 'is-offscreen'}`} ref={sectionRef} id="about" data-character-target="about">
       <div className="about-inner">
         <Reveal className="about-text" data-character-target="about-text">
           <p className="eyebrow">Über uns</p>

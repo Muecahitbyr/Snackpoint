@@ -18,10 +18,32 @@ interface SnackBotPanelProps {
 export default function SnackBotPanel({ messages, onSend, onQuickAction, onClose }: SnackBotPanelProps) {
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
+
+  // Close on a click/tap outside the panel, or on Escape. `mousedown` (not
+  // `click`) so this doesn't fire on the same click that just opened the
+  // panel — that one has already finished dispatching by the time this
+  // effect's listener is attached on the next tick.
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose();
+    }
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -32,7 +54,7 @@ export default function SnackBotPanel({ messages, onSend, onQuickAction, onClose
   }
 
   return (
-    <div className="snackbot-panel" role="dialog" aria-label="SnackPoint Assistent">
+    <div className="snackbot-panel" role="dialog" aria-label="SnackPoint Assistent" ref={panelRef}>
       <div className="snackbot-panel-header">
         <img src="/mascot.png" alt="" className="snackbot-panel-avatar" />
         <div className="snackbot-panel-heading">
