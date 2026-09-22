@@ -2,20 +2,32 @@
   position: relative;
   overflow: hidden;
   padding: 130px 24px;
+  text-align: center;
+}
+/* Animating background-position directly on .highlight would repaint the
+   whole section every frame (it's not a compositor-only property, unlike
+   transform) — moving the gradient onto its own oversized layer and
+   animating *that* layer's transform keeps this on the compositor. */
+.highlight::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
   background: linear-gradient(120deg, var(--accent-3) 0%, var(--accent) 55%, var(--accent-2) 100%);
   background-size: 220% 220%;
   animation: highlight-shift 12s ease-in-out infinite;
-  text-align: center;
+  z-index: 0;
+  will-change: transform;
 }
 @keyframes highlight-shift {
-  0% { background-position: 0% 40%; }
-  50% { background-position: 100% 60%; }
-  100% { background-position: 0% 40%; }
+  0% { transform: translate(0%, 0%); }
+  50% { transform: translate(-6%, 4%); }
+  100% { transform: translate(0%, 0%); }
 }
 
 .highlight-floaters {
   position: absolute;
   inset: 0;
+  z-index: 1;
   pointer-events: none;
 }
 .hfloat {
@@ -61,4 +73,9 @@
 
 @media (max-width: 700px) {
   .hfloat { font-size: 1.6rem; }
+}
+
+.highlight.is-offscreen::before,
+.highlight.is-offscreen .hfloat {
+  animation-play-state: paused;
 }

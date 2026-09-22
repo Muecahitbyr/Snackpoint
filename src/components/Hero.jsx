@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParallax } from '../hooks/useParallax';
 import { useCountUp } from '../hooks/useCountUp';
 import Reveal from './Reveal';
@@ -23,6 +23,21 @@ export default function Hero() {
   const reviewCount = useCountUp(4945);
   const rating = useCountUp(5, { decimals: 1 });
 
+  // Pause the blobs/particles' infinite animations once the hero scrolls
+  // out of view — they'd otherwise keep the compositor busy forever for
+  // something nobody can see, which adds up with all the other sections
+  // animating continuously at the same time.
+  const [inView, setInView] = useState(true);
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), {
+      rootMargin: '200px 0px',
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   function handleMouseMove(e) {
     const el = heroRef.current;
     if (!el) return;
@@ -32,7 +47,13 @@ export default function Hero() {
   }
 
   return (
-    <section className="hero" id="home" ref={heroRef} onMouseMove={handleMouseMove} data-character-target="hero">
+    <section
+      className={`hero ${inView ? '' : 'is-offscreen'}`}
+      id="home"
+      ref={heroRef}
+      onMouseMove={handleMouseMove}
+      data-character-target="hero"
+    >
       <div className="hero-spotlight" />
       <div className="hero-blob blob-1" ref={blob1} />
       <div className="hero-blob blob-2" ref={blob2} />

@@ -34,8 +34,8 @@
 .blob-3 { width: 340px; height: 340px; background: var(--accent-2); top: 35%; left: 60%; opacity: 0.34; animation-delay: -8s; }
 
 @keyframes drift {
-  0%, 100% { margin: 0; }
-  50% { margin: 24px 0 0 24px; }
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(24px, 24px); }
 }
 
 .hero-particles {
@@ -95,6 +95,14 @@
   color: var(--text-dim);
   max-width: 560px;
   margin: 0 auto 40px;
+}
+
+/* Off-screen: freeze the decorative animations instead of burning cycles
+   animating something nobody can see. */
+.hero.is-offscreen .hero-blob,
+.hero.is-offscreen .particle,
+.hero.is-offscreen .hero-title span {
+  animation-play-state: paused;
 }
 
 .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }

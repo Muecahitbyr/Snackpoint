@@ -13,7 +13,8 @@
   width: max-content;
   animation: marquee 45s linear infinite;
 }
-.marquee:hover .marquee-track { animation-play-state: paused; }
+.marquee:hover .marquee-track,
+.reviews.is-offscreen .marquee-track { animation-play-state: paused; }
 
 @keyframes marquee {
   from { transform: translateX(0); }

@@ -1,3 +1,4 @@
+import { useInView } from '../hooks/useInView';
 import Reveal from './Reveal';
 import './Highlight.css';
 
@@ -10,8 +11,14 @@ const FLOATERS = [
 ];
 
 export default function Highlight() {
+  const { ref, inView } = useInView();
+
   return (
-    <section className="highlight" data-character-target="highlight">
+    <section
+      className={`highlight ${inView ? '' : 'is-offscreen'}`}
+      ref={ref}
+      data-character-target="highlight"
+    >
       <div className="highlight-floaters">
         {FLOATERS.map((f, i) => (
           <span

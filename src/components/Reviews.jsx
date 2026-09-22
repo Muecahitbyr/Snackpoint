@@ -1,4 +1,5 @@
 import { reviews } from '../data/reviews';
+import { useInView } from '../hooks/useInView';
 import Reveal from './Reveal';
 import './Reviews.css';
 
@@ -21,9 +22,15 @@ function ReviewCard({ review }) {
 export default function Reviews() {
   // Render the review set twice so the CSS translateX(-50%) loop is seamless — no visible start or end.
   const loopedReviews = [...reviews, ...reviews];
+  const { ref, inView } = useInView();
 
   return (
-    <section className="reviews" id="reviews" data-character-target="reviews">
+    <section
+      className={`reviews ${inView ? '' : 'is-offscreen'}`}
+      ref={ref}
+      id="reviews"
+      data-character-target="reviews"
+    >
       <Reveal as="p" className="eyebrow center">Bewertungen</Reveal>
       <Reveal as="h2" className="section-title center">Das sagen unsere Kunden.</Reveal>
 
