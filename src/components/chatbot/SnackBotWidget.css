@@ -272,3 +272,19 @@
 @media (min-width: 641px) and (max-width: 1100px) {
   .snackbot-panel { width: min(360px, calc(100vw - 32px)); }
 }
+
+/* ---------- TEMPORARY: ?chatSimple=1 diagnostic mode ----------
+   Strips every animation/transition/shadow/blur so open/close becomes a
+   plain instant DOM swap with zero compositing work. If this is still slow
+   on a real device, the cause is React/JS, not rendering. If this fixes
+   it, the cause is one of the properties removed here. Remove this whole
+   block once the investigation is done. */
+.snackbot-simple,
+.snackbot-simple * {
+  animation: none !important;
+  transition: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  will-change: auto !important;
+}

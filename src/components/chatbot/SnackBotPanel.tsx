@@ -12,7 +12,7 @@ interface SnackBotPanelProps {
   messages: ChatMessage[];
   onSend: (text: string) => void;
   onQuickAction: (entryId: string) => void;
-  onClose: () => void;
+  onClose: (timeStamp?: number) => void;
 }
 
 export default function SnackBotPanel({ messages, onSend, onQuickAction, onClose }: SnackBotPanelProps) {
@@ -31,11 +31,11 @@ export default function SnackBotPanel({ messages, onSend, onQuickAction, onClose
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        onClose();
+        onClose(event.timeStamp);
       }
     }
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') onClose(event.timeStamp);
     }
     document.addEventListener('mousedown', handlePointerDown);
     document.addEventListener('keydown', handleKeyDown);
@@ -63,7 +63,12 @@ export default function SnackBotPanel({ messages, onSend, onQuickAction, onClose
             Frag mich z. B. nach Snacks, Zigaretten, DHL, Lotto oder Öffnungszeiten.
           </p>
         </div>
-        <button type="button" className="snackbot-panel-close" onClick={onClose} aria-label="Chat schließen">
+        <button
+          type="button"
+          className="snackbot-panel-close"
+          onClick={(event) => onClose(event.timeStamp)}
+          aria-label="Chat schließen"
+        >
           ✕
         </button>
       </div>
