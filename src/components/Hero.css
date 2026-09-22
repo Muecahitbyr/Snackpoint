@@ -105,6 +105,17 @@
   animation-play-state: paused;
 }
 
+/* TEMPORARY diagnostic — see App.jsx ?heroSimple=1. Narrower version of
+   ?pageSimple=1: freezes only Hero's own continuous animations, to isolate
+   whether Hero specifically (as opposed to something elsewhere on the
+   page) explains the chatbot open/close latency. Remove once the
+   investigation is done. */
+body.hero-simple .hero-blob,
+body.hero-simple .particle,
+body.hero-simple .hero-title span {
+  animation-play-state: paused !important;
+}
+
 .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }
 
 .hero-stats {

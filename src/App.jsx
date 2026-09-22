@@ -36,8 +36,19 @@ export default function App() {
   // animating (blurred blobs, the marquee, etc.), not because of anything
   // in the widget's own CSS.
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('pageSimple') === '1') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('pageSimple') === '1') {
       document.body.classList.add('page-simple');
+    }
+    // Narrower version of the same test: only the Hero section's blobs/
+    // particles/gradient are frozen. pageSimple=1 froze the whole page, but
+    // everything below Hero is already auto-paused off-screen (see
+    // useInView) whenever the report was reproduced scrolled to the top —
+    // so Hero is the only thing that was actually still animating. This
+    // isolates whether Hero alone explains the fix, or whether something
+    // else contributed too.
+    if (params.get('heroSimple') === '1') {
+      document.body.classList.add('hero-simple');
     }
   }, []);
 
