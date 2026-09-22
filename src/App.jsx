@@ -28,6 +28,19 @@ export default function App() {
     el?.scrollIntoView({ behavior: 'auto', block: 'start' });
   }, []);
 
+  // TEMPORARY diagnostic — see chatPerf.ts / the chatbot-latency
+  // investigation. ?pageSimple=1 freezes every decorative animation on the
+  // WHOLE page (not just the chat widget, unlike ?chatSimple=1), to test
+  // whether inserting the fixed-position chat panel is expensive because
+  // iOS Safari has to recomposite everything else that's concurrently
+  // animating (blurred blobs, the marquee, etc.), not because of anything
+  // in the widget's own CSS.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('pageSimple') === '1') {
+      document.body.classList.add('page-simple');
+    }
+  }, []);
+
   return (
     <>
       <ProgressBar />
