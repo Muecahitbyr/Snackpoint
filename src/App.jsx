@@ -50,6 +50,14 @@ export default function App() {
     if (params.get('heroSimple') === '1') {
       document.body.classList.add('hero-simple');
     }
+    // heroSimple=1 only paused the blobs' *animation* — the filter:blur(90px)
+    // itself stayed applied (just frozen in place). pageSimple=1 also
+    // stripped the filter entirely. If blur (not motion) is the actual
+    // cost, this — which removes only the blur and leaves the animation
+    // running — should fix it on its own.
+    if (params.get('heroNoBlur') === '1') {
+      document.body.classList.add('hero-no-blur');
+    }
   }, []);
 
   return (

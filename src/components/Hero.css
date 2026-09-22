@@ -116,6 +116,14 @@ body.hero-simple .hero-title span {
   animation-play-state: paused !important;
 }
 
+/* TEMPORARY diagnostic — see App.jsx ?heroNoBlur=1. Removes only the blur
+   filter, animation keeps running — isolates blur-the-effect from
+   motion-the-animation as the cost. Remove once the investigation is
+   done. */
+body.hero-no-blur .hero-blob {
+  filter: none !important;
+}
+
 .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }
 
 .hero-stats {
