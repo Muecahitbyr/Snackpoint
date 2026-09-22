@@ -1,7 +1,5 @@
-import type { MouseEvent } from 'react';
-
 interface SnackBotButtonProps {
-  onClick: (event: MouseEvent) => void;
+  onClick: () => void;
   hasUnread: boolean;
 }
 

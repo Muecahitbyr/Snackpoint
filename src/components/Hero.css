@@ -21,17 +21,35 @@
   transition: background 0.1s ease-out;
 }
 
+/* A radial-gradient fading to transparent reads as the same soft glow as
+   the previous filter:blur(90px) circles, without an actual blur pass —
+   confirmed on a real iPhone that filter:blur() specifically (not the
+   animation, not motion) was costing 700-900ms whenever the chat panel
+   was inserted/removed, because Safari has to recomposite blurred layers
+   on every such change. A gradient has no equivalent cost. */
 .hero-blob {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
   z-index: 0;
   will-change: transform;
   animation: drift 14s ease-in-out infinite;
 }
-.blob-1 { width: 520px; height: 520px; background: var(--accent); top: -180px; left: -140px; opacity: 0.32; }
-.blob-2 { width: 440px; height: 440px; background: var(--accent-3); bottom: -200px; right: -120px; opacity: 0.26; animation-delay: -4s; }
-.blob-3 { width: 340px; height: 340px; background: var(--accent-2); top: 35%; left: 60%; opacity: 0.34; animation-delay: -8s; }
+.blob-1 {
+  width: 520px; height: 520px; top: -180px; left: -140px;
+  background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+  opacity: 0.32;
+}
+.blob-2 {
+  width: 440px; height: 440px; bottom: -200px; right: -120px;
+  background: radial-gradient(circle, var(--accent-3) 0%, transparent 70%);
+  opacity: 0.26;
+  animation-delay: -4s;
+}
+.blob-3 {
+  width: 340px; height: 340px; top: 35%; left: 60%;
+  background: radial-gradient(circle, var(--accent-2) 0%, transparent 70%);
+  opacity: 0.34;
+  animation-delay: -8s;
+}
 
 @keyframes drift {
   0%, 100% { transform: translate(0, 0); }
@@ -103,25 +121,6 @@
 .hero.is-offscreen .particle,
 .hero.is-offscreen .hero-title span {
   animation-play-state: paused;
-}
-
-/* TEMPORARY diagnostic — see App.jsx ?heroSimple=1. Narrower version of
-   ?pageSimple=1: freezes only Hero's own continuous animations, to isolate
-   whether Hero specifically (as opposed to something elsewhere on the
-   page) explains the chatbot open/close latency. Remove once the
-   investigation is done. */
-body.hero-simple .hero-blob,
-body.hero-simple .particle,
-body.hero-simple .hero-title span {
-  animation-play-state: paused !important;
-}
-
-/* TEMPORARY diagnostic — see App.jsx ?heroNoBlur=1. Removes only the blur
-   filter, animation keeps running — isolates blur-the-effect from
-   motion-the-animation as the cost. Remove once the investigation is
-   done. */
-body.hero-no-blur .hero-blob {
-  filter: none !important;
 }
 
 .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }

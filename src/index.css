@@ -139,19 +139,3 @@ section { position: relative; scroll-margin-top: 90px; }
   transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s;
   will-change: transform;
 }
-
-/* TEMPORARY: ?pageSimple=1 diagnostic — see App.jsx. Freezes every
-   decorative animation/filter/shadow on the whole page (not just the chat
-   widget) to test whether the chat panel's own compositing is cheap in
-   isolation, but expensive because iOS has to recomposite everything else
-   that's concurrently animating on the page. Remove once the chatbot
-   latency investigation is done. */
-body.page-simple *,
-body.page-simple *::before,
-body.page-simple *::after {
-  animation: none !important;
-  transition: none !important;
-  filter: none !important;
-  backdrop-filter: none !important;
-  box-shadow: none !important;
-}
