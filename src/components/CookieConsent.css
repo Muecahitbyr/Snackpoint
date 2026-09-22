@@ -9,6 +9,12 @@
   display: flex;
   justify-content: center;
   animation: cookie-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  /* This wrapper spans the full width to center its card, but has no
+     visible background of its own — without this it silently intercepts
+     clicks on anything underneath/beside the card (e.g. the chat button,
+     which sits in the same bottom-right corner), even though there's
+     nothing to see there. Only the actual card should be clickable. */
+  pointer-events: none;
 }
 
 @keyframes cookie-in {
@@ -28,6 +34,7 @@
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
+  pointer-events: auto;
 }
 
 .cookie-banner-text {
