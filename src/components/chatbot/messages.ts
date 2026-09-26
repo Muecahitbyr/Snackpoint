@@ -240,6 +240,8 @@ const de = {
   },
   whichProduct: 'Meinst du ein bestimmtes Produkt? Frag z. B. „Habt ihr Red Bull?“ 😎',
   noProducts: 'Dazu hab ich gerade nichts hinterlegt 😅 Frag am besten kurz unser Team vor Ort.',
+  /** Appended to every answer that mentions cigarettes or tobacco. Fixed wording, no tone tiers. */
+  ageNote: 'Wichtig: Zigaretten und Tabakwaren gibt es nur für Personen ab 18 Jahren.',
 
   address: [
     (a: string) => `Wir sind hier: ${a} 📍 Komm rum 😎`,

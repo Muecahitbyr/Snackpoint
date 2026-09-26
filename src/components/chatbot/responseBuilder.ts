@@ -186,8 +186,11 @@ function multiReply(results: SegmentResult[], rng: Rng): { text: string; ids: st
 export function buildProductAnswer(intent: Intent, entities: Entities, ctx: ChatContext, rng: Rng): ProductAnswer {
   const query = entities.query as ProductQuery | undefined;
   const results = entities.results ?? [];
+  // Anything that mentions cigarettes/tobacco carries the 18+ note.
+  const withAgeNote = (text: string, ids: string[]) =>
+    getProductsByIds(ids).some((product) => product.category === 'zigaretten') ? `${text}\n${M.ageNote}` : text;
   const finish = (text: string, ids: string[], extra: Partial<ProductAnswer> = {}): ProductAnswer => ({
-    text,
+    text: withAgeNote(text, ids),
     cta: PRODUCTS_CTA,
     productIds: ids,
     quickReplies: quickRepliesFor(intent, { productIds: ids, offer: Boolean(extra.offer) }),

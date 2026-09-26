@@ -447,6 +447,27 @@ describe('tone: facts stay correct in every variant', () => {
   });
 });
 
+describe('age restriction', () => {
+  it('every answer about cigarettes or tobacco says 18+', () => {
+    for (const question of ['Habt ihr Zigaretten?', 'Welche Zigaretten habt ihr?', 'Habt ihr Marlboro?', 'Habt ihr Marlboro Gold?', 'habt ihr kippen', 'Was kostet Marlboro Gold?', 'Habt ihr Tabak?', 'marlborro gold da?']) {
+      forEveryVariant(question, (reply) => assert.ok(reply.includes('ab 18 Jahren'), `${question}: ${reply}`));
+    }
+  });
+  it('follow-ups about cigarettes keep the note', () => {
+    for (const roll of ROLLS) {
+      let ctx: ChatContext = {};
+      ctx = respond('Habt ihr Marlboro?', ctx, SAT_NOON, () => roll).context;
+      assert.ok(respond('Welche?', ctx, SAT_NOON, () => roll).reply.text.includes('ab 18 Jahren'));
+      assert.ok(respond('Was kosten die?', ctx, SAT_NOON, () => roll).reply.text.includes('ab 18 Jahren'));
+    }
+  });
+  it('other products do not carry the note', () => {
+    for (const question of ['Habt ihr Takis?', 'Habt ihr Red Bull?', 'Welche Getränke habt ihr?', 'Was habt ihr im Sortiment?']) {
+      forEveryVariant(question, (reply) => assert.ok(!reply.includes('ab 18 Jahren') || question.includes('Sortiment'), `${question}: ${reply}`));
+    }
+  });
+});
+
 describe('tone: small talk', () => {
   it('greets, thanks and says goodbye in every variant', () => {
     for (const text of ['Hallo', 'Servus', 'Danke', 'Tschüss']) {
