@@ -8,22 +8,26 @@
 // intents.ts + one entry in HANDLERS.
 import { nextContext, type AnswerMemory } from './conversationContext';
 import { detectIntent } from './intents';
-import { answerHoursForDay, answerOpenNow, answerReopening, answerWeek } from './openingHours';
+import { getDayFact, getOpenStatus, getWeekFact } from './openingHours';
 import {
   addressReply,
   buildProductAnswer,
   contactReply,
+  dayReply,
   deliveryReply,
   directionsReply,
   goodbyeReply,
   greetingReply,
   helpReply,
+  openNowReply,
   parkingReply,
   paymentReply,
   phoneReply,
   quickRepliesFor,
+  reopeningReply,
   thanksReply,
   unknownReply,
+  weekReply,
   type Rng,
 } from './responseBuilder';
 import type { BotReply, ChatContext, DetectedIntent, Intent } from './types';
@@ -41,12 +45,15 @@ const withQuickReplies = (intent: Intent, reply: BotReply): BotReply => ({ ...re
 const hours =
   (intent: Intent): Handler =>
   ({ entities }, _ctx, now, rng) => {
-    if (intent === 'open_now') return { reply: withQuickReplies(intent, answerOpenNow(now, rng)) };
-    if (entities.weekly || !entities.day) return { reply: withQuickReplies(intent, answerWeek()) };
-    if (entities.remaining) return { reply: withQuickReplies(intent, answerOpenNow(now, rng, true)) };
-    if (entities.again) return { reply: withQuickReplies(intent, answerReopening(now)) };
-    const day = entities.day;
-    return { reply: withQuickReplies(intent, answerHoursForDay(day, entities.focus ?? 'both', entities.question ?? 'plain', now)) };
+    // Facts first (openingHours.ts), wording second (responseBuilder.ts).
+    const status = getOpenStatus(now);
+    let reply: BotReply;
+    if (intent === 'open_now') reply = openNowReply(status, false, rng);
+    else if (entities.weekly || !entities.day) reply = weekReply(getWeekFact(), rng);
+    else if (entities.remaining) reply = openNowReply(status, true, rng);
+    else if (entities.again) reply = reopeningReply(status);
+    else reply = dayReply(getDayFact(entities.day, now), entities.focus ?? 'both', entities.question ?? 'plain', rng);
+    return { reply: withQuickReplies(intent, reply) };
   };
 
 const product =
@@ -57,8 +64,8 @@ const product =
   };
 
 const staticReply =
-  (build: () => BotReply): Handler =>
-  () => ({ reply: build() });
+  (build: (rng: Rng) => BotReply): Handler =>
+  (_d, _c, _n, rng) => ({ reply: build(rng) });
 
 const topic =
   (intent: Intent): Handler =>

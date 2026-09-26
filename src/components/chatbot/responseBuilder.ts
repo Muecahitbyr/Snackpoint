@@ -1,80 +1,26 @@
-// Builds the German reply text for every intent. Facts always come from the
-// data (products, hours, address …); only the wording varies between variants.
+// Turns FACTS into replies: what the search found, what the opening hours are,
+// what the data says. This file decides which facts appear in a reply and how
+// they're arranged; the actual wording (and the tone) comes from messages.ts.
 //
-// Language: all texts live in `de` below. To add English/Turkish later, add a
-// sibling object with the same shape and register it in MESSAGES — nothing else
-// in the engine has to change. (The sentence templates in openingHours.ts are
-// still German-only.)
+//   intent + data  →  facts  →  responseBuilder  →  wording from messages.ts
 import { ADDRESS, CONTACT, DELIVERY_INFO, MAPS_URL, PARKING_INFO, PAYMENT_METHODS } from '../../data/constants';
 import { CATEGORIES, PRODUCTS, getProductId, getProductName, type Product } from '../../data/products';
-import { CONFIDENT, categoryProducts, getProductsByIds, hasTag, isAvailable, rootCategory, type SegmentResult } from './productSearch';
 import type { ProductQuery } from './entities';
+import { M, pick, say, type Flavor, type Rng, type Tones } from './messages';
+import type { DayFact, HoursFocus, HoursQuestion, NextOpening, OpenStatus, WeekGroup } from './openingHours';
+import { CONFIDENT, categoryProducts, getProductsByIds, hasTag, isAvailable, rootCategory, type SegmentResult } from './productSearch';
 import type { BotReply, ChatContext, Entities, Intent, QuickReply } from './types';
 
-export type Rng = () => number;
-export type Lang = 'de';
-export const LANG: Lang = 'de';
-
-/** Picks one wording at random — the facts inside are identical in every variant. */
-export function pick<T>(variants: readonly T[], rng: Rng): T {
-  return variants[Math.floor(rng() * variants.length) % variants.length];
-}
-
-const de = {
-  greeting: [
-    'Hallo 😊 Wie kann ich dir helfen? Frag mich z. B. nach Produkten, Öffnungszeiten oder DHL.',
-    'Hi 😊 Schön, dass du da bist! Wonach suchst du?',
-    'Servus 😊 Was darf es sein? Ich kenne unser Sortiment, die Öffnungszeiten und den Weg zu uns.',
-  ],
-  greetingMorning: ['Guten Morgen ☀️ Wie kann ich dir helfen?', 'Guten Morgen 😊 Wonach suchst du?'],
-  greetingEvening: ['Guten Abend 🌙 Wie kann ich dir helfen?', 'Guten Abend 😊 Wonach suchst du?'],
-  thanks: [
-    'Sehr gerne! 😊 Sag Bescheid, wenn du noch etwas wissen möchtest.',
-    'Gern geschehen! 😊',
-    'Kein Problem 😊 Ich bin da, falls noch was ist.',
-  ],
-  goodbye: ['Bis bald! 😊 Schau gern wieder vorbei.', 'Tschüss und bis später! 👋', 'Mach’s gut – wir sehen uns im Laden! 😊'],
-  unknown: [
-    'Das weiß ich leider nicht sicher. Frag am besten kurz unser Team vor Ort. 😊\nBei Produkten, Öffnungszeiten, Standort, DHL und Lotto helfe ich dir gern weiter.',
-    'Dazu habe ich aktuell keine Information. Frag am besten kurz unser Team vor Ort. 😊\nBei Produkten, Öffnungszeiten, Standort, DHL und Lotto helfe ich dir gern weiter.',
-  ],
-  help:
-    'Ich helfe dir gern bei:\n• Produkten – z. B. „Habt ihr blaue Takis?“ oder „Was kostet Red Bull?“\n• Öffnungszeiten – z. B. „Habt ihr gerade offen?“\n• Adresse & Route\n• DHL Paketshop & Lotto\n• Kontakt & Zahlungsarten',
-  yesOne: [
-    (name: string) => `Ja 😊 ${name} haben wir da.`,
-    (name: string) => `Ja, ${name} haben wir aktuell im Sortiment.`,
-    (name: string) => `Klar 😊 ${name} findest du bei uns.`,
-    (name: string) => `Ja, ${name} haben wir.`,
-  ],
-  yesMany: ['Ja 😊 Wir haben aktuell:', 'Klar 😊 Das findest du bei uns:', 'Ja, da haben wir:'],
-  yesThose: ['Ja 😊 Das haben wir:', 'Klar 😊 Das findest du bei uns:'],
-  yesTag: ['Ja 😊 Da hätte ich was für dich:', 'Klar 😊 Das könnte dir gefallen:', 'Da passt bei uns:'],
-  notFound: [
-    (what: string) => `Das Produkt „${what}“ habe ich aktuell nicht in unserem Sortiment gefunden.`,
-    (what: string) => `„${what}“ finde ich gerade nicht in unserem Sortiment.`,
-  ],
-  askTeam: 'Frag am besten kurz unser Team vor Ort, unser Angebot wechselt. 😊',
-  priceMissing: 'Den aktuellen Preis habe ich leider nicht hinterlegt. Frag am besten kurz vor Ort nach. 😊',
-  pricesPartlyMissing: 'Bei den anderen habe ich keinen Preis hinterlegt – frag dazu am besten kurz vor Ort nach.',
-  noRecommendation: 'Dazu habe ich gerade keine Empfehlung hinterlegt. Frag am besten kurz unser Team vor Ort, die helfen dir gern weiter. 😊',
-  whichProduct: 'Zu welchem Produkt meinst du das? Frag z. B. „Habt ihr Red Bull?“ 😊',
-  noPhone: (address: string) => `Eine Telefonnummer habe ich leider nicht hinterlegt. Komm gern direkt vorbei: ${address}. 😊`,
-  noContact: (address: string) => `Eine Telefonnummer oder E-Mail-Adresse habe ich leider nicht hinterlegt. Komm gern direkt vorbei: ${address}. 😊`,
-  noPayment: 'Welche Zahlungsarten wir genau anbieten, weiß ich leider nicht sicher. Frag am besten kurz unser Team vor Ort. 😊',
-  noDelivery: 'Zu einem Lieferservice habe ich keine Information. Frag am besten kurz unser Team vor Ort. 😊',
-  noParking: 'Zu Parkmöglichkeiten habe ich keine Information. Frag am besten kurz unser Team vor Ort. 😊',
-};
-
-type Messages = typeof de;
-const MESSAGES: Record<Lang, Messages> = { de };
-const M = MESSAGES[LANG];
-
-// ---- Small helpers ------------------------------------------------------
+export { pick, say, LANG } from './messages';
+export type { Rng } from './messages';
 
 const MAX_LIST = 8;
 const MAX_FOLLOWUP_LIST = 12;
 const PRODUCTS_CTA = { label: 'Alle Produkte ansehen', href: '/produkte.html' };
 const ROUTE_CTA = { label: 'Route öffnen', href: MAPS_URL, external: true };
+const HOURS_CTA = { label: 'Öffnungszeiten ansehen', href: '#location' };
+
+// ---- Small helpers ------------------------------------------------------
 
 function formatPrice(price: number): string {
   return `${price.toFixed(2).replace('.', ',')} €`;
@@ -104,6 +50,20 @@ const sharedBrand = (products: Product[]): string | null => {
   return brands.size === 1 && only ? only : null;
 };
 
+/** Decides the tone: age-restricted products get matter-of-fact wording only. */
+function flavorOfProducts(products: Product[]): Flavor {
+  if (products.some((product) => product.category === 'zigaretten')) return 'restricted';
+  if (products.length && products.every((product) => product.category === 'energy')) return 'energy';
+  if (products.length && products.every((product) => rootCategory(product.category)?.id === 'snacks')) return 'snack';
+  return 'generic';
+}
+
+function flavorOfCategory(categoryId: string): Flavor {
+  if (categoryId === 'zigaretten') return 'restricted';
+  if (categoryId === 'energy') return 'energy';
+  return rootCategory(categoryId)?.id === 'snacks' ? 'snack' : 'generic';
+}
+
 // ---- Products ---------------------------------------------------------------
 
 export interface ProductAnswer extends BotReply {
@@ -112,53 +72,64 @@ export interface ProductAnswer extends BotReply {
   offer?: ChatContext['offer'];
 }
 
-function priceReply(products: Product[]): string {
+function priceReply(products: Product[], rng: Rng): string {
   const available = products.filter(isAvailable);
   const priced = available.filter((product) => product.price != null);
-  if (!priced.length) return M.priceMissing;
-  if (priced.length === 1 && available.length === 1) return `${getProductName(priced[0])} kostet ${formatPrice(priced[0].price as number)}. 😊`;
+  if (!priced.length) return pick(M.price.missing, rng);
+
+  if (priced.length === 1 && available.length === 1) {
+    const [product] = priced;
+    const name = getProductName(product);
+    const price = formatPrice(product.price as number);
+    return flavorOfProducts([product]) === 'restricted' ? pick(M.price.oneRestricted, rng)(name, price) : say(M.price.one, rng)(name, price);
+  }
 
   const lines = priced.slice(0, MAX_FOLLOWUP_LIST).map((product) => `• ${getProductName(product)} – ${formatPrice(product.price as number)}`);
-  const missing = priced.length < available.length ? `\n${M.pricesPartlyMissing}` : '';
-  return `Aktuell kosten:\n${lines.join('\n')}${missing}`;
+  const missing = priced.length < available.length ? `\n${M.price.partlyMissing}` : '';
+  return `${pick(M.price.listHeader, rng)}\n${lines.join('\n')}${missing}`;
 }
 
 function categoryReply(categoryId: string, rng: Rng): { text: string; offer?: ChatContext['offer'] } {
   const category = CATEGORIES.find((entry) => entry.id === categoryId);
   const all = categoryProducts(categoryId).filter(isAvailable);
-  if (!category || !all.length) return { text: 'Dazu habe ich gerade nichts hinterlegt. Frag am besten kurz unser Team vor Ort. 😊' };
+  if (!category || !all.length) return { text: M.noProducts };
 
-  if (all.length <= MAX_LIST) return { text: `${pick(M.yesMany, rng)}\n${bulletList(all, MAX_LIST)}` };
+  if (all.length <= MAX_LIST) return { text: `${say(M.available.intro[flavorOfCategory(categoryId)], rng)}\n${bulletList(all, MAX_LIST)}` };
 
   const children = CATEGORIES.filter((child) => child.parent === categoryId);
   if (children.length >= 2) {
-    return { text: `Ja 😊 Da haben wir mehrere Bereiche:\n${children.map((child) => `• ${child.name}`).join('\n')}\nFrag gern nach einem davon!` };
+    return { text: `${say(M.areas, rng)}\n${children.map((child) => `• ${child.name}`).join('\n')}\n${M.areasCloser}` };
   }
   const names = groupNames(all).slice(0, 4);
-  return {
-    text: `Wir haben unter anderem ${names.join(', ')} und weitere ${category.name}. Soll ich dir alle Sorten zeigen?`,
-    offer: 'list',
-  };
+  return { text: say(M.categorySummary, rng)(names.join(', '), category.name), offer: 'list' };
 }
 
 function availabilityReply(products: Product[], listRequest: boolean, rng: Rng): { text: string; offer?: ChatContext['offer'] } {
-  if (products.length === 1) return { text: pick(M.yesOne, rng)(getProductName(products[0])) };
+  const flavor = flavorOfProducts(products);
+  if (products.length === 1) return { text: say(M.available.one[flavor], rng)(getProductName(products[0])) };
 
-  const brand = sharedBrand(products);
   if (products.length > MAX_LIST && !listRequest) {
     const names = products.slice(0, 3).map(getProductName);
-    return { text: `Ja 😊 Wir haben ${products.length} Sorten, zum Beispiel ${joinNames(names)}. Soll ich dir alle zeigen?`, offer: 'list' };
+    return { text: say(M.productSummary, rng)(products.length, joinNames(names)), offer: 'list' };
   }
+
   const list = bulletList(products, listRequest ? MAX_FOLLOWUP_LIST : MAX_LIST);
-  if (brand && !listRequest) {
-    return { text: `Ja 😊 Wir haben mehrere ${brand.replace(/ /g, '-')}-Sorten:\n${list}${products.length >= 3 ? '\nMeinst du eine bestimmte?' : ''}` };
+  const brand = sharedBrand(products);
+  if (brand && !listRequest && flavor !== 'restricted') {
+    const intro = say(M.available.brandMany, rng)(brand);
+    const closer = products.some((product) => product.price != null)
+      ? pick(M.available.closerWithPrices, rng)
+      : products.length >= 3
+        ? M.available.closerNoPrices
+        : '';
+    return { text: `${intro}\n${list}${closer ? `\n${closer}` : ''}` };
   }
-  return { text: `${pick(M.yesMany, rng)}\n${list}` };
+  return { text: `${say(M.available.intro[flavor], rng)}\n${list}` };
 }
 
 function notFoundReply(result: SegmentResult, rng: Rng): string {
-  const suggestion = result.suggestions.length ? ` Meinst du ${joinNames(result.suggestions.map(getProductName), 'oder')}?` : '';
-  return `${pick(M.notFound, rng)(result.display)}${suggestion} ${M.askTeam}`;
+  const suggestion = result.suggestions.length ? ` ${M.didYouMean(joinNames(result.suggestions.map(getProductName), 'oder'))}` : '';
+  return `${pick(M.notFound, rng)(result.display)}${suggestion} ${pick(M.askTeam, rng)}`;
 }
 
 function recommendationReply(results: SegmentResult[] | undefined, rng: Rng): { text: string; ids: string[] } {
@@ -167,13 +138,14 @@ function recommendationReply(results: SegmentResult[] | undefined, rng: Rng): { 
 
   if (tagged) {
     const picks = hits[0].products.filter(isAvailable).slice(0, 5);
-    if (picks.length) return { text: `${pick(M.yesTag, rng)}\n${bulletList(picks, 5)}`, ids: picks.map(getProductId) };
+    if (picks.length) return { text: `${say(M.recommendation.byTag, rng)}\n${bulletList(picks, 5)}`, ids: picks.map(getProductId) };
   }
 
+  // Only ever recommends products the data itself tags as "beliebt".
   const base = hits.length ? hits.flatMap((hit) => (hit.category ? categoryProducts(hit.category.id) : hit.products)) : PRODUCTS;
   const popular = base.filter((product) => isAvailable(product) && hasTag(product, 'beliebt')).slice(0, 4);
-  if (!popular.length) return { text: M.noRecommendation, ids: [] };
-  return { text: `Bei uns sind aktuell besonders beliebt:\n${bulletList(popular, 4)}`, ids: popular.map(getProductId) };
+  if (!popular.length) return { text: M.recommendation.none, ids: [] };
+  return { text: `${say(M.recommendation.popular, rng)}\n${bulletList(popular, 4)}`, ids: popular.map(getProductId) };
 }
 
 /** Several things asked at once ("Cola und Chips"): one line per hit. */
@@ -206,8 +178,8 @@ function multiReply(results: SegmentResult[], rng: Rng): { text: string; ids: st
   }
 
   const parts: string[] = [];
-  if (lines.length) parts.push(`${pick(M.yesThose, rng)}\n${lines.join('\n')}`);
-  if (missing.length) parts.push(`${missing.join(' und ')} habe ich aktuell nicht in unserem Sortiment gefunden. ${M.askTeam}`);
+  if (lines.length) parts.push(`${say(M.available.those, rng)}\n${lines.join('\n')}`);
+  if (missing.length) parts.push(`${M.multiMissing(missing.join(' und '))} ${pick(M.askTeam, rng)}`);
   return { text: parts.join('\n'), ids };
 }
 
@@ -227,8 +199,8 @@ export function buildProductAnswer(intent: Intent, entities: Entities, ctx: Chat
     const products = getProductsByIds(ctx.lastProductIds ?? []);
     if (!products.length) return { text: M.whichProduct, productIds: [] };
     const ids = products.map(getProductId);
-    if (intent === 'product_price') return finish(priceReply(products), ids);
-    return finish(`Aktuell haben wir:\n${bulletList(products.filter(isAvailable), MAX_FOLLOWUP_LIST)}`, ids);
+    if (intent === 'product_price') return finish(priceReply(products, rng), ids);
+    return finish(`${pick(M.followUpList, rng)}\n${bulletList(products.filter(isAvailable), MAX_FOLLOWUP_LIST)}`, ids);
   }
 
   if (intent === 'recommendations') {
@@ -242,23 +214,23 @@ export function buildProductAnswer(intent: Intent, entities: Entities, ctx: Chat
   }
 
   const [result] = results;
-  if (!result) return { text: pick(M.unknown, rng), productIds: [] };
+  if (!result || !query) return { text: say(M.unknown, rng), productIds: [] };
 
   if (result.category) {
     const categoryId = result.category.id;
     if (intent === 'product_price') {
       const products = categoryProducts(categoryId);
-      return finish(priceReply(products), products.filter(isAvailable).map(getProductId), { categoryId });
+      return finish(priceReply(products, rng), products.filter(isAvailable).map(getProductId), { categoryId });
     }
     const { text, offer } = categoryReply(categoryId, rng);
     return finish(text, categoryProducts(categoryId).filter(isAvailable).map(getProductId), { categoryId, offer });
   }
 
-  if (!result.products.length) return finish(notFoundReply(result, rng), [], { cta: PRODUCTS_CTA });
+  if (!result.products.length) return finish(notFoundReply(result, rng), []);
 
   const available = result.products.filter(isAvailable);
   const soldOut = result.products.filter((product) => !isAvailable(product));
-  const soldOutText = soldOut.map((product) => `${getProductName(product)} ist aktuell leider nicht da.`).join(' ');
+  const soldOutText = soldOut.map((product) => pick(M.soldOut, rng)(getProductName(product))).join(' ');
   const ids = available.map(getProductId);
   if (!available.length) return finish(soldOutText, ids);
 
@@ -266,15 +238,94 @@ export function buildProductAnswer(intent: Intent, entities: Entities, ctx: Chat
   if (result.confidence < CONFIDENT) {
     const text =
       available.length === 1
-        ? `Meinst du „${getProductName(available[0])}“? Das haben wir aktuell da. 😊`
-        : `Meinst du eine dieser Sorten?\n${bulletList(available, MAX_LIST)}`;
+        ? pick(M.cautious.one, rng)(getProductName(available[0]))
+        : `${pick(M.cautious.many, rng)}\n${bulletList(available, MAX_LIST)}`;
     return finish(text, ids);
   }
 
-  if (intent === 'product_price') return finish(priceReply(available), ids);
+  if (intent === 'product_price') return finish(priceReply(available, rng), ids);
 
   const { text, offer } = availabilityReply(available, intent === 'product_variants', rng);
   return finish(soldOutText ? `${text}\n${soldOutText}` : text, ids, { offer });
+}
+
+// ---- Opening hours (facts from openingHours.ts) ------------------------------
+
+const nextSentence = (next: NextOpening | null): string => (next ? M.hours.next(next.when, next.time) : '');
+
+/** "etwa 2 Stunden und 15 Minuten" */
+function formatDuration(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const parts = [
+    hours ? `${hours} ${hours === 1 ? 'Stunde' : 'Stunden'}` : '',
+    minutes ? `${minutes} ${minutes === 1 ? 'Minute' : 'Minuten'}` : '',
+  ].filter(Boolean);
+  return parts.length ? `etwa ${parts.join(' und ')}` : 'weniger als eine Minute';
+}
+
+/** "Habt ihr gerade offen?" — and with `remaining`, "Wie lange habt ihr noch offen?". */
+export function openNowReply(status: OpenStatus, remaining: boolean, rng: Rng): BotReply {
+  if (!status.open) return { text: say(M.hours.closedNow, rng)(nextSentence(status.next)), cta: HOURS_CTA };
+  const until = status.closesAt as string;
+  const text = remaining
+    ? pick(M.hours.remaining, rng)(until, formatDuration(status.minutesLeft ?? 0))
+    : say(M.hours.openNow, rng)(until);
+  return { text, cta: HOURS_CTA };
+}
+
+/** "Wann macht ihr wieder auf?" */
+export function reopeningReply(status: OpenStatus): BotReply {
+  const text = status.open
+    ? M.hours.reopeningOpen(status.closesAt as string, nextSentence(status.next))
+    : M.hours.reopeningClosed(nextSentence(status.next));
+  return { text: text.trim(), cta: HOURS_CTA };
+}
+
+/** Opening hours on one day — when we open, when we close, or both. */
+export function dayReply(fact: DayFact, focus: HoursFocus, question: HoursQuestion, rng: Rng): BotReply {
+  const { day } = fact;
+  const label = day.label; // "Heute", "Morgen", "Samstag" …
+  const inSentence = ['Heute', 'Morgen', 'Übermorgen'].includes(label) ? label.toLowerCase() : label;
+
+  if (fact.closed) {
+    const base = say(M.hours.closedDay, rng)(label);
+    const lead = question === 'yesNo' ? pick(M.hours.no, rng) : question === 'closed' ? 'Ja, ' : '';
+    const next = day.offset === 0 ? ` ${nextSentence(fact.status.next)}` : '';
+    return { text: `${lead}${base}${next}`.trim(), cta: HOURS_CTA };
+  }
+
+  const { open, close } = fact as { open: string; close: string };
+  if (fact.over) return { text: M.hours.over(close, nextSentence(fact.status.next)), cta: HOURS_CTA };
+
+  let text: string;
+  if (focus === 'close') {
+    const tones: Tones<string> = {
+      plain: M.hours.close.plain.map((variant) => variant(label, inSentence, close)),
+      funny: day.offset === 0 ? M.hours.closeTodayFunny.map((variant) => variant(close)) : undefined,
+    };
+    text = say(tones, rng);
+  } else if (focus === 'open') {
+    text = fact.alreadyOpen ? M.hours.alreadyOpen(open) : pick(M.hours.open.plain, rng)(label, open);
+  } else {
+    text = pick(M.hours.both.plain, rng)(label, open, close);
+  }
+
+  const lead = question === 'yesNo' ? pick(M.hours.yes, rng) : question === 'closed' ? pick(M.hours.no, rng) : '';
+  return { text: `${lead}${text}`, cta: HOURS_CTA };
+}
+
+/** The whole week, identical consecutive days merged. */
+export function weekReply(groups: WeekGroup[], rng: Rng): BotReply {
+  if (groups.length === 1) {
+    const [group] = groups;
+    return { text: group.closed ? M.hours.weekClosed : pick(M.hours.weekSingle, rng)(group.open, group.close), cta: HOURS_CTA };
+  }
+  const lines = groups.map((group) => {
+    const days = group.count === 1 ? group.first : group.count === 2 ? `${group.first} & ${group.last}` : `${group.first} – ${group.last}`;
+    return `• ${days}: ${group.closed ? 'geschlossen' : `${group.open} – ${group.close} Uhr`}`;
+  });
+  return { text: `${pick(M.hours.weekHeader, rng)}\n${lines.join('\n')}`, cta: HOURS_CTA };
 }
 
 // ---- Quick replies ----------------------------------------------------------
@@ -333,35 +384,39 @@ export function quickRepliesFor(intent: Intent, info: { productIds?: string[]; o
 // ---- Everything that isn't a product ------------------------------------------
 
 export function greetingReply(kind: Entities['greeting'], rng: Rng): BotReply {
-  const variants = kind === 'morgen' ? M.greetingMorning : kind === 'abend' ? M.greetingEvening : M.greeting;
-  return { text: pick(variants, rng) };
+  const tones = kind === 'morgen' ? M.greetingMorning : kind === 'abend' ? M.greetingEvening : M.greeting;
+  return { text: say(tones, rng) };
 }
 
-export const thanksReply = (rng: Rng): BotReply => ({ text: pick(M.thanks, rng) });
-export const goodbyeReply = (rng: Rng): BotReply => ({ text: pick(M.goodbye, rng) });
-export const unknownReply = (rng: Rng): BotReply => ({ text: pick(M.unknown, rng) });
+export const thanksReply = (rng: Rng): BotReply => ({ text: say(M.thanks, rng) });
+export const goodbyeReply = (rng: Rng): BotReply => ({ text: say(M.goodbye, rng) });
+export const unknownReply = (rng: Rng): BotReply => ({ text: say(M.unknown, rng) });
 export const helpReply = (): BotReply => ({ text: M.help });
 
-export const addressReply = (): BotReply => ({ text: `Du findest uns in der ${ADDRESS}. 😊`, cta: ROUTE_CTA, quickReplies: quickRepliesFor('address') });
-export const directionsReply = (): BotReply => ({
-  text: `Wir sind in der ${ADDRESS}. Die Route findest du hier:`,
+export const addressReply = (rng: Rng): BotReply => ({
+  text: pick(M.address, rng)(ADDRESS),
+  cta: ROUTE_CTA,
+  quickReplies: quickRepliesFor('address'),
+});
+export const directionsReply = (rng: Rng): BotReply => ({
+  text: pick(M.directions, rng)(ADDRESS),
   cta: ROUTE_CTA,
   quickReplies: quickRepliesFor('directions'),
 });
 
 export function phoneReply(): BotReply {
-  const text = CONTACT.phone ? `Du erreichst uns telefonisch unter ${CONTACT.phone}. 😊` : M.noPhone(ADDRESS);
+  const text = CONTACT.phone ? M.phone(CONTACT.phone) : M.noPhone(ADDRESS);
   return { text, cta: CONTACT.phone ? undefined : ROUTE_CTA, quickReplies: quickRepliesFor('phone') };
 }
 
 export function contactReply(): BotReply {
   const details = [CONTACT.phone && `Telefon: ${CONTACT.phone}`, CONTACT.email && `E-Mail: ${CONTACT.email}`].filter(Boolean);
-  const text = details.length ? `So erreichst du uns:\n${details.join('\n')}` : M.noContact(ADDRESS);
+  const text = details.length ? M.contact(details.join('\n')) : M.noContact(ADDRESS);
   return { text, cta: details.length ? undefined : ROUTE_CTA, quickReplies: quickRepliesFor('contact') };
 }
 
-export function paymentReply(): BotReply {
-  const text = PAYMENT_METHODS.length ? `Bei uns kannst du bezahlen mit: ${PAYMENT_METHODS.join(', ')}. 😊` : M.noPayment;
+export function paymentReply(rng: Rng): BotReply {
+  const text = PAYMENT_METHODS.length ? pick(M.payment, rng)(PAYMENT_METHODS.join(', ')) : M.noPayment;
   return { text, quickReplies: quickRepliesFor('payment_methods') };
 }
 
