@@ -2,6 +2,8 @@
 // external AI API. Products live in ./products, opening hours in ./hours and
 // the address in ./constants; the chat logic (src/components/chatbot) reads
 // them from there, so each fact is maintained in exactly one place.
+import { ADDRESS } from './constants';
+import { services } from './services';
 
 export interface ChatCTA {
   label: string;
@@ -11,6 +13,8 @@ export interface ChatCTA {
 
 export interface KnowledgeEntry {
   id: string;
+  /** 'service' (default): part of the shop's offer. 'faq': a general question. */
+  kind?: 'service' | 'faq';
   /** Lowercase keyword/phrase fragments (umlauts written out, e.g. "oeffnungszeit")
    * — matched against user input normalized the same way (see text.ts). */
   keywords: string[];
@@ -25,7 +29,7 @@ export interface QuickAction {
   query: string;
 }
 
-/** Topics without product data behind them: the range in general, DHL, Lotto. */
+/** Topics without product data behind them: the range in general, DHL, Lotto, FAQ. */
 export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   {
     id: 'sortiment',
@@ -50,6 +54,24 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
     getResponse: () => 'Bei SnackPoint kannst du auch Lotto spielen — Tippscheine abgeben und Gewinne prüfen.',
     cta: { label: 'Leistungen ansehen', href: '#services' },
   },
+  {
+    id: 'ihle',
+    keywords: ['ihle'],
+    getResponse: () => services.find((service: { target: string }) => service.target === 'ihle')?.text ?? 'Ihle gibt es bei uns im Kiosk.',
+    cta: { label: 'Leistungen ansehen', href: '#services' },
+  },
+  {
+    id: 'ueber-uns',
+    kind: 'faq',
+    keywords: ['wer seid ihr', 'wer bist du', 'ueber euch', 'ueber uns', 'was ist snackpoint', 'was ist das hier'],
+    getResponse: () => `Wir sind SnackPoint in der ${ADDRESS} — Kiosk, DHL Paketshop und Lotto unter einem Dach. 😊`,
+  },
+  {
+    id: 'alter',
+    kind: 'faq',
+    keywords: ['ab 18', 'ab wie viel', 'ab wieviel', 'wie alt', 'mindestalter', 'ausweis', 'jugendschutz', 'alterskontrolle'],
+    getResponse: () => 'Tabakwaren und Lotto gibt es in Deutschland nur an Personen ab 18 Jahren — bring dafür bitte einen Ausweis mit. 😊',
+  },
 ];
 
 export const QUICK_ACTIONS: QuickAction[] = [
@@ -63,6 +85,3 @@ export const QUICK_ACTIONS: QuickAction[] = [
 
 export const GREETING_MESSAGE =
   'Hallo! Ich bin der SnackPoint Assistent. Frag mich gern, ob wir ein Produkt führen (z. B. „Habt ihr blaue Takis?“), wann wir geöffnet haben oder wo du uns findest — tippe einfach los.';
-
-export const FALLBACK_MESSAGE =
-  'Das weiß ich leider gerade nicht sicher. Frag am besten kurz unser Team vor Ort. 😊\nBei Produkten, Öffnungszeiten, Standort, DHL und Lotto helfe ich dir gern weiter.';

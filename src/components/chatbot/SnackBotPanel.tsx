@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { QUICK_ACTIONS, type ChatCTA } from '../../data/chatbotKnowledge';
+import type { QuickReply } from './types';
 
 export interface ChatMessage {
   id: string;
   sender: 'bot' | 'user';
   text: string;
   cta?: ChatCTA;
+  /** Suggested follow-up questions; shown in the chip row while this is the latest bot message. */
+  quickReplies?: QuickReply[];
 }
 
 interface SnackBotPanelProps {
@@ -19,6 +22,13 @@ export default function SnackBotPanel({ messages, onSend, onQuickAction, onClose
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Chips: follow-up suggestions from the latest bot answer, if it has any
+  // (plus a way back to the topic overview); otherwise the standard quick actions.
+  const lastBot = [...messages].reverse().find((message) => message.sender === 'bot');
+  const chips: QuickReply[] = lastBot?.quickReplies?.length
+    ? [...lastBot.quickReplies, { label: 'Alle Themen', query: 'Was kannst du?' }]
+    : QUICK_ACTIONS;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -93,14 +103,14 @@ export default function SnackBotPanel({ messages, onSend, onQuickAction, onClose
       </div>
 
       <div className="snackbot-quick-actions">
-        {QUICK_ACTIONS.map((action) => (
+        {chips.map((chip) => (
           <button
-            key={action.id}
+            key={chip.label}
             type="button"
             className="snackbot-chip"
-            onClick={() => onQuickAction(action.query)}
+            onClick={() => onQuickAction(chip.query)}
           >
-            {action.label}
+            {chip.label}
           </button>
         ))}
       </div>

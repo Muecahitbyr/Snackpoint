@@ -1,82 +1,121 @@
 // Chat brain: detects the intent of a message and builds the reply from the
-// site's own data. No external AI — everything is local and deterministic.
+// site's own data. No external AI, no network — everything is local and
+// deterministic (apart from harmless wording variants).
 //
 //   message ──► detectIntent (intents.ts) ──► handler below ──► reply + updated context
 //
-// Adding a topic = one detector in intents.ts + one entry in HANDLERS.
-import { ADDRESS, CONTACT, MAPS_URL, PAYMENT_METHODS } from '../../data/constants';
-import { FALLBACK_MESSAGE } from '../../data/chatbotKnowledge';
+// Adding a topic = trigger words in data/synonyms.ts + a detector in
+// intents.ts + one entry in HANDLERS.
+import { nextContext, type AnswerMemory } from './conversationContext';
 import { detectIntent } from './intents';
-import { answerHoursForDay, answerOpenNow, answerWeek } from './openingHours';
-import { answerFollowUp, answerProductQuery } from './productSearch';
+import { answerHoursForDay, answerOpenNow, answerReopening, answerWeek } from './openingHours';
+import {
+  addressReply,
+  buildProductAnswer,
+  contactReply,
+  deliveryReply,
+  directionsReply,
+  goodbyeReply,
+  greetingReply,
+  helpReply,
+  parkingReply,
+  paymentReply,
+  phoneReply,
+  quickRepliesFor,
+  thanksReply,
+  unknownReply,
+  type Rng,
+} from './responseBuilder';
 import type { BotReply, ChatContext, DetectedIntent, Intent } from './types';
-
-const ROUTE_CTA = { label: 'Route öffnen', href: MAPS_URL, external: true };
-const ASK_IN_STORE = 'Frag am besten kurz unser Team vor Ort. 😊';
 
 interface HandlerResult {
   reply: BotReply;
-  /** Set by product answers so "Welche?" knows what the last answer was about. */
-  productIds?: string[];
+  /** Set by product answers so follow-ups know what the answer was about. */
+  memory?: AnswerMemory;
 }
 
-type Handler = (detected: DetectedIntent, ctx: ChatContext, now: Date) => HandlerResult;
+type Handler = (detected: DetectedIntent, ctx: ChatContext, now: Date, rng: Rng) => HandlerResult;
 
-const reply = (text: string, cta?: BotReply['cta']): HandlerResult => ({ reply: { text, cta } });
+const withQuickReplies = (intent: Intent, reply: BotReply): BotReply => ({ ...reply, quickReplies: quickRepliesFor(intent) });
+
+const hours =
+  (intent: Intent): Handler =>
+  ({ entities }, _ctx, now, rng) => {
+    if (intent === 'open_now') return { reply: withQuickReplies(intent, answerOpenNow(now, rng)) };
+    if (entities.weekly || !entities.day) return { reply: withQuickReplies(intent, answerWeek()) };
+    if (entities.remaining) return { reply: withQuickReplies(intent, answerOpenNow(now, rng, true)) };
+    if (entities.again) return { reply: withQuickReplies(intent, answerReopening(now)) };
+    const day = entities.day;
+    return { reply: withQuickReplies(intent, answerHoursForDay(day, entities.focus ?? 'both', entities.question ?? 'plain', now)) };
+  };
+
+const product =
+  (intent: Intent): Handler =>
+  ({ entities }, ctx, _now, rng) => {
+    const { productIds, categoryId, offer, ...reply } = buildProductAnswer(intent, entities, ctx, rng);
+    return { reply, memory: { productIds, categoryId, offer } };
+  };
+
+const staticReply =
+  (build: () => BotReply): Handler =>
+  () => ({ reply: build() });
+
+const topic =
+  (intent: Intent): Handler =>
+  ({ entities }) => ({
+    reply: { text: entities.topic?.getResponse() ?? '', cta: entities.topic?.cta, quickReplies: quickRepliesFor(intent) },
+  });
 
 const HANDLERS: Record<Intent, Handler> = {
-  greeting: () => reply('Hallo 😊 Wie kann ich dir helfen? Frag mich z. B. nach Produkten, Öffnungszeiten oder DHL.'),
-  goodbye: () => reply('Bis bald! 😊 Schau gern wieder vorbei.'),
-  thanks: () => reply('Sehr gerne! 😊 Sag Bescheid, wenn du noch etwas wissen möchtest.'),
+  greeting: ({ entities }, _ctx, _now, rng) => ({ reply: greetingReply(entities.greeting, rng) }),
+  goodbye: (_d, _c, _n, rng) => ({ reply: goodbyeReply(rng) }),
+  thanks: (_d, _c, _n, rng) => ({ reply: thanksReply(rng) }),
+  help: staticReply(helpReply),
+  unknown: (_d, _c, _n, rng) => ({ reply: unknownReply(rng) }),
 
-  open_now: (_, __, now) => ({ reply: answerOpenNow(now) }),
-  opening_hours: ({ entities }, _, now) => ({
-    reply: entities.weekly || !entities.day ? answerWeek() : answerHoursForDay(entities.day, entities.focus ?? 'both', entities.question ?? 'plain', now),
-  }),
+  opening_hours: hours('opening_hours'),
+  open_now: hours('open_now'),
+  closing_time: hours('closing_time'),
+  opening_time: hours('opening_time'),
 
-  product_search: ({ entities }) => productReply(entities.query, entities.results),
-  product_category: ({ entities }) => productReply(entities.query, entities.results),
-  product_followup: (_, ctx) => ({
-    reply: answerFollowUp(ctx.lastProductIds ?? []),
-    productIds: ctx.lastProductIds,
-  }),
+  product_search: product('product_search'),
+  product_category: product('product_category'),
+  product_variants: product('product_variants'),
+  product_price: product('product_price'),
+  product_availability: product('product_availability'),
+  recommendations: product('recommendations'),
 
-  address: () => reply(`Du findest uns in der ${ADDRESS}. 😊`, ROUTE_CTA),
-  directions: () => reply(`Wir sind in der ${ADDRESS}. Die Route findest du hier:`, ROUTE_CTA),
+  address: staticReply(addressReply),
+  directions: staticReply(directionsReply),
+  phone: staticReply(phoneReply),
+  contact: staticReply(contactReply),
+  payment_methods: staticReply(paymentReply),
+  delivery: staticReply(deliveryReply),
+  parking: staticReply(parkingReply),
 
-  contact: () => {
-    const details = [CONTACT.phone && `Telefon: ${CONTACT.phone}`, CONTACT.email && `E-Mail: ${CONTACT.email}`].filter(Boolean);
-    if (details.length) return reply(`So erreichst du uns:\n${details.join('\n')}`);
-    return reply(`Eine Telefonnummer oder E-Mail-Adresse habe ich leider nicht hinterlegt. Komm gern direkt vorbei: ${ADDRESS}. 😊`, ROUTE_CTA);
-  },
-  payment_methods: () => {
-    if (PAYMENT_METHODS.length) return reply(`Bei uns kannst du bezahlen mit: ${PAYMENT_METHODS.join(', ')}. 😊`);
-    return reply(`Welche Zahlungsarten wir genau anbieten, weiß ich leider nicht sicher. ${ASK_IN_STORE}`);
-  },
-
-  services: ({ entities }) => reply(entities.topic?.getResponse() ?? FALLBACK_MESSAGE, entities.topic?.cta),
-  unknown: () => reply(FALLBACK_MESSAGE),
+  services: topic('services'),
+  faq: topic('faq'),
 };
 
-function productReply(query: DetectedIntent['entities']['query'], results: DetectedIntent['entities']['results']): HandlerResult {
-  if (!query || !results) return reply(FALLBACK_MESSAGE);
-  const { productIds, ...botReply } = answerProductQuery(query, results);
-  return { reply: botReply, productIds };
+export interface EngineResult {
+  reply: BotReply;
+  context: ChatContext;
+  /** What was understood — for tests and the dev-mode console. */
+  debug: { intent: Intent; entities: DetectedIntent['entities']; confidence: number; matchedProducts: string[] };
 }
 
-const PRODUCT_INTENTS: Intent[] = ['product_search', 'product_category', 'product_followup'];
-/** Small talk shouldn't make the bot forget what "Welche?" refers to. */
-const KEEPS_CONTEXT: Intent[] = ['greeting', 'thanks'];
-
-export function respond(text: string, ctx: ChatContext = {}, now: Date = new Date()): { reply: BotReply; context: ChatContext } {
+export function respond(text: string, ctx: ChatContext = {}, now: Date = new Date(), rng: Rng = Math.random): EngineResult {
   const detected = detectIntent(text, ctx, now);
-  const result = HANDLERS[detected.intent](detected, ctx, now);
+  const result = HANDLERS[detected.intent](detected, ctx, now, rng);
+  const context = nextContext(ctx, detected, result.memory ?? {});
 
-  const lastProductIds = PRODUCT_INTENTS.includes(detected.intent)
-    ? result.productIds
-    : KEEPS_CONTEXT.includes(detected.intent)
-      ? ctx.lastProductIds
-      : undefined;
+  const matchedProducts = (detected.entities.results ?? []).flatMap((entry) =>
+    entry.products.map((product) => product.name ?? `${product.brand} ${product.variant}`)
+  );
+  const debug = { intent: detected.intent, entities: detected.entities, confidence: detected.confidence, matchedProducts };
 
-  return { reply: result.reply, context: { lastIntent: detected.intent, lastProductIds } };
+  // Development only: Vite replaces import.meta.env.DEV with false in the production build.
+  if (import.meta.env?.DEV) console.debug('[SnackBot]', text, debug);
+
+  return { reply: result.reply, context, debug };
 }

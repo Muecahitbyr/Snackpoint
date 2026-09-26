@@ -11,3 +11,8 @@ export const MAPS_EMBED_URL =
 // guessing.
 export const CONTACT = { phone: '', email: '' };
 export const PAYMENT_METHODS = [];
+
+// Free-text answers for "Liefert ihr?" / "Gibt es Parkplätze?", e.g.
+// 'Parkplätze findest du direkt vor dem Laden.' Empty = the bot says it doesn't know.
+export const DELIVERY_INFO = '';
+export const PARKING_INFO = '';

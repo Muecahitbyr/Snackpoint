@@ -37,7 +37,7 @@ export default function SnackBotWidget() {
   const pushBotReply = useCallback((userText: string) => {
     const { reply, context } = respond(userText, contextRef.current);
     contextRef.current = context;
-    setMessages((prev) => [...prev, { id: nextId(), sender: 'bot', text: reply.text, cta: reply.cta }]);
+    setMessages((prev) => [...prev, { id: nextId(), sender: 'bot', text: reply.text, cta: reply.cta, quickReplies: reply.quickReplies }]);
   }, []);
 
   const handleSend = useCallback(
