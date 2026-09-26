@@ -106,7 +106,7 @@ export const QUICK_ACTIONS: QuickAction[] = [
 ];
 
 export const GREETING_MESSAGE =
-  'Hallo! Ich bin der SnackPoint Assistent. Frag mich gern nach Sortiment, Öffnungszeiten, DHL, Lotto oder unserem Standort — oder tippe einfach los.';
+  'Hallo! Ich bin der SnackPoint Assistent. Frag mich gern, ob wir etwas führen (z. B. „Habt ihr Gummibärchen?“), oder nach Öffnungszeiten, DHL, Lotto und unserem Standort — tippe einfach los.';
 
 export const FALLBACK_MESSAGE =
   'Dabei kann ich dir leider noch nicht perfekt helfen. Du kannst mich aber zu diesen Themen fragen:\n– Sortiment\n– Süßigkeiten\n– Zigaretten & Tabak\n– DHL Paketshop\n– Lotto\n– Öffnungszeiten\n– Standort';

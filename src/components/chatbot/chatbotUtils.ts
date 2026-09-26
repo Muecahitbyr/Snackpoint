@@ -1,4 +1,5 @@
 import { KNOWLEDGE_BASE, type KnowledgeEntry } from '../../data/chatbotKnowledge';
+import { matchProduct, matchUnknownProductQuestion } from '../../data/chatbotProducts';
 
 /** Lowercases, spells out umlauts (ä→ae etc.) and strips punctuation, so
  * "Öffnungszeiten?" and "offnungszeiten" both normalize the same way as the
@@ -15,13 +16,19 @@ function normalize(text: string): string {
     .trim();
 }
 
-/** Simple keyword/intent scoring: every keyword found as a substring of the
+/** Product/category lookup first ("Habt ihr Gummibärchen?"), since a specific
+ * product is a more precise match than the broad topic keywords; then simple
+ * keyword/intent scoring: every keyword found as a substring of the
  * normalized input adds its own length to that entry's score (longer, more
  * specific phrases outweigh short generic ones), and the highest-scoring
- * entry wins. Returns null when nothing matches — caller shows the fallback. */
+ * entry wins. An unrecognised "habt ihr X?" gets an honest "ask in store".
+ * Returns null when nothing matches — caller shows the fallback. */
 export function matchKnowledge(userText: string): KnowledgeEntry | null {
   const input = normalize(userText);
   if (!input) return null;
+
+  const product = matchProduct(input);
+  if (product) return product;
 
   let best: KnowledgeEntry | null = null;
   let bestScore = 0;
@@ -40,5 +47,5 @@ export function matchKnowledge(userText: string): KnowledgeEntry | null {
     }
   }
 
-  return best;
+  return best ?? matchUnknownProductQuestion(input);
 }
