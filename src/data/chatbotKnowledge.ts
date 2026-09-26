@@ -1,8 +1,7 @@
-// Local, offline knowledge base for the SnackPoint chat assistant — no
-// external AI API. Pulls opening hours / address from the same data sources
-// the rest of the site uses, so there's only one place to update them.
-import { ADDRESS, MAPS_URL } from './constants';
-import { OPENING_HOURS, getTodayHours } from './hours';
+// Static topics and canned texts for the SnackPoint chat assistant — no
+// external AI API. Products live in ./products, opening hours in ./hours and
+// the address in ./constants; the chat logic (src/components/chatbot) reads
+// them from there, so each fact is maintained in exactly one place.
 
 export interface ChatCTA {
   label: string;
@@ -13,7 +12,7 @@ export interface ChatCTA {
 export interface KnowledgeEntry {
   id: string;
   /** Lowercase keyword/phrase fragments (umlauts written out, e.g. "oeffnungszeit")
-   * — matched against user input normalized the same way (see chatbotUtils). */
+   * — matched against user input normalized the same way (see text.ts). */
   keywords: string[];
   getResponse: () => string;
   cta?: ChatCTA;
@@ -22,42 +21,21 @@ export interface KnowledgeEntry {
 export interface QuickAction {
   id: string;
   label: string;
-  entryId: string;
+  /** Sent through the chat logic as if the user had typed it. */
+  query: string;
 }
 
-function formatHoursList(): string {
-  return OPENING_HOURS.map((entry) => `${entry.day}: ${entry.closed ? 'geschlossen' : `${entry.open} – ${entry.close}`}`).join('\n');
-}
-
+/** Topics without product data behind them: the range in general, DHL, Lotto. */
 export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   {
     id: 'sortiment',
     keywords: [
-      'sortiment', 'angebot', 'was gibt es', 'was habt ihr', 'was verkauft ihr',
+      'sortiment', 'angebot', 'was gibt es', 'was habt ihr', 'was verkauft ihr', 'produkte', 'artikel',
       'auswahl', 'alles unter einem dach', 'was bietet ihr', 'was fuehrt ihr',
     ],
     getResponse: () =>
-      'Bei SnackPoint gibt es alles unter einem Dach: Süßigkeiten, Snacks, Getränke, Zeitschriften, Tabakwaren, Lotto und einen DHL Paketshop. Frag mich gern nach einem der Themen!',
-  },
-  {
-    id: 'suessigkeiten',
-    keywords: [
-      'suess', 'suß', 'süß', 'snack', 'naschen', 'schokolade', 'chips',
-      'bonbon', 'hunger', 'zeitschrift',
-    ],
-    getResponse: () =>
-      'Ja, bei uns findest du Süßigkeiten, Snacks und Kleinigkeiten für den Hunger zwischendurch — täglich frisch sortiert.',
-    cta: { label: 'Leistungen ansehen', href: '#services' },
-  },
-  {
-    id: 'getraenke',
-    keywords: ['getraenk', 'getränk', 'trinken', 'durst', 'cola', 'energy', 'wasser', 'drink'],
-    getResponse: () => 'Wir führen verschiedene Getränke für unterwegs — von Softdrinks bis Energydrinks.',
-  },
-  {
-    id: 'tabak',
-    keywords: ['zigarette', 'tabak', 'rauchen', 'shisha', 'zigaretten'],
-    getResponse: () => 'Bei uns bekommst du Zigaretten und Tabakwaren.',
+      'Bei SnackPoint gibt es alles unter einem Dach: Süßigkeiten, Snacks, Getränke, Zeitschriften, Tabakwaren, Lotto und einen DHL Paketshop. Frag mich gern nach einem bestimmten Produkt! 😊',
+    cta: { label: 'Alle Produkte ansehen', href: '/produkte.html' },
   },
   {
     id: 'dhl',
@@ -72,45 +50,19 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
     getResponse: () => 'Bei SnackPoint kannst du auch Lotto spielen — Tippscheine abgeben und Gewinne prüfen.',
     cta: { label: 'Leistungen ansehen', href: '#services' },
   },
-  {
-    id: 'oeffnungszeiten',
-    keywords: [
-      'oeffnungszeit', 'öffnungszeit', 'offen', 'geoeffnet', 'geöffnet',
-      'wann habt ihr auf', 'uhrzeit', 'geschlossen', 'wann macht ihr',
-    ],
-    getResponse: () => {
-      const today = getTodayHours();
-      const todayLine = today
-        ? `Heute haben wir ${today.closed ? 'geschlossen' : `von ${today.open} bis ${today.close}`} geöffnet.\n\n`
-        : '';
-      return `${todayLine}Unsere Öffnungszeiten:\n${formatHoursList()}`;
-    },
-    cta: { label: 'Öffnungszeiten ansehen', href: '#location' },
-  },
-  {
-    id: 'standort',
-    keywords: ['wo seid', 'standort', 'adresse', 'wo finde', 'anfahrt', 'route', 'wo ist', 'wo liegt'],
-    getResponse: () =>
-      `Du findest uns in der ${ADDRESS}. Wenn du willst, kann ich dir auch gleich die Route in Google Maps zeigen.`,
-    cta: { label: 'Route öffnen', href: MAPS_URL, external: true },
-  },
 ];
 
 export const QUICK_ACTIONS: QuickAction[] = [
-  { id: 'qa-sortiment', label: 'Was gibt es im Laden?', entryId: 'sortiment' },
-  { id: 'qa-hours', label: 'Öffnungszeiten', entryId: 'oeffnungszeiten' },
-  { id: 'qa-dhl', label: 'DHL Paketshop', entryId: 'dhl' },
-  { id: 'qa-lotto', label: 'Lotto', entryId: 'lotto' },
-  { id: 'qa-tabak', label: 'Zigaretten & Tabak', entryId: 'tabak' },
-  { id: 'qa-standort', label: 'Standort', entryId: 'standort' },
+  { id: 'qa-sortiment', label: 'Was gibt es im Laden?', query: 'Was habt ihr im Sortiment?' },
+  { id: 'qa-hours', label: 'Öffnungszeiten', query: 'Wie sind eure Öffnungszeiten?' },
+  { id: 'qa-dhl', label: 'DHL Paketshop', query: 'DHL Paketshop' },
+  { id: 'qa-lotto', label: 'Lotto', query: 'Lotto' },
+  { id: 'qa-tabak', label: 'Zigaretten & Tabak', query: 'Habt ihr Zigaretten?' },
+  { id: 'qa-standort', label: 'Standort', query: 'Wo seid ihr?' },
 ];
 
 export const GREETING_MESSAGE =
-  'Hallo! Ich bin der SnackPoint Assistent. Frag mich gern, ob wir etwas führen (z. B. „Habt ihr Gummibärchen?“), oder nach Öffnungszeiten, DHL, Lotto und unserem Standort — tippe einfach los.';
+  'Hallo! Ich bin der SnackPoint Assistent. Frag mich gern, ob wir ein Produkt führen (z. B. „Habt ihr blaue Takis?“), wann wir geöffnet haben oder wo du uns findest — tippe einfach los.';
 
 export const FALLBACK_MESSAGE =
-  'Dabei kann ich dir leider noch nicht perfekt helfen. Du kannst mich aber zu diesen Themen fragen:\n– Sortiment\n– Süßigkeiten\n– Zigaretten & Tabak\n– DHL Paketshop\n– Lotto\n– Öffnungszeiten\n– Standort';
-
-export function getEntryById(id: string): KnowledgeEntry | undefined {
-  return KNOWLEDGE_BASE.find((entry) => entry.id === id);
-}
+  'Das weiß ich leider gerade nicht sicher. Frag am besten kurz unser Team vor Ort. 😊\nBei Produkten, Öffnungszeiten, Standort, DHL und Lotto helfe ich dir gern weiter.';

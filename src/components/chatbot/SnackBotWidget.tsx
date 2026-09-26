@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import SnackBotButton from './SnackBotButton';
 import SnackBotPanel, { type ChatMessage } from './SnackBotPanel';
-import { matchKnowledge } from './chatbotUtils';
-import { FALLBACK_MESSAGE, GREETING_MESSAGE, getEntryById } from '../../data/chatbotKnowledge';
+import { respond } from './chatbotEngine';
+import type { ChatContext } from './types';
+import { GREETING_MESSAGE } from '../../data/chatbotKnowledge';
 import { useCookieConsent } from '../../hooks/useCookieConsent';
 import './SnackBotWidget.css';
 
@@ -30,12 +31,13 @@ export default function SnackBotWidget() {
 
   const close = useCallback(() => setIsOpen(false), []);
 
+  // What the bot remembers for follow-ups like "Welche?" — not rendered, so a ref.
+  const contextRef = useRef<ChatContext>({});
+
   const pushBotReply = useCallback((userText: string) => {
-    const entry = matchKnowledge(userText);
-    const reply: ChatMessage = entry
-      ? { id: nextId(), sender: 'bot', text: entry.getResponse(), cta: entry.cta }
-      : { id: nextId(), sender: 'bot', text: FALLBACK_MESSAGE };
-    setMessages((prev) => [...prev, reply]);
+    const { reply, context } = respond(userText, contextRef.current);
+    contextRef.current = context;
+    setMessages((prev) => [...prev, { id: nextId(), sender: 'bot', text: reply.text, cta: reply.cta }]);
   }, []);
 
   const handleSend = useCallback(
@@ -46,14 +48,8 @@ export default function SnackBotWidget() {
     [pushBotReply]
   );
 
-  const handleQuickAction = useCallback((entryId: string) => {
-    const entry = getEntryById(entryId);
-    if (!entry) return;
-    setMessages((prev) => [
-      ...prev,
-      { id: nextId(), sender: 'bot', text: entry.getResponse(), cta: entry.cta },
-    ]);
-  }, []);
+  // Chips answer like a typed question, just without echoing it as a user bubble.
+  const handleQuickAction = useCallback((query: string) => pushBotReply(query), [pushBotReply]);
 
   if (!isOpen && consent === null) return null;
 

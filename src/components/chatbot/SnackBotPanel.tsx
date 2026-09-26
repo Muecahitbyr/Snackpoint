@@ -11,7 +11,7 @@ export interface ChatMessage {
 interface SnackBotPanelProps {
   messages: ChatMessage[];
   onSend: (text: string) => void;
-  onQuickAction: (entryId: string) => void;
+  onQuickAction: (query: string) => void;
   onClose: () => void;
 }
 
@@ -98,7 +98,7 @@ export default function SnackBotPanel({ messages, onSend, onQuickAction, onClose
             key={action.id}
             type="button"
             className="snackbot-chip"
-            onClick={() => onQuickAction(action.entryId)}
+            onClick={() => onQuickAction(action.query)}
           >
             {action.label}
           </button>

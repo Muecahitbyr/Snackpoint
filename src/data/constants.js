@@ -5,3 +5,9 @@ export const MAPS_URL =
 
 export const MAPS_EMBED_URL =
   'https://maps.google.com/maps?q=Snack+Point+Kaufbeuren,+Neugablonzer+Str.+25,+87600+Kaufbeuren&output=embed';
+
+// Optional details the chat assistant can quote. Leave empty until the real
+// values are available — the assistant then says it doesn't know instead of
+// guessing.
+export const CONTACT = { phone: '', email: '' };
+export const PAYMENT_METHODS = [];
