@@ -34,5 +34,7 @@ export const services = [
     title: 'Ihle',
     text: 'Frische Sandwiches, Wraps & Gebäck von Ihle — direkt bei uns im Kiosk.',
     target: 'ihle',
+    // Optional banner on the card's top-right corner.
+    badge: 'BALD VERFÜGBAR',
   },
 ];

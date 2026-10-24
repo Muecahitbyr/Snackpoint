@@ -8,10 +8,13 @@
   align-items: center;
 }
 .location-info h2 {
-  font-size: clamp(2rem, 4vw, 2.8rem);
-  font-weight: 800;
+  font-family: var(--font-tag);
+  font-size: clamp(2.4rem, 4.8vw, 3.4rem);
+  font-weight: 400;
+  line-height: 1.05;
   margin-bottom: 30px;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.01em;
+  text-shadow: var(--tag-shadow);
   color: var(--text);
 }
 .info-row { display: flex; gap: 16px; margin-bottom: 22px; align-items: flex-start; }

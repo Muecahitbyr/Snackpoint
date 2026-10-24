@@ -28,6 +28,7 @@ function ProductCard({ product, delay, index }) {
 export default function NewProducts() {
   return (
     <section className="new-products" id="new" data-character-target="products">
+      <span className="new-products-tag" aria-hidden="true">Snacks</span>
       <Reveal className="new-header">
         <p className="eyebrow">Neu eingetroffen</p>
         <h2 className="section-title">Frisch im Regal.</h2>

@@ -13,6 +13,96 @@ const PARTICLES = [
   { emoji: '📦', top: '85%', left: '50%', delay: '0.3s', duration: '8.5s' },
 ];
 
+const SPARKLE = 'M0 -22C4 -6 6 -4 22 0C6 4 4 6 0 22C-4 6 -6 4 -22 0C-6 -4 -4 -6 0 -22Z';
+
+// Two hand-built graffiti pieces for the hero's corners. Both share the
+// same vocabulary — black outlines, brand colors, paint drips, a soft spray
+// halo — but differ in subject so they read as a pair, not a copy. Static
+// and decorative only.
+
+// Top right: an "SP" piece with chrome-banded fill, block extrusion, an
+// arrow swinging out beneath it, a crown and drips.
+function HeroArtTopRight() {
+  return (
+    <svg className="hero-art hero-art-tr" viewBox="0 0 360 280" aria-hidden="true" focusable="false">
+      <defs>
+        <radialGradient id="hero-tr-mist">
+          <stop offset="0" style={{ stopColor: 'var(--accent)', stopOpacity: 0.28 }} />
+          <stop offset="1" style={{ stopColor: 'var(--accent)', stopOpacity: 0 }} />
+        </radialGradient>
+        <linearGradient id="hero-tr-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffe08a" />
+          <stop offset="0.38" style={{ stopColor: 'var(--accent-2)' }} />
+          <stop offset="0.42" stopColor="#fff4cf" />
+          <stop offset="0.48" style={{ stopColor: 'var(--accent-2)' }} />
+          <stop offset="1" style={{ stopColor: 'var(--accent)' }} />
+        </linearGradient>
+      </defs>
+      <ellipse cx="190" cy="150" rx="172" ry="112" fill="url(#hero-tr-mist)" />
+      <path
+        className="hero-art-ink"
+        style={{ fill: 'var(--accent-3)' }}
+        d="M26 248C116 262 226 258 298 236L290 214L352 240L300 278L298 258C224 278 116 282 30 268Z"
+      />
+      <path className="hero-art-ink" style={{ fill: 'var(--accent-2)' }} transform="translate(216 22) rotate(10)" d="M0 40L10 6L28 26L44 0L60 26L78 6L88 40Z" />
+      <path className="hero-art-ink" style={{ fill: 'var(--accent)' }} d="M110 196V236a8 8 0 0 0 16 0V196ZM146 196V222a7 7 0 0 0 14 0V196ZM232 196V244a8 8 0 0 0 16 0V196Z" />
+      <text className="hero-art-letters hero-art-depth" x="52" y="210" textLength="256" lengthAdjust="spacingAndGlyphs" transform="translate(10 10)">SP</text>
+      <text className="hero-art-letters" x="52" y="210" textLength="256" lengthAdjust="spacingAndGlyphs" transform="translate(5 5)" style={{ fill: 'var(--accent-3)' }}>SP</text>
+      <text className="hero-art-letters" x="52" y="210" textLength="256" lengthAdjust="spacingAndGlyphs" fill="url(#hero-tr-fill)">SP</text>
+      <path className="hero-art-spark" transform="translate(316 206) scale(0.8)" d={SPARKLE} />
+      <path className="hero-art-spark" transform="translate(48 82) scale(0.6)" d={SPARKLE} />
+    </svg>
+  );
+}
+
+const FLOW_MAIN = 'M30 200C60 110 150 210 200 120S270 60 286 52';
+const FLOW_CROSS = 'M50 100C102 60 150 132 222 96';
+const FLOW_HEAD = 'M322 34L295 83L266 26Z';
+
+// Bottom left: an abstract wildstyle "flow" — a red ribbon running under a
+// bigger gold one that ends in an arrowhead — built like the SP piece:
+// block extrusion, black outline, gradient fill, a shine line and drips.
+function HeroArtBottomLeft() {
+  return (
+    <svg className="hero-art hero-art-bl" viewBox="0 0 340 250" aria-hidden="true" focusable="false">
+      <defs>
+        <radialGradient id="hero-bl-mist">
+          <stop offset="0" style={{ stopColor: 'var(--accent-2)', stopOpacity: 0.3 }} />
+          <stop offset="1" style={{ stopColor: 'var(--accent-2)', stopOpacity: 0 }} />
+        </radialGradient>
+        <linearGradient id="hero-bl-gold" x1="30" y1="0" x2="322" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0" style={{ stopColor: 'var(--accent-2)' }} />
+          <stop offset="0.55" stopColor="#ffc24a" />
+          <stop offset="1" style={{ stopColor: 'var(--accent)' }} />
+        </linearGradient>
+        <linearGradient id="hero-bl-red" x1="50" y1="0" x2="222" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ff6b5a" />
+          <stop offset="0.5" style={{ stopColor: 'var(--accent)' }} />
+          <stop offset="1" style={{ stopColor: 'var(--accent-3)' }} />
+        </linearGradient>
+      </defs>
+      <ellipse cx="172" cy="132" rx="168" ry="110" fill="url(#hero-bl-mist)" />
+
+      <g className="hero-flow-depth" transform="translate(9 9)">
+        <path className="hero-flow-stroke" d={FLOW_CROSS} />
+        <path className="hero-flow-stroke" d={FLOW_MAIN} />
+        <path d={FLOW_HEAD} />
+      </g>
+
+      <path className="hero-flow-outline" d={FLOW_CROSS} />
+      <path className="hero-flow-fill" d={FLOW_CROSS} stroke="url(#hero-bl-red)" />
+      <path className="hero-flow-shine" d={FLOW_CROSS} transform="translate(-2 -7)" />
+
+      <path className="hero-art-ink" style={{ fill: 'var(--accent)' }} d="M96 178V218a9 9 0 0 0 18 0V178ZM184 134V164a8 8 0 0 0 16 0V134Z" />
+
+      <path className="hero-flow-outline" d={FLOW_MAIN} />
+      <path className="hero-flow-fill" d={FLOW_MAIN} stroke="url(#hero-bl-gold)" />
+      <path className="hero-art-ink" d={FLOW_HEAD} fill="url(#hero-bl-gold)" />
+      <path className="hero-flow-shine" d={FLOW_MAIN} transform="translate(-3 -9)" />
+    </svg>
+  );
+}
+
 export default function Hero() {
   const blob1 = useParallax(0.15);
   const blob2 = useParallax(0.3);
@@ -70,6 +160,9 @@ export default function Hero() {
           </span>
         ))}
       </div>
+
+      <HeroArtTopRight />
+      <HeroArtBottomLeft />
 
       <div className="hero-content">
         <img src="/logo.jpg" alt="SnackPoint Logo" className="hero-logo" ref={logo} />

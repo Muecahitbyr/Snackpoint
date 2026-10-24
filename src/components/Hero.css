@@ -86,15 +86,93 @@
   will-change: transform;
 }
 
-.hero-title {
-  font-size: clamp(2.6rem, 8vw, 5.2rem);
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  margin-bottom: 22px;
-  color: var(--text);
+/* Corner graffiti pieces (see Hero.jsx). They sit in the hero's free side
+   space — beside the centered content column on desktop, above/below it on
+   narrow screens — and the hero's overflow:hidden crops any bleed. */
+.hero-art {
+  position: absolute;
+  z-index: 1;
+  height: auto;
+  overflow: visible;
+  pointer-events: none;
 }
+.hero-art-tr {
+  top: 92px;
+  right: 3%;
+  width: clamp(150px, 22vw, 330px);
+  transform: rotate(6deg);
+}
+.hero-art-bl {
+  bottom: 36px;
+  left: 3%;
+  width: clamp(120px, 18vw, 260px);
+  transform: rotate(-6deg);
+}
+.hero-art-ink {
+  stroke: var(--text);
+  stroke-width: 6;
+  stroke-linejoin: round;
+}
+.hero-art-letters {
+  font-family: var(--font-brush);
+  font-size: 190px;
+  stroke: var(--text);
+  stroke-width: 10;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+}
+.hero-art-depth { fill: var(--text); }
+.hero-art-spark {
+  fill: #fff;
+  stroke: var(--text);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+/* Bottom-left flow: each ribbon is one path stroked three times — a wide
+   black outline, a narrower color fill on top, then a thin shine line. */
+.hero-flow-depth { fill: var(--accent-3); stroke: var(--accent-3); stroke-width: 6; stroke-linejoin: round; }
+.hero-flow-depth .hero-flow-stroke { fill: none; stroke-width: 46; stroke-linecap: round; }
+.hero-flow-outline { fill: none; stroke: var(--text); stroke-width: 46; stroke-linecap: round; }
+.hero-flow-fill { fill: none; stroke-width: 32; stroke-linecap: round; }
+.hero-flow-shine {
+  fill: none;
+  stroke: #fff;
+  stroke-opacity: 0.7;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  stroke-dasharray: 70 400;
+  stroke-dashoffset: -30;
+}
+
+/* "SnackPoint" as a finished piece: cream fill, black outline and a deep-red
+   block extrusion with a black edge, like a 3D throw on a wall. */
+.hero-title {
+  font-family: var(--font-tag);
+  font-size: clamp(3.6rem, 12vw, 7.4rem);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 0.92;
+  margin-bottom: 26px;
+  color: #fff8ec;
+  -webkit-text-stroke: 3px var(--text);
+  paint-order: stroke fill;
+  text-shadow:
+    1px 1px 0 var(--accent-3), 2px 2px 0 var(--accent-3), 3px 3px 0 var(--accent-3),
+    4px 4px 0 var(--accent-3), 5px 5px 0 var(--accent-3), 6px 6px 0 var(--accent-3),
+    7px 7px 0 var(--text), 8px 8px 0 var(--text),
+    10px 14px 22px rgba(0,0,0,0.18);
+}
+/* "Kaufbeuren" is the tag underneath: a brush handstyle, slightly tilted,
+   keeping its animated brand gradient. */
 .hero-title span {
+  display: inline-block;
+  margin-top: 0.14em;
+  font-family: var(--font-brush);
+  font-size: 0.5em;
+  letter-spacing: 0.04em;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+  transform: rotate(-3deg);
   background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3), var(--accent));
   background-size: 300% 100%;
   -webkit-background-clip: text;
@@ -145,4 +223,15 @@
 
 @media (max-width: 700px) {
   .particle { font-size: 1.4rem; }
+  .hero-title {
+    -webkit-text-stroke-width: 2px;
+    text-shadow:
+      1px 1px 0 var(--accent-3), 2px 2px 0 var(--accent-3), 3px 3px 0 var(--accent-3),
+      4px 4px 0 var(--accent-3), 5px 5px 0 var(--text),
+      6px 9px 14px rgba(0,0,0,0.16);
+  }
+  /* Phones: the pieces move into the hero's top and bottom padding, clear
+     of the logo above and the stats below. */
+  .hero-art-tr { top: 78px; right: 8px; width: 104px; }
+  .hero-art-bl { bottom: 4px; left: -6px; width: 80px; }
 }
