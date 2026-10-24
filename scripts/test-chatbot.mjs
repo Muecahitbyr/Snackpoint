@@ -1,5 +1,5 @@
 // Runs tests/*.test.ts without installing a test framework: bundles them with
-// esbuild (already installed as part of Vite) and runs them with Node's
+// esbuild (a devDependency) and runs them with Node's
 // built-in test runner.  Usage: npm test
 import { spawnSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
@@ -17,6 +17,7 @@ for (const file of files) {
   const build = spawnSync(esbuild, [join(root, 'tests', file), '--bundle', '--platform=node', '--format=esm', `--outfile=${out}`, '--log-level=error'], {
     stdio: 'inherit',
   });
+  if (build.error) console.error(`Could not run esbuild: ${build.error.message}`);
   if (build.status !== 0) process.exit(build.status ?? 1);
   const run = spawnSync(process.execPath, ['--test', '--test-reporter=spec', out], { stdio: 'inherit' });
   if (run.status !== 0) failed = true;

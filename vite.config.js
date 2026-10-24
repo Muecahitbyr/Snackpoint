@@ -5,12 +5,12 @@ import { resolve } from 'node:path';
 export default defineConfig({
   plugins: [react()],
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
-        impressum: resolve(__dirname, 'impressum.html'),
-        datenschutz: resolve(__dirname, 'datenschutz.html'),
-        produkte: resolve(__dirname, 'produkte.html'),
+        main: resolve(import.meta.dirname, 'index.html'),
+        impressum: resolve(import.meta.dirname, 'impressum.html'),
+        datenschutz: resolve(import.meta.dirname, 'datenschutz.html'),
+        produkte: resolve(import.meta.dirname, 'produkte.html'),
       },
     },
   },
