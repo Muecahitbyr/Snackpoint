@@ -122,8 +122,8 @@ export default function Hero() {
   const secondaryCta = useMagnetic();
   const heroRef = useRef(null);
 
-  const reviewCount = useCountUp(4945);
-  const rating = useCountUp(5, { decimals: 1 });
+  const reviewCount = useCountUp(48);
+  const rating = useCountUp(4.9, { decimals: 1 });
 
   // Pause the blobs/particles' infinite animations once the hero scrolls
   // out of view — they'd otherwise keep the compositor busy forever for

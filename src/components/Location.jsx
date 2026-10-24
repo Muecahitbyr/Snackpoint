@@ -118,7 +118,7 @@ export default function Location() {
             <span className="info-icon">⭐</span>
             <div>
               <strong>Bewertung</strong>
-              <p>5.0 von 5 · 4.945 Rezensionen auf Google</p>
+              <p>4.9 von 5 · 48 Rezensionen auf Google</p>
             </div>
           </div>
           <a
