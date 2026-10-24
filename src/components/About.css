@@ -53,35 +53,8 @@
 }
 .glow-card img { width: 78%; border-radius: 20px; }
 
-/* Spray can illustration (see About.jsx) leaning against the logo card. */
-.about-visual { position: relative; }
-.about-spray {
-  position: absolute;
-  z-index: 2;
-  left: -40px;
-  bottom: -46px;
-  width: 112px;
-  height: auto;
-  overflow: visible;
-  transform: rotate(-14deg);
-  pointer-events: none;
-}
-.about-can-edge { stroke: var(--text); stroke-width: 3; stroke-linejoin: round; }
-.about-can-seam { stroke: var(--text); stroke-opacity: 0.35; stroke-width: 2; }
-.about-can-tag { font-family: var(--font-tag); font-size: 54px; fill: var(--accent-2); }
-.about-can-tag-depth { fill: var(--accent); }
-.about-can-brand {
-  font-family: var(--font-body);
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: 1.6px;
-  fill: #fff;
-  fill-opacity: 0.85;
-}
-
 @media (max-width: 860px) {
   .about-inner { grid-template-columns: 1fr; }
-  .about-spray { left: -4px; bottom: -40px; width: 86px; }
 }
 
 .about.is-offscreen .glow-card-ring::before {

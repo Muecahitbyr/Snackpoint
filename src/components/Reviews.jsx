@@ -1,6 +1,7 @@
 import { reviews } from '../data/reviews';
 import { useInView } from '../hooks/useInView';
 import Reveal from './Reveal';
+import SplitWords from './SplitWords';
 import './Reviews.css';
 
 function ReviewCard({ review }) {
@@ -32,7 +33,7 @@ export default function Reviews() {
       data-character-target="reviews"
     >
       <Reveal as="p" className="eyebrow center">Bewertungen</Reveal>
-      <Reveal as="h2" className="section-title center">Das sagen unsere Kunden.</Reveal>
+      <Reveal as="h2" className="section-title center"><SplitWords text="Das sagen unsere Kunden." /></Reveal>
 
       <div className="marquee">
         <div className="marquee-track">

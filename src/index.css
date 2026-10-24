@@ -102,7 +102,7 @@ section { position: relative; scroll-margin-top: 90px; }
   border-radius: 100px;
   font-weight: 600;
   font-size: 0.95rem;
-  transition: transform 0.25s, box-shadow 0.25s, background 0.25s;
+  transition: transform 0.25s, box-shadow 0.25s, background 0.25s, translate 0.3s cubic-bezier(0.16,1,0.3,1);
   isolation: isolate;
 }
 .btn::before {
@@ -141,10 +141,52 @@ section { position: relative; scroll-margin-top: 90px; }
 }
 .reveal.is-visible { opacity: 1; transform: translateY(0) scale(1); }
 
+/* Headlines fly in word by word (SplitWords.jsx), slightly after their
+   reveal wrapper starts moving. */
+.split-word {
+  display: inline-block;
+  transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.34,1.56,0.64,1);
+  transition-delay: calc(var(--word-delay, 0s) + 0.15s);
+}
+.reveal:not(.is-visible) .split-word {
+  opacity: 0;
+  transform: translateY(0.6em) rotate(6deg);
+}
+
+/* Expanding ring behind a "live" status dot (nav pill, opening hours). */
+@keyframes status-ping {
+  0% { transform: scale(1); opacity: 0.6; }
+  75%, 100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* Visible to screen readers only. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* Shared tilt-card shine sweep */
 .tilt-card {
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s;
   will-change: transform;
+}
+
+/* Respect "reduce motion": stop decorative loops, make reveals instant.
+   JS-driven effects check prefersReducedMotion() (hooks/motion.js). */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+  /* The review marquee can't move on its own any more — let people scroll it. */
+  .marquee { overflow-x: auto; }
 }

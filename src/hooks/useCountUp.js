@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useReveal } from './useReveal';
+import { prefersReducedMotion } from './motion';
 
 export function useCountUp(target, { decimals = 0, duration = 1400 } = {}) {
   const { ref, visible } = useReveal({ threshold: 0.5 });
@@ -7,6 +8,10 @@ export function useCountUp(target, { decimals = 0, duration = 1400 } = {}) {
 
   useEffect(() => {
     if (!visible) return;
+    if (prefersReducedMotion()) {
+      setValue(target);
+      return;
+    }
     const start = performance.now();
 
     function frame(now) {

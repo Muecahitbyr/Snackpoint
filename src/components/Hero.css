@@ -92,21 +92,50 @@
 .hero-art {
   position: absolute;
   z-index: 1;
-  height: auto;
-  overflow: visible;
   pointer-events: none;
 }
 .hero-art-tr {
   top: 92px;
   right: 3%;
   width: clamp(150px, 22vw, 330px);
-  transform: rotate(6deg);
+  --art-rot: 6deg;
 }
 .hero-art-bl {
   bottom: 36px;
   left: 3%;
   width: clamp(120px, 18vw, 260px);
-  transform: rotate(-6deg);
+  --art-rot: -6deg;
+}
+/* The wrapper carries the scroll parallax (inline transform from JS); the
+   svg sprays on, then floats. */
+.hero-art-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  animation:
+    art-spray-in 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) 0.7s both,
+    art-float 7s ease-in-out 1.6s infinite;
+}
+.hero-art-bl .hero-art-svg { animation-delay: 1s, 1.9s; }
+@keyframes art-spray-in {
+  from { opacity: 0; transform: scale(0.5) rotate(calc(var(--art-rot) - 16deg)); }
+  to { opacity: 1; transform: rotate(var(--art-rot)); }
+}
+@keyframes art-float {
+  0%, 100% { transform: rotate(var(--art-rot)) translateY(0); }
+  50% { transform: rotate(var(--art-rot)) translateY(-10px); }
+}
+/* Paint runs down once the piece has landed. */
+.hero-art-drip {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: drip-run 1.4s cubic-bezier(0.55, 0, 0.75, 0.4) 1.5s both;
+}
+.hero-art-bl .hero-art-drip { animation-delay: 1.8s; }
+@keyframes drip-run {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
 }
 .hero-art-ink {
   stroke: var(--text);
@@ -127,6 +156,12 @@
   stroke: var(--text);
   stroke-width: 4;
   stroke-linejoin: round;
+  animation: art-twinkle 2.6s ease-in-out infinite;
+}
+.hero-art-spark + .hero-art-spark { animation-delay: 1.3s; }
+@keyframes art-twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
 }
 /* Bottom-left flow: each ribbon is one path stroked three times — a wide
    black outline, a narrower color fill on top, then a thin shine line. */
@@ -142,6 +177,12 @@
   stroke-linecap: round;
   stroke-dasharray: 70 400;
   stroke-dashoffset: -30;
+  animation: shine-run 4.5s ease-in-out 2.4s infinite;
+}
+/* A glint travelling along the ribbon, then a pause. */
+@keyframes shine-run {
+  0% { stroke-dashoffset: 70; }
+  55%, 100% { stroke-dashoffset: -400; }
 }
 
 /* "SnackPoint" as a finished piece: cream fill, black outline and a deep-red
@@ -162,9 +203,27 @@
     7px 7px 0 var(--text), 8px 8px 0 var(--text),
     10px 14px 22px rgba(0,0,0,0.18);
 }
+/* Each letter is sprayed on in turn, and bounces when hovered. The entrance
+   uses a backwards-filled animation so the hover transition stays free. */
+.hero-letter {
+  display: inline-block;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.hero-title.is-visible .hero-letter {
+  animation: letter-spray 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  animation-delay: calc(var(--i) * 0.055s + 0.25s);
+}
+.hero-title:not(.is-visible) .hero-letter,
+.hero-title:not(.is-visible) .hero-tag { opacity: 0; }
+.hero-letter:hover { transform: translateY(-0.12em) rotate(-8deg) scale(1.08); }
+@keyframes letter-spray {
+  from { opacity: 0; transform: translateY(-0.45em) scale(1.35) rotate(-10deg); }
+  to { opacity: 1; transform: none; }
+}
+
 /* "Kaufbeuren" is the tag underneath: a brush handstyle, slightly tilted,
-   keeping its animated brand gradient. */
-.hero-title span {
+   stamped on after the letters and keeping its animated brand gradient. */
+.hero-title .hero-tag {
   display: inline-block;
   margin-top: 0.14em;
   font-family: var(--font-brush);
@@ -178,7 +237,13 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: gradient-shift 6s ease-in-out infinite;
+  animation:
+    tag-stamp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.95s backwards,
+    gradient-shift 6s ease-in-out infinite;
+}
+@keyframes tag-stamp {
+  from { opacity: 0; transform: scale(1.7) rotate(-14deg); }
+  to { opacity: 1; transform: rotate(-3deg); }
 }
 @keyframes gradient-shift {
   0% { background-position: 0% 0%; }
@@ -197,7 +262,10 @@
    animating something nobody can see. */
 .hero.is-offscreen .hero-blob,
 .hero.is-offscreen .particle,
-.hero.is-offscreen .hero-title span {
+.hero.is-offscreen .hero-tag,
+.hero.is-offscreen .hero-art-svg,
+.hero.is-offscreen .hero-art-spark,
+.hero.is-offscreen .hero-flow-shine {
   animation-play-state: paused;
 }
 
@@ -233,5 +301,13 @@
   /* Phones: the pieces move into the hero's top and bottom padding, clear
      of the logo above and the stats below. */
   .hero-art-tr { top: 78px; right: 8px; width: 104px; }
-  .hero-art-bl { bottom: 4px; left: -6px; width: 80px; }
+  .hero-art-bl { bottom: 10px; left: -6px; width: 72px; }
+  /* The pieces live in the hero's tight top/bottom padding here, so neither
+     they nor the content column drift — otherwise the stats would slide
+     into the bottom piece while scrolling. */
+  .hero-art,
+  .hero-content { transform: none !important; }
+}
+@media (max-width: 400px) {
+  .hero-art-bl { width: 64px; }
 }

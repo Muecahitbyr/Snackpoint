@@ -1,6 +1,7 @@
 import { services } from '../data/services';
 import { useTilt } from '../hooks/useTilt';
 import Reveal from './Reveal';
+import SplitWords from './SplitWords';
 import './Services.css';
 
 // Ticker sash across the card. The text is repeated in two identical halves
@@ -14,7 +15,7 @@ function ServiceBadge({ text }) {
 
   return (
     <div className="service-badge">
-      <span className="service-badge-label">{text}</span>
+      <span className="sr-only">{text}</span>
       <div className="service-badge-track" aria-hidden="true">
         {half}
         {half}
@@ -49,7 +50,7 @@ export default function Services() {
   return (
     <section className="services" id="services" data-character-target="services">
       <Reveal as="p" className="eyebrow center">Leistungen</Reveal>
-      <Reveal as="h2" className="section-title center">Alles unter einem Dach.</Reveal>
+      <Reveal as="h2" className="section-title center"><SplitWords text="Alles unter einem Dach." /></Reveal>
 
       <div className="service-grid">
         {services.map((service, i) => (

@@ -1,6 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { MAPS_URL } from '../data/constants';
+import { getOpenStatus } from './chatbot/openingHours';
+import { useNow } from '../hooks/useNow';
 import './Header.css';
+
+// Live "open / closed" pill in the middle of the mobile bar (hidden on
+// desktop, where the nav links sit there). Same hours data as the chatbot
+// and the location section.
+function OpenStatus() {
+  const status = getOpenStatus(useNow());
+
+  return (
+    <span className={`nav-status ${status.open ? 'is-open' : 'is-closed'}`}>
+      <span className="nav-status-dot" aria-hidden="true" />
+      {status.open ? 'Geöffnet' : 'Geschlossen'}
+      {status.open && status.closesAt && <span className="nav-status-until"> · bis {status.closesAt}</span>}
+    </span>
+  );
+}
 
 // Absolute (/#services) rather than bare (#services) hashes so these links
 // also work correctly from standalone pages like /produkte.html or
@@ -50,6 +67,7 @@ export default function Header() {
           <img src="/logo.jpg" alt="SnackPoint Logo" className="brand-logo" />
           <span>SnackPoint</span>
         </a>
+        <OpenStatus />
         <nav className="nav-links">
           {LINKS.map((link) => (
             <a key={link.href} href={link.href}>{link.label}</a>

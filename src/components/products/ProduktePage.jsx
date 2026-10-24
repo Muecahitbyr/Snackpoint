@@ -5,6 +5,7 @@ import Header from '../Header';
 import Footer from '../Footer';
 import CookieConsent from '../CookieConsent';
 import Reveal from '../Reveal';
+import SplitWords from '../SplitWords';
 import '../NewProducts.css';
 import './Produkte.css';
 
@@ -52,7 +53,7 @@ export default function ProduktePage() {
       <main className="produkte-main">
         <div className="produkte-header">
           <p className="eyebrow">Sortiment</p>
-          <h1 className="section-title">Alle Produkte.</h1>
+          <h1 className="section-title"><SplitWords text="Alle Produkte." /></h1>
           <p className="lead">
             Eine Auswahl aus unserem Sortiment — täglich frisch im Laden, oft in mehreren Sorten und
             Marken. Genaue Verfügbarkeit direkt bei uns in Kaufbeuren.

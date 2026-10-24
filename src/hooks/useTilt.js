@@ -1,11 +1,12 @@
 import { useRef } from 'react';
+import { prefersReducedMotion } from './motion';
 
 export function useTilt(strength = 10) {
   const ref = useRef(null);
 
   function onMouseMove(e) {
     const el = ref.current;
-    if (!el) return;
+    if (!el || prefersReducedMotion()) return;
     const rect = el.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;

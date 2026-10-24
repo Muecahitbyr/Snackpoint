@@ -1,6 +1,8 @@
 import { newProducts } from '../data/newProducts';
 import { useTilt } from '../hooks/useTilt';
+import { useParallax } from '../hooks/useParallax';
 import Reveal from './Reveal';
+import SplitWords from './SplitWords';
 import './NewProducts.css';
 
 function ProductCard({ product, delay, index }) {
@@ -26,12 +28,17 @@ function ProductCard({ product, delay, index }) {
 }
 
 export default function NewProducts() {
+  // The side tag drifts sideways as the section scrolls past.
+  const tagTrack = useParallax(1.4, 'x');
+
   return (
     <section className="new-products" id="new" data-character-target="products">
-      <span className="new-products-tag" aria-hidden="true">Snacks</span>
+      <div className="new-products-tag-track" ref={tagTrack} aria-hidden="true">
+        <span className="new-products-tag">Snacks</span>
+      </div>
       <Reveal className="new-header">
         <p className="eyebrow">Neu eingetroffen</p>
-        <h2 className="section-title">Frisch im Regal.</h2>
+        <h2 className="section-title"><SplitWords text="Frisch im Regal." /></h2>
         <p className="lead">
           Jede Woche neue Süßigkeiten-Trends aus aller Welt — von internationalen Klassikern bis zu
           den heißesten Newcomern.
