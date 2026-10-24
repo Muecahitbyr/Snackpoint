@@ -28,11 +28,17 @@ html {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Permanent Marker', 'Comic Sans MS', cursive;
   overflow-x: hidden;
   width: 100%;
   line-height: 1.5;
+  /* Both graffiti fonts only ship in one weight — faux-bolding them smears the strokes. */
+  font-synthesis: none;
 }
+
+h1, h2 { font-family: 'Sedgwick Ave Display', 'Permanent Marker', cursive; }
+
+button, input, textarea, select { font-family: inherit; }
 
 img { display: block; max-width: 100%; }
 a { color: inherit; text-decoration: none; }
