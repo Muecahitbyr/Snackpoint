@@ -103,17 +103,17 @@ npm run admin:create
 
 - Fragt E-Mail und Passwort ab (Passwort wird nicht angezeigt, mind. 12 Zeichen).
 - Weigert sich, wenn schon ein Konto existiert.
-- Für die Produktionsdatenbank auf Railway: in Railway bei der Postgres-Datenbank unter *Connect* die
-  **öffentliche** URL (`DATABASE_PUBLIC_URL`, `…proxy.rlwy.net:…`) kopieren und lokal ausführen:
+- Für die Produktionsdatenbank auf Railway: Die Datenbank hat absichtlich **keine öffentliche Adresse**.
+  Der Befehl läuft deshalb direkt im API-Container auf Railway (dort ist `DATABASE_URL` schon gesetzt):
   ```bash
-   DATABASE_URL="postgresql://…proxy.rlwy.net:12345/railway" DATABASE_SSL=no-verify npm run admin:create
+  railway ssh --service snackpoint-api
+  npm run admin:create        # im Container; danach: exit
   ```
-  (Das Leerzeichen am Anfang verhindert, dass die URL mit Passwort in der Shell-History landet.)
 
 ### Passwort ändern / vergessen
 
 - Im Adminpanel: **Passwort ändern** (alle anderen Geräte werden dabei abgemeldet).
-- Vergessen: `npm run admin:reset-password` (mit der öffentlichen Railway-URL wie oben). Setzt ein neues Passwort,
+- Vergessen: `npm run admin:reset-password` (genauso im Container über `railway ssh`). Setzt ein neues Passwort,
   beendet alle Sitzungen und hebt eine Login-Sperre auf. Ein Zurücksetzen per E-Mail-Link ist absichtlich
   nicht eingebaut – dafür bräuchte es einen Mail-Dienst, und ein Link-Versand ist ein zusätzliches Einfallstor.
 
@@ -192,13 +192,12 @@ bei Weitem). Railway: nutzungsbasiert im bestehenden Railway-Tarif (API-Dienst +
 
 ### Backups
 
-- Regelmäßig (z. B. wöchentlich und vor größeren Änderungen):
-  ```bash
-   DATABASE_URL="postgresql://…proxy.rlwy.net:…/railway" DATABASE_SSL=no-verify npm run db:backup
-  ```
-  → `backups/snackpoint-<datum>.dump` (nicht in Git). Benötigt `pg_dump` in einer Version ≥ Server-Version.
-  Zusätzlich bietet Railway Volume-Backups für die Datenbank (Datenbank → *Backups*), sofern im Tarif
-  enthalten.
+- **Empfohlen:** Railways eingebaute Postgres-Backups aktivieren (Point-in-Time-Recovery mit
+  automatischem Zeitplan): `railway postgres pitr enable --service Postgres` bzw. im Dashboard unter
+  Postgres → *Backups*. Kostet etwas Speicher im Railway-Tarif.
+- Manuelles Backup vom eigenen Rechner (`npm run db:backup`) braucht eine öffentliche Datenbankadresse.
+  Dafür vorübergehend in Railway bei Postgres *Settings → Networking → TCP Proxy* aktivieren, die
+  `DATABASE_PUBLIC_URL` verwenden (`DATABASE_SSL=no-verify`) und den Proxy danach wieder entfernen.
 - Wiederherstellen in eine **leere** Datenbank: `pg_restore --no-owner -d "<url>" backups/<datei>.dump`
 - Backups enthalten Passwort-**Hashes** und alle Bilder: sicher aufbewahren, nicht öffentlich teilen.
 
