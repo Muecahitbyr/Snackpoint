@@ -71,7 +71,7 @@ export default function Events() {
     <>
       <PageHeader
         title="Events"
-        description="Veröffentlichte, aktive Events erscheinen auf der Startseite und unter /events."
+        description="Veröffentlichte, aktive Events erscheinen groß auf der Startseite, direkt unter dem Kopfbereich."
         actions={<Button onClick={() => navigate('events/neu')}><Icon name="plus" size={16} /> Neues Event</Button>}
       />
       <div className="toolbar">

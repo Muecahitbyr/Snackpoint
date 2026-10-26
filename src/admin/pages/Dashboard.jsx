@@ -71,22 +71,24 @@ export default function Dashboard({ isDeveloper }) {
             <Stat label="Bilder" value={data.counts.media} href="#/medien" />
           </div>
 
-          <div className="dashboard-grid">
-            <Card title="Letzte Änderungen" actions={isDeveloper && <a className="card-link" href="#/protokoll">Alle ansehen</a>}>
-              {data.recent.length ? (
-                <ul className="activity">
-                  {data.recent.map((entry) => (
-                    <li key={entry.id}>
-                      <div>
-                        <strong>{describeChange(entry)}</strong>
-                        {entry.summary && <span className="activity-summary">{entry.summary}</span>}
-                      </div>
-                      <time dateTime={entry.createdAt} title={formatDateTime(entry.createdAt)}>{formatRelative(entry.createdAt)}</time>
-                    </li>
-                  ))}
-                </ul>
-              ) : <EmptyState icon="activity" title="Noch keine Änderungen" />}
-            </Card>
+          <div className={`dashboard-grid ${isDeveloper ? '' : 'is-single'}`}>
+            {isDeveloper && (
+              <Card title="Letzte Änderungen" actions={<a className="card-link" href="#/protokoll">Alle ansehen</a>}>
+                {data.recent.length ? (
+                  <ul className="activity">
+                    {data.recent.map((entry) => (
+                      <li key={entry.id}>
+                        <div>
+                          <strong>{describeChange(entry)}</strong>
+                          {entry.summary && <span className="activity-summary">{entry.summary}</span>}
+                        </div>
+                        <time dateTime={entry.createdAt} title={formatDateTime(entry.createdAt)}>{formatRelative(entry.createdAt)}</time>
+                      </li>
+                    ))}
+                  </ul>
+                ) : <EmptyState icon="activity" title="Noch keine Änderungen" />}
+              </Card>
+            )}
 
             <Card title="Nächste Events" actions={<a className="card-link" href="#/events">Alle Events</a>}>
               {data.nextEvents.length ? (

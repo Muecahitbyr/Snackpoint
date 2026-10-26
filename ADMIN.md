@@ -158,9 +158,10 @@ ab. Bilder werden zusätzlich von Cloudflare zwischengespeichert; wird ein Bild 
 Adresse automatisch.
 
 **Was erscheint wo?**
-- Bereiche *Aktionen* und *Events* auf der Startseite sowie der Menüpunkt „Events“ erscheinen nur, wenn es
-  aktive Einträge gibt – ohne Einträge sieht die Seite genau wie vorher aus. `/events` zeigt ohne Events einen
-  freundlichen Hinweis.
+- **Events** stehen groß direkt unter dem Kopfbereich der Startseite (nächstes Event als große Karte mit
+  Countdown, weitere darunter); ein Klick öffnet alle Infos inkl. Galerie, Kalender-Datei und Route. Der
+  Menüpunkt „Events“ springt dorthin. Ohne geplante Events verschwinden Bereich und Menüpunkt.
+- Der Bereich *Aktionen* erscheint nur, wenn es aktive Aktionen gibt.
 - Vergangene Events werden automatisch archiviert (`EVENT_ARCHIVE` in `server/lib/publicSite.js`). Ein Event
   ohne Ende gilt bis Mitternacht als laufend.
 - Die 12 zusätzlichen Markenprodukte des Chat-Assistenten (Takis, Red Bull, Monster, Marlboro) wurden als

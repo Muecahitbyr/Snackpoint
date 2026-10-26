@@ -24,7 +24,7 @@ if (!apiOnly && existsSync('dist')) {
   });
   server.get('/admin', serveStatic({ path: './dist/admin.html' }));
   server.get('/admin/', serveStatic({ path: './dist/admin.html' }));
-  server.get('/events', serveStatic({ path: './dist/events.html' }));
+  server.get('/events', (c) => c.redirect('/#events', 301));
   server.use('/assets/*', async (c, next) => {
     await next();
     c.header('Cache-Control', 'public, max-age=31536000, immutable');

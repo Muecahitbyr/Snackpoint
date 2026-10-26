@@ -8,7 +8,7 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    // /admin → admin.html, /events → events.html
+    // /admin → admin.html
     "html_handling": "auto-trailing-slash",
     "run_worker_first": ["/api/*"]
   },

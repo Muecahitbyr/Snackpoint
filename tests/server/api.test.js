@@ -489,7 +489,9 @@ describe('roles', () => {
     }
     assert.equal((await owner.send('/api/admin/users', { method: 'POST', body: {} })).status, 403);
     assert.equal((await owner.send('/api/auth/password', { method: 'POST', body: { currentPassword: 'x', newPassword: 'y' } })).status, 403);
-    assert.equal((await owner.send('/api/admin/dashboard')).data.lastBackupAt, undefined, 'no backup reminder for owners');
+    const ownerDashboard = (await owner.send('/api/admin/dashboard')).data;
+    assert.equal(ownerDashboard.lastBackupAt, undefined, 'no backup info for owners');
+    assert.equal(ownerDashboard.recent, undefined, 'no change log for owners');
     const category = (await owner.send('/api/admin/categories')).data.items[0];
     assert.equal((await owner.send('/api/admin/products', { method: 'POST', body: { categoryId: category.id, name: 'Inhaber-Produkt' } })).status, 201);
   });

@@ -244,9 +244,9 @@ dashboard.get('/', async (c) => {
   );
   return c.json({
     counts: counts[0],
-    // Backups are the developer's job; owners don't see the reminder.
+    // Change log and backups are the developer's; owners get neither.
     lastBackupAt: developer ? await lastBackupAt() : undefined,
-    recent: recent.map(auditJson),
+    recent: developer ? recent.map(auditJson) : undefined,
     nextEvents: next.map((row) => ({ id: row.id, title: row.title, startsAt: iso(row.starts_at), status: row.status })),
   });
 });

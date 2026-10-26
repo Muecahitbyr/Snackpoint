@@ -4,8 +4,7 @@
 import { query } from '../db/pool.js';
 import { mediaUrl } from './media.js';
 
-// Past events leave the "current" list; set showPast to list the last ones
-// on /events under "Das war los".
+// Past events leave the "current" list (and with it the homepage).
 const EVENT_ARCHIVE = { autoArchive: true, showPast: false };
 
 // An event without an end time counts as running until the end of its day.

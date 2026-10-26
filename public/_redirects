@@ -1,0 +1,3 @@
+# The events page became a section of the homepage.
+/events       /#events  301
+/events.html  /#events  301

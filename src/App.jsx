@@ -36,12 +36,12 @@ export default function App() {
       <Header />
       <main>
         <Hero />
+        <Events />
         <About />
         <Services />
         <Promotions />
         <Highlight />
         <NewProducts />
-        <Events />
         <Reviews />
         <Location />
       </main>

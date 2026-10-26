@@ -5,7 +5,7 @@ import { getRequestListener } from '@hono/node-server';
 
 // Pretty URLs for the extra pages — Cloudflare (wrangler.jsonc) and server/node.js do the
 // same in production.
-const PAGE_REWRITES = { '/admin': '/admin.html', '/admin/': '/admin.html', '/events': '/events.html' };
+const PAGE_REWRITES = { '/admin': '/admin.html', '/admin/': '/admin.html' };
 
 function rewritePages(req, _res, next) {
   const [path, query] = req.url.split('?');
@@ -45,7 +45,6 @@ export default defineConfig({
         impressum: resolve(import.meta.dirname, 'impressum.html'),
         datenschutz: resolve(import.meta.dirname, 'datenschutz.html'),
         produkte: resolve(import.meta.dirname, 'produkte.html'),
-        events: resolve(import.meta.dirname, 'events.html'),
         admin: resolve(import.meta.dirname, 'admin.html'),
       },
     },

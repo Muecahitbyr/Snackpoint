@@ -34,15 +34,15 @@ const LINKS = [
   { href: '/#reviews', label: 'Bewertungen' },
   { href: '/#location', label: 'Standort' },
 ];
-// Only listed while events are planned.
-const EVENTS_LINK = { href: '/events', label: 'Events' };
+// Only listed while events are planned — first, like the section on the page.
+const EVENTS_LINK = { href: '/#events', label: 'Events' };
 
 export default function Header() {
   const navRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const content = useContent();
   const { events } = useSite();
-  const links = events.current.length ? [...LINKS.slice(0, 2), EVENTS_LINK, ...LINKS.slice(2)] : LINKS;
+  const links = events.current.length ? [EVENTS_LINK, ...LINKS] : LINKS;
 
   useEffect(() => {
     let ticking = false;

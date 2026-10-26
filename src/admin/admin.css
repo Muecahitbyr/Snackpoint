@@ -337,6 +337,7 @@ select.filter.is-active {
 .stat-label { font-weight: 700; font-size: 0.9rem; }
 .stat-hint { font-size: 0.78rem; color: var(--a-dim); }
 .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.dashboard-grid.is-single { grid-template-columns: 1fr; }
 .activity { list-style: none; }
 .activity li { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--a-border); }
 .activity li:last-child { border-bottom: none; }

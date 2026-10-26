@@ -41,8 +41,6 @@ export const CONTENT = {
   'events.eyebrow': 'Events',
   'events.title': 'Bald bei uns.',
   'events.text': 'Aktionstage, Verkostungen und mehr — komm vorbei und feier mit uns.',
-  'events.empty': 'Gerade sind keine Events geplant. Schau bald wieder vorbei!',
-  'events.pastTitle': 'Das war los',
   // Bewertungen
   'reviews.eyebrow': 'Bewertungen',
   'reviews.title': 'Das sagen unsere Kunden.',
