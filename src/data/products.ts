@@ -50,7 +50,8 @@ export const CATEGORIES: ProductCategory[] = [
   { id: 'suessigkeiten', name: 'Süßigkeiten', aliases: ['suessigkeiten', 'suessigkeit', 'suess', 'naschen', 'naschzeug', 'candy'], parent: 'snacks' },
   { id: 'schokolade', name: 'Schokolade', aliases: ['schokolade', 'schoko'], parent: 'suessigkeiten' },
   { id: 'belegtes', name: 'Sandwiches & Gebäck', aliases: ['belegtes', 'imbiss', 'essen', 'mittagessen', 'fruehstueck', 'hunger'], parent: 'snacks' },
-  { id: 'zeitschriften', name: 'Zeitschriften', aliases: [] },
+  { id: 'zeitschriften', name: 'Zeitschriften', aliases: ['zeitschriften', 'zeitungen'] },
+  { id: 'guthaben', name: 'Guthabenkarten', aliases: ['guthaben', 'guthabenkarte', 'aufladen', 'prepaid', 'geschenkkarte'] },
 ];
 
 // Generic product groups from the /produkte catalog (allProducts.js): which
@@ -59,11 +60,24 @@ export const CATEGORIES: ProductCategory[] = [
 const CATEGORY_BY_CATALOG_CATEGORY: Record<string, string> = {
   'Süßigkeiten': 'suessigkeiten',
   Schokolade: 'schokolade',
-  'Getränke': 'getraenke',
   'Chips & Salziges': 'chips',
+  'Popcorn & Eis': 'snacks',
+  'Softdrinks & Wasser': 'getraenke',
+  'Energy Drinks': 'energy',
+  Kaffee: 'getraenke',
   'Sandwiches & Snacks': 'belegtes',
-  Sonstiges: 'snacks',
+  'Zeitschriften & Zeitungen': 'zeitschriften',
+  Guthabenkarten: 'guthaben',
 };
+
+// Not offered as chat products: Lotto and DHL are answered by their own
+// topics in chatbotKnowledge.ts, tobacco by the 'zigaretten' category and
+// the branded rows below (catalog names like "Drehtabak" would otherwise
+// shadow it).
+const CHAT_SKIPPED_CATALOG_CATEGORIES = new Set([
+  'Zigaretten', 'Tabak', 'E-Zigaretten', 'Raucherbedarf',
+  'Lotterien', 'Rubbellose & Wetten', 'Lotto-Service', 'DHL Paketshop',
+]);
 
 const GENERIC_OVERRIDES: Record<string, { category?: string; aliases?: string[]; tags?: string[]; skip?: boolean }> = {
   'Fruchtgummi-Mix': { aliases: ['gummi', 'gummibärchen', 'weingummi', 'lakritz', 'bärchen'], tags: ['suess', 'beliebt'] },
@@ -91,11 +105,17 @@ const GENERIC_OVERRIDES: Record<string, { category?: string; aliases?: string[];
   'Salat to go': { aliases: ['salat'] },
   'Popcorn süß & salzig': { aliases: ['popcorn'], tags: ['suess', 'salzig'] },
   'Eis am Stiel': { aliases: ['eis', 'eiscreme', 'speiseeis'], tags: ['kalt', 'suess'] },
+  'Tageszeitungen': { aliases: ['zeitung', 'tageszeitung'] },
+  'Magazine & Zeitschriften': { aliases: ['magazin', 'zeitschrift', 'heft'] },
+  'Rätselhefte': { aliases: ['rätsel', 'kreuzworträtsel', 'sudoku'] },
+  'Prepaid-Guthaben': { aliases: ['aufladekarte'] },
+  'Gaming- & Geschenkkarten': { aliases: ['psn', 'playstation', 'xbox', 'nintendo', 'steam', 'google play', 'netflix', 'spotify', 'gutschein'] },
+  paysafecard: { aliases: ['paysafe'] },
 };
 
 const GENERIC_PRODUCTS: Product[] = allProducts.flatMap((item: { title: string; category: string }) => {
   const override = GENERIC_OVERRIDES[item.title];
-  if (override?.skip) return [];
+  if (override?.skip || CHAT_SKIPPED_CATALOG_CATEGORIES.has(item.category)) return [];
   return [
     {
       name: item.title,
@@ -125,8 +145,6 @@ const BRANDED_PRODUCTS: Product[] = [
   { brand: 'Monster', variant: 'Energy', category: 'energy', tags: ['kalt', 'beliebt'] },
   { brand: 'Monster', variant: 'Ultra', category: 'energy', aliases: ['zero'], tags: ['kalt', 'zuckerfrei'] },
   { brand: 'Monster', variant: 'Mango Loco', category: 'energy', tags: ['kalt'] },
-  // Sonstiges
-  { name: 'Zeitschriften', category: 'zeitschriften', aliases: ['magazin', 'zeitung', 'heft'] },
 ];
 
 export const PRODUCTS: Product[] = [...GENERIC_PRODUCTS, ...BRANDED_PRODUCTS];

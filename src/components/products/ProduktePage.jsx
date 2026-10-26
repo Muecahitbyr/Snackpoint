@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { allProducts, PRODUCT_CATEGORIES } from '../../data/allProducts';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { allProducts, PRODUCT_GROUPS, groupCategories } from '../../data/allProducts';
 import { useTilt } from '../../hooks/useTilt';
 import Header from '../Header';
 import Footer from '../Footer';
@@ -10,9 +10,17 @@ import '../NewProducts.css';
 import './Produkte.css';
 
 const ALL = 'Alle';
+const GROUP_BY_ID = new Map(PRODUCT_GROUPS.map((group) => [group.id, group]));
+
+// /produkte.html#lotto opens straight on that group.
+function groupFromHash() {
+  const id = window.location.hash.slice(1);
+  return GROUP_BY_ID.has(id) ? id : ALL;
+}
 
 function ProductCard({ product, delay }) {
   const tilt = useTilt(10);
+  const ageRestricted = GROUP_BY_ID.get(product.group)?.ageRestricted;
 
   return (
     <Reveal className="product-card-wrap" delay={delay}>
@@ -25,6 +33,7 @@ function ProductCard({ product, delay }) {
         <div className={`product-media ${product.gradient}`}>
           <span>{product.emoji}</span>
         </div>
+        {ageRestricted && <div className="age-badge" title="Nur ab 18 Jahren">18+</div>}
         <div className="badge">{product.category}</div>
         <h3>{product.title}</h3>
         <p>{product.text}</p>
@@ -35,17 +44,48 @@ function ProductCard({ product, delay }) {
 
 export default function ProduktePage() {
   const [search, setSearch] = useState('');
+  const [group, setGroup] = useState(groupFromHash);
   const [category, setCategory] = useState(ALL);
+  const groupsRef = useRef(null);
 
-  const filtered = useMemo(() => {
+  useEffect(() => {
+    const onHashChange = () => {
+      setGroup(groupFromHash());
+      setCategory(ALL);
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  // On phones the tab row scrolls sideways — keep the active tab in view.
+  useEffect(() => {
+    const row = groupsRef.current;
+    const active = row?.querySelector('.is-active');
+    if (!row || !active || row.scrollWidth <= row.clientWidth) return;
+    row.scrollTo({ left: active.offsetLeft - (row.clientWidth - active.offsetWidth) / 2, behavior: 'smooth' });
+  }, [group]);
+
+  const selectGroup = (id) => {
+    setGroup(id);
+    setCategory(ALL);
+    window.history.replaceState(null, '', id === ALL ? window.location.pathname : `#${id}`);
+  };
+
+  const subCategories = group === ALL ? [] : groupCategories(group);
+
+  const sections = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return allProducts.filter((product) => {
-      const matchesCategory = category === ALL || product.category === category;
-      const matchesSearch =
-        !term || product.title.toLowerCase().includes(term) || product.text.toLowerCase().includes(term);
-      return matchesCategory && matchesSearch;
+    const matches = allProducts.filter((product) => {
+      if (group !== ALL && product.group !== group) return false;
+      if (category !== ALL && product.category !== category) return false;
+      if (!term) return true;
+      const groupName = GROUP_BY_ID.get(product.group)?.name ?? '';
+      return [product.title, product.text, product.category, groupName].some((text) => text.toLowerCase().includes(term));
     });
-  }, [search, category]);
+    return PRODUCT_GROUPS.map((g) => ({ group: g, products: matches.filter((p) => p.group === g.id) })).filter(
+      (section) => section.products.length > 0
+    );
+  }, [search, group, category]);
 
   return (
     <div className="produkte-page">
@@ -55,8 +95,8 @@ export default function ProduktePage() {
           <p className="eyebrow">Sortiment</p>
           <h1 className="section-title"><SplitWords text="Alle Produkte." /></h1>
           <p className="lead">
-            Eine Auswahl aus unserem Sortiment — täglich frisch im Laden, oft in mehreren Sorten und
-            Marken. Genaue Verfügbarkeit direkt bei uns in Kaufbeuren.
+            Snacks, Getränke, Tabakwaren, Lotto und mehr — eine Auswahl aus unserem Sortiment, oft in
+            mehreren Sorten und Marken. Genaue Verfügbarkeit direkt bei uns in Kaufbeuren.
           </p>
         </div>
 
@@ -77,36 +117,62 @@ export default function ProduktePage() {
             )}
           </div>
 
-          <div className="produkte-filters" role="group" aria-label="Nach Kategorie filtern">
+          <div className="produkte-groups" ref={groupsRef} role="group" aria-label="Nach Bereich filtern">
             <button
               type="button"
-              className={`produkte-filter-chip ${category === ALL ? 'is-active' : ''}`}
-              onClick={() => setCategory(ALL)}
+              className={`produkte-group-tab ${group === ALL ? 'is-active' : ''}`}
+              onClick={() => selectGroup(ALL)}
             >
-              Alle
+              <span aria-hidden="true">✨</span> Alle
             </button>
-            {PRODUCT_CATEGORIES.map((cat) => (
+            {PRODUCT_GROUPS.map((g) => (
               <button
-                key={cat}
+                key={g.id}
                 type="button"
-                className={`produkte-filter-chip ${category === cat ? 'is-active' : ''}`}
-                onClick={() => setCategory(cat)}
+                className={`produkte-group-tab ${group === g.id ? 'is-active' : ''}`}
+                onClick={() => selectGroup(g.id)}
               >
-                {cat}
+                <span aria-hidden="true">{g.emoji}</span> {g.name}
               </button>
             ))}
           </div>
+
+          {subCategories.length > 1 && (
+            <div className="produkte-filters" role="group" aria-label="Nach Kategorie filtern">
+              {[ALL, ...subCategories].map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  className={`produkte-filter-chip ${category === cat ? 'is-active' : ''}`}
+                  onClick={() => setCategory(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {filtered.length > 0 ? (
-          <div className="product-grid produkte-grid">
-            {filtered.map((product, i) => (
-              <ProductCard key={product.title} product={product} delay={(i % 8) * 0.06} />
-            ))}
-          </div>
+        {sections.length > 0 ? (
+          sections.map(({ group: g, products }) => (
+            <section key={g.id} className="produkte-section" aria-labelledby={`gruppe-${g.id}`}>
+              <div className="produkte-section-head">
+                <h2 id={`gruppe-${g.id}`}>
+                  <span aria-hidden="true">{g.emoji}</span> {g.name}
+                </h2>
+                <span className="produkte-section-count">{products.length}</span>
+              </div>
+              {g.notice && <p className="produkte-notice">{g.notice}</p>}
+              <div className="product-grid produkte-grid">
+                {products.map((product, i) => (
+                  <ProductCard key={product.title} product={product} delay={(i % 8) * 0.06} />
+                ))}
+              </div>
+            </section>
+          ))
         ) : (
           <div className="produkte-empty">
-            <p>Keine Produkte gefunden. Versuch es mit einem anderen Suchbegriff oder einer anderen Kategorie.</p>
+            <p>Keine Produkte gefunden. Versuch es mit einem anderen Suchbegriff oder einem anderen Bereich.</p>
           </div>
         )}
       </main>

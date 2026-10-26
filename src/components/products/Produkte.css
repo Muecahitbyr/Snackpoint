@@ -88,6 +88,88 @@
   box-shadow: 0 10px 24px rgba(224, 32, 31, 0.28);
 }
 
+.produkte-groups {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.produkte-group-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid var(--card-border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 12px 20px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s, border-color 0.2s;
+}
+.produkte-group-tab span { font-size: 1.15rem; }
+.produkte-group-tab:hover { transform: translateY(-2px); border-color: rgba(224, 32, 31, 0.35); }
+.produkte-group-tab.is-active {
+  background: var(--text);
+  border-color: var(--text);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.produkte-section {
+  max-width: var(--max);
+  margin: 0 auto 64px;
+}
+.produkte-section-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--card-border);
+}
+.produkte-section-head h2 {
+  font-family: var(--font-brush);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 400;
+  color: var(--text);
+}
+.produkte-section-count {
+  min-width: 28px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  background: var(--bg-alt);
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+.produkte-notice {
+  margin: -8px 0 22px;
+  padding: 12px 16px;
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  background: rgba(224, 32, 31, 0.06);
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.age-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 5px 10px;
+  border-radius: 100px;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
 .produkte-empty {
   max-width: var(--max);
   margin: 0 auto;
@@ -99,4 +181,7 @@
 
 @media (max-width: 560px) {
   .produkte-search { max-width: none; }
+  .produkte-groups { flex-wrap: nowrap; overflow-x: auto; margin: 0 -24px; padding: 4px 24px 8px; scrollbar-width: none; }
+  .produkte-groups::-webkit-scrollbar { display: none; }
+  .produkte-group-tab { flex: none; padding: 10px 16px; font-size: 0.88rem; }
 }
