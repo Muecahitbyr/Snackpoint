@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, formatRelative, useApi } from '../api';
 import { Badge, Button, Card, ErrorBox, ImageField, PageHeader, SelectField, Spinner, Tabs, TextField, Toggle, useToast } from '../ui';
 import ManagedList, { FormActions } from './ManagedList';
+import { Icon } from '../icons';
 
 function ContentSection({ section, values, onSaved }) {
   const toast = useToast();
@@ -176,7 +177,11 @@ export default function Content() {
       <Tabs
         active={tab}
         onChange={setTab}
-        tabs={[{ id: 'texts', label: '📝 Texte & Bilder' }, { id: 'services', label: '🧰 Leistungen' }, { id: 'reviews', label: '⭐ Bewertungen' }]}
+        tabs={[
+          { id: 'texts', label: 'Texte & Bilder', icon: 'text' },
+          { id: 'services', label: 'Leistungen', icon: 'wrench' },
+          { id: 'reviews', label: 'Bewertungen', icon: 'message' },
+        ]}
       />
       {tab === 'texts' && <Texts />}
       {tab === 'services' && (
@@ -185,11 +190,11 @@ export default function Content() {
           endpoint="/admin/services"
           noun="Leistung"
           newLabel="Neue Leistung"
-          emptyIcon="🧰"
+          emptyIcon="wrench"
           emptyText="Noch keine Leistungen"
           Form={ServiceForm}
           describe={(item) => ({
-            thumb: item.logo ? <img src={item.logo.thumbUrl} alt="" /> : item.icon || '🧰',
+            thumb: item.logo ? <img src={item.logo.thumbUrl} alt="" /> : item.icon || <Icon name="wrench" />,
             title: item.title,
             subtitle: item.description,
             badges: item.badge ? <Badge tone="accent">Laufband: {item.badge}</Badge> : null,
@@ -202,7 +207,7 @@ export default function Content() {
           endpoint="/admin/reviews"
           noun="Bewertung"
           newLabel="Neue Bewertung"
-          emptyIcon="⭐"
+          emptyIcon="message"
           emptyText="Noch keine Bewertungen"
           Form={ReviewForm}
           describe={(item) => ({

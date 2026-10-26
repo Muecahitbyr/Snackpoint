@@ -4,6 +4,7 @@ import {
   Badge, Button, Card, EmptyState, ErrorBox, Modal, MoveButtons, PageHeader, SelectField, Spinner, TextField, Toggle,
   useAction, useConfirm, useToast,
 } from '../ui';
+import { Icon } from '../icons';
 
 function GroupModal({ group, onClose, onSaved }) {
   const toast = useToast();
@@ -98,7 +99,7 @@ function CategoryModal({ category, groups, chatCategories, defaultGroupId, onClo
 export default function Categories() {
   const groups = useApi('/admin/groups');
   const categories = useApi('/admin/categories');
-  const settings = useApi('/admin/settings');
+  const settings = useApi('/admin/meta');
   const confirm = useConfirm();
   const [run, busy] = useAction();
   const [modal, setModal] = useState(null);
@@ -142,14 +143,14 @@ export default function Categories() {
         description="Bereiche (Reiter auf der Produktseite) und ihre Kategorien (Filter darunter)."
         actions={
           <>
-            <Button variant="ghost" onClick={() => setModal({ type: 'group' })}>＋ Neuer Bereich</Button>
-            <Button onClick={() => setModal({ type: 'category' })} disabled={!groupList.length}>＋ Neue Kategorie</Button>
+            <Button variant="ghost" onClick={() => setModal({ type: 'group' })}><Icon name="plus" size={16} /> Neuer Bereich</Button>
+            <Button onClick={() => setModal({ type: 'category' })} disabled={!groupList.length}><Icon name="plus" size={16} /> Neue Kategorie</Button>
           </>
         }
       />
 
       {loading ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : groupList.length === 0 ? (
-        <EmptyState icon="🗂️" title="Noch keine Bereiche">Lege zuerst einen Bereich an.</EmptyState>
+        <EmptyState icon="folder" title="Noch keine Bereiche">Lege zuerst einen Bereich an.</EmptyState>
       ) : (
         <div className="group-list">
           {groupList.map((group) => {
@@ -172,7 +173,7 @@ export default function Categories() {
                       disabled={group.categoryCount > 0}
                       title={group.categoryCount > 0 ? 'Enthält noch Kategorien' : 'Löschen'}
                       aria-label={`${group.name} löschen`}
-                    >🗑</Button>
+                    ><Icon name="trash" size={16} /></Button>
                   </div>
                 }
               >
@@ -198,7 +199,7 @@ export default function Categories() {
                             disabled={category.productCount > 0}
                             title={category.productCount > 0 ? 'Enthält noch Produkte — verschiebe oder lösche sie zuerst' : 'Löschen'}
                             aria-label={`${category.name} löschen`}
-                          >🗑</Button>
+                          ><Icon name="trash" size={16} /></Button>
                         </div>
                       </li>
                     ))}
@@ -206,7 +207,7 @@ export default function Categories() {
                 ) : (
                   <p className="muted">Noch keine Kategorien.</p>
                 )}
-                <Button variant="link" size="small" onClick={() => setModal({ type: 'category', groupId: group.id })}>＋ Kategorie in „{group.name}“</Button>
+                <Button variant="link" size="small" onClick={() => setModal({ type: 'category', groupId: group.id })}><Icon name="plus" size={14} /> Kategorie in „{group.name}“</Button>
               </Card>
             );
           })}

@@ -5,6 +5,7 @@ import { DateTimeField } from '../DateTimePicker';
 import {
   Badge, Button, Card, ErrorBox, Field, GalleryField, ImageField, PageHeader, Spinner, TextField, Toggle, useConfirm, useToast,
 } from '../ui';
+import { Icon } from '../icons';
 
 const EMPTY = {
   title: '', description: '', location: '', startsAt: '', endsAt: '', priceMode: 'none', price: '', admissionNote: '',
@@ -117,7 +118,7 @@ export default function EventForm({ id }) {
         title={id ? form.title || 'Event bearbeiten' : 'Neues Event'}
         description={
           <>
-            <a href="#/events">← Zurück zur Übersicht</a>{' '}
+            <a href="#/events" className="back-link"><Icon name="arrowLeft" size={15} /> Zurück zur Übersicht</a>{' '}
             {id && (published ? <Badge tone="success">Veröffentlicht</Badge> : <Badge tone="warning">Entwurf</Badge>)}
           </>
         }

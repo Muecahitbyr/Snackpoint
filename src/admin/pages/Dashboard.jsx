@@ -1,6 +1,7 @@
 import { formatDateTime, formatRelative, useApi } from '../api';
 import { navigate } from '../router';
 import { Badge, Button, Card, EmptyState, ErrorBox, PageHeader, Spinner } from '../ui';
+import { Icon } from '../icons';
 
 const ENTITY_LABELS = {
   product: 'Produkt', product_group: 'Bereich', product_category: 'Kategorie', event: 'Event', banner: 'Banner',
@@ -18,7 +19,7 @@ function BackupReminder({ lastBackupAt }) {
   return (
     <div className="hint-bar backup-reminder">
       <span>
-        💾 {lastBackupAt ? `Letzte Datensicherung ${formatRelative(lastBackupAt)}.` : 'Es wurde noch keine Datensicherung heruntergeladen.'} Lade
+        <Icon name="save" size={16} /> {lastBackupAt ? `Letzte Datensicherung ${formatRelative(lastBackupAt)}.` : 'Es wurde noch keine Datensicherung heruntergeladen.'} Lade
         regelmäßig eine Sicherung herunter (alle 1–2 Wochen) und bewahre sie gut auf.
       </span>
       <a className="a-btn a-btn-primary a-btn-small" href="/api/admin/backup" download>Jetzt sichern</a>
@@ -46,16 +47,16 @@ export default function Dashboard() {
   return (
     <>
       <PageHeader
-        title="Willkommen zurück 👋"
+        title="Willkommen zurück"
         description="Hier siehst du auf einen Blick, was auf deiner Webseite los ist."
-        actions={<a className="a-btn a-btn-ghost" href="/" target="_blank" rel="noopener noreferrer">↗ Webseite ansehen</a>}
+        actions={<a className="a-btn a-btn-ghost" href="/" target="_blank" rel="noopener noreferrer"><Icon name="external" size={16} /> Webseite ansehen</a>}
       />
 
       <div className="quick-actions">
-        <Button onClick={() => navigate('produkte/neu')}>＋ Neues Produkt</Button>
-        <Button onClick={() => navigate('events/neu')}>＋ Neues Event</Button>
-        <Button variant="ghost" onClick={() => navigate('banner')}>📣 Banner schalten</Button>
-        <Button variant="ghost" onClick={() => navigate('medien')}>🖼️ Bilder hochladen</Button>
+        <Button onClick={() => navigate('produkte/neu')}><Icon name="plus" size={16} /> Neues Produkt</Button>
+        <Button onClick={() => navigate('events/neu')}><Icon name="plus" size={16} /> Neues Event</Button>
+        <Button variant="ghost" onClick={() => navigate('banner')}><Icon name="megaphone" size={16} /> Banner schalten</Button>
+        <Button variant="ghost" onClick={() => navigate('medien')}><Icon name="upload" size={16} /> Bilder hochladen</Button>
       </div>
 
       {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : (
@@ -84,7 +85,7 @@ export default function Dashboard() {
                     </li>
                   ))}
                 </ul>
-              ) : <EmptyState icon="🕊️" title="Noch keine Änderungen" />}
+              ) : <EmptyState icon="activity" title="Noch keine Änderungen" />}
             </Card>
 
             <Card title="Nächste Events" actions={<a className="card-link" href="#/events">Alle Events</a>}>
@@ -101,7 +102,7 @@ export default function Dashboard() {
                   ))}
                 </ul>
               ) : (
-                <EmptyState icon="📅" title="Keine Events geplant">
+                <EmptyState icon="calendar" title="Keine Events geplant">
                   <Button size="small" onClick={() => navigate('events/neu')}>Event anlegen</Button>
                 </EmptyState>
               )}

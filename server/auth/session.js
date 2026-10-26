@@ -46,7 +46,7 @@ export async function loadSession(c) {
   const token = getCookie(c, COOKIE_NAME);
   if (!token || token.length > 100) return null;
   const { rows } = await query(
-    `SELECT s.id, s.csrf_token, s.created_at, s.last_seen_at, u.id AS user_id, u.email, u.display_name
+    `SELECT s.id, s.csrf_token, s.created_at, s.last_seen_at, u.id AS user_id, u.email, u.display_name, u.role
        FROM admin_sessions s JOIN admin_users u ON u.id = s.user_id
       WHERE s.token_hash = $1 AND s.expires_at > now()
         AND s.created_at > now() - make_interval(days => $2)`,
@@ -64,7 +64,7 @@ export async function loadSession(c) {
   return {
     id: session.id,
     csrfToken: session.csrf_token,
-    user: { id: session.user_id, email: session.email, displayName: session.display_name },
+    user: { id: session.user_id, email: session.email, displayName: session.display_name, role: session.role },
   };
 }
 
@@ -96,6 +96,14 @@ export function assertSameOrigin(c) {
   }
   const site = c.req.header('sec-fetch-site');
   if (site && site !== 'same-origin' && site !== 'none') throw forbidden('Anfrage von fremder Seite abgelehnt.');
+}
+
+/** Middleware (after requireAdmin): only accounts with the developer role. */
+export async function requireDeveloper(c, next) {
+  if (c.get('session').user.role !== 'developer') {
+    throw forbidden('Dieser Bereich ist nur für den Entwickler. Bitte wende dich an ihn.');
+  }
+  await next();
 }
 
 /** Middleware: requires a logged-in admin; unsafe methods also need the CSRF token. */

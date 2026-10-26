@@ -1,4 +1,5 @@
-// Admin accounts. Every account has full access; there is still no public
+// Admin accounts (developer only). Role "developer" sees everything, role
+// "owner" only the daily business (see app.js). There is still no public
 // sign-up. Creating, deleting and resetting another account's password all
 // require the acting admin to confirm with their own password.
 import { Hono } from 'hono';
@@ -13,12 +14,14 @@ import { parse, parseId, readJson, text } from '../lib/validation.js';
 
 const email = z.string().trim().toLowerCase().email('Ungültige E-Mail-Adresse').max(254);
 const currentPassword = z.string().min(1, 'Bitte dein Passwort eingeben').max(200);
+const role = z.enum(['developer', 'owner']);
 
 const iso = (value) => (value ? new Date(value).toISOString() : null);
 const userJson = (row, selfId) => ({
   id: row.id,
   email: row.email,
   displayName: row.display_name,
+  role: row.role,
   lastLoginAt: iso(row.last_login_at),
   createdAt: iso(row.created_at),
   isSelf: row.id === selfId,
@@ -50,7 +53,7 @@ users.get('/', async (c) => {
 
 users.post('/', async (c) => {
   const data = parse(
-    z.object({ email, displayName: text(80).optional(), password: z.string().max(200), currentPassword }),
+    z.object({ email, displayName: text(80).optional(), role: role.default('owner'), password: z.string().max(200), currentPassword }),
     await readJson(c)
   );
   assertStrong(data.password, data.email);
@@ -58,8 +61,8 @@ users.post('/', async (c) => {
   let row;
   try {
     ({ rows: [row] } = await query(
-      'INSERT INTO admin_users (email, display_name, password_hash) VALUES ($1, $2, $3) RETURNING *',
-      [data.email, data.displayName ?? '', await hashPassword(data.password)]
+      'INSERT INTO admin_users (email, display_name, role, password_hash) VALUES ($1, $2, $3, $4) RETURNING *',
+      [data.email, data.displayName ?? '', data.role, await hashPassword(data.password)]
     ));
   } catch (error) {
     if (error.code === '23505') throw conflict('Für diese E-Mail-Adresse gibt es schon ein Konto.');
@@ -71,12 +74,15 @@ users.post('/', async (c) => {
 
 users.patch('/:id', async (c) => {
   const id = parseId(c.req.param('id'));
-  const data = parse(z.object({ displayName: text(80).optional(), email: email.optional() }), await readJson(c));
+  const data = parse(z.object({ displayName: text(80).optional(), email: email.optional(), role: role.optional() }), await readJson(c));
+  // Changing the own role could lock the last developer out.
+  if (data.role && id === c.get('session').user.id) throw badRequest('Deine eigene Rolle kannst du nicht ändern.');
   let row;
   try {
     ({ rows: [row] } = await query(
-      'UPDATE admin_users SET display_name = coalesce($2, display_name), email = coalesce($3, email) WHERE id = $1 RETURNING *',
-      [id, data.displayName ?? null, data.email ?? null]
+      `UPDATE admin_users SET display_name = coalesce($2, display_name), email = coalesce($3, email), role = coalesce($4, role)
+        WHERE id = $1 RETURNING *`,
+      [id, data.displayName ?? null, data.email ?? null, data.role ?? null]
     ));
   } catch (error) {
     if (error.code === '23505') throw conflict('Für diese E-Mail-Adresse gibt es schon ein Konto.');

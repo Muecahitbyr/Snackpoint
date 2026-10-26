@@ -4,8 +4,12 @@ import { navigate } from '../router';
 import {
   Badge, Button, EmptyState, ErrorBox, PageHeader, SearchInput, Spinner, SwitchButton, Tabs, useAction, useConfirm,
 } from '../ui';
+import { Icon } from '../icons';
 
 // Same rule as the website: without an end time, an event lasts until midnight.
+const DAY = new Intl.DateTimeFormat('de-DE', { day: '2-digit' });
+const MONTH = new Intl.DateTimeFormat('de-DE', { month: 'short' });
+
 export function isPast(event, now = Date.now()) {
   if (event.endsAt) return new Date(event.endsAt).getTime() < now;
   const end = new Date(event.startsAt);
@@ -68,7 +72,7 @@ export default function Events() {
       <PageHeader
         title="Events"
         description="Veröffentlichte, aktive Events erscheinen auf der Startseite und unter /events."
-        actions={<Button onClick={() => navigate('events/neu')}>＋ Neues Event</Button>}
+        actions={<Button onClick={() => navigate('events/neu')}><Icon name="plus" size={16} /> Neues Event</Button>}
       />
       <div className="toolbar">
         <Tabs
@@ -85,7 +89,7 @@ export default function Events() {
       </div>
 
       {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : visible.length === 0 ? (
-        <EmptyState icon="📅" title={tab === 'upcoming' ? 'Keine kommenden Events' : 'Keine Events'}>
+        <EmptyState icon="calendar" title={tab === 'upcoming' ? 'Keine kommenden Events' : 'Keine Events'}>
           {tab === 'upcoming' && <Button size="small" onClick={() => navigate('events/neu')}>Event anlegen</Button>}
         </EmptyState>
       ) : (
@@ -107,10 +111,17 @@ export default function Events() {
                   <tr key={event.id} className={event.isActive ? '' : 'is-muted'}>
                     <td data-label="Event">
                       <a className="row-title" href={`#/events/${event.id}`}>
-                        <span className="thumb">{event.cover ? <img src={event.cover.thumbUrl} alt="" /> : '🎉'}</span>
+                        {event.cover ? (
+                          <span className="thumb"><img src={event.cover.thumbUrl} alt="" /></span>
+                        ) : (
+                          <span className="thumb thumb-date" aria-hidden="true">
+                            <strong>{DAY.format(new Date(event.startsAt))}</strong>
+                            {MONTH.format(new Date(event.startsAt)).replace('.', '')}
+                          </span>
+                        )}
                         <span>
                           <strong>{event.title}</strong>
-                          {event.location && <small>📍 {event.location}</small>}
+                          {event.location && <small className="with-icon"><Icon name="pin" size={12} /> {event.location}</small>}
                         </span>
                       </a>
                     </td>
@@ -118,7 +129,7 @@ export default function Events() {
                     <td data-label="Status">
                       <span className="badges">
                         {event.status === 'published' ? <Badge tone="success">Veröffentlicht</Badge> : <Badge tone="warning">Entwurf</Badge>}
-                        {event.isFeatured && <Badge tone="accent">★ Highlight</Badge>}
+                        {event.isFeatured && <Badge tone="accent"><Icon name="star" size={11} filled /> Highlight</Badge>}
                         {past && <Badge>Vorbei</Badge>}
                       </span>
                     </td>
@@ -133,8 +144,8 @@ export default function Events() {
                           <Button variant="ghost" size="small" onClick={() => patch(event, { status: 'draft' }, 'Event ist wieder ein Entwurf.')} disabled={busy}>Zurückziehen</Button>
                         )}
                         <Button variant="ghost" size="small" onClick={() => navigate(`events/${event.id}`)}>Bearbeiten</Button>
-                        <Button variant="icon" size="small" onClick={() => duplicate(event)} title="Duplizieren" aria-label={`${event.title} duplizieren`}>⧉</Button>
-                        <Button variant="icon" size="small" onClick={() => remove(event)} title="Löschen" aria-label={`${event.title} löschen`}>🗑</Button>
+                        <Button variant="icon" size="small" onClick={() => duplicate(event)} title="Duplizieren" aria-label={`${event.title} duplizieren`}><Icon name="copy" size={16} /></Button>
+                        <Button variant="icon" size="small" onClick={() => remove(event)} title="Löschen" aria-label={`${event.title} löschen`}><Icon name="trash" size={16} /></Button>
                       </div>
                     </td>
                   </tr>

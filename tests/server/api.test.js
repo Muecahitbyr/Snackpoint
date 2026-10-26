@@ -487,6 +487,40 @@ describe('admin accounts', () => {
   });
 });
 
+describe('roles', () => {
+  const OWN = 'Ein-Neues-Passwort-2026';
+
+  it('owners manage the daily business but not the developer areas', async () => {
+    const created = await admin.send('/api/admin/users', {
+      method: 'POST',
+      body: { email: 'laden@test.local', displayName: 'Laden', role: 'owner', password: 'Sicheres-Shoppasswort-2026', currentPassword: OWN },
+    });
+    assert.equal(created.status, 201);
+    assert.equal(created.data.item.role, 'owner');
+    const owner = client();
+    const login = await owner.login('laden@test.local', 'Sicheres-Shoppasswort-2026');
+    assert.equal(login.data.user.role, 'owner');
+
+    for (const path of ['/api/admin/dashboard', '/api/admin/products', '/api/admin/events', '/api/admin/banners', '/api/admin/media', '/api/admin/hours', '/api/admin/meta']) {
+      assert.equal((await owner.send(path)).status, 200, path);
+    }
+    for (const path of ['/api/admin/content', '/api/admin/settings', '/api/admin/users', '/api/admin/backup', '/api/admin/audit', '/api/admin/services', '/api/admin/reviews']) {
+      assert.equal((await owner.send(path)).status, 403, path);
+    }
+    assert.equal((await owner.send('/api/admin/content', { method: 'PUT', body: { values: { 'hero.subtitle': 'x' } } })).status, 403);
+    assert.equal((await owner.send('/api/admin/settings/legal', { method: 'PUT', body: {} })).status, 403);
+    assert.equal((await owner.send('/api/auth/password', { method: 'POST', body: { currentPassword: 'x', newPassword: 'y' } })).status, 403);
+    assert.equal((await owner.send('/api/admin/dashboard')).data.lastBackupAt, undefined, 'no backup reminder for owners');
+    const category = (await owner.send('/api/admin/categories')).data.items[0];
+    assert.equal((await owner.send('/api/admin/products', { method: 'POST', body: { categoryId: category.id, name: 'Inhaber-Produkt' } })).status, 201);
+  });
+
+  it('nobody can change their own role', async () => {
+    const me = (await admin.send('/api/admin/users')).data.items.find((u) => u.isSelf);
+    assert.equal((await admin.send(`/api/admin/users/${me.id}`, { method: 'PATCH', body: { role: 'owner' } })).status, 400);
+  });
+});
+
 describe('backup & restore', () => {
   it('downloads a complete backup and restores it exactly', async () => {
     const { readBackup, restoreBackup } = await import('../../server/lib/backup.js');

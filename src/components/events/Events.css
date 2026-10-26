@@ -58,7 +58,8 @@
 .event-body { padding: 20px 22px 24px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
 .event-when { font-size: 0.8rem; font-weight: 700; color: var(--accent-3); }
 .event-body h3 { font-size: 1.2rem; font-weight: 800; color: var(--text); }
-.event-location { font-size: 0.86rem; color: var(--text-dim); }
+.event-location { display: flex; align-items: center; gap: 5px; font-size: 0.86rem; color: var(--text-dim); }
+.event-location svg { color: var(--accent); flex-shrink: 0; }
 .event-text { font-size: 0.9rem; color: var(--text-dim); white-space: pre-line; }
 .event-text.is-clamped { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .event-price { margin-top: auto; padding-top: 6px; font-weight: 800; color: var(--text); }
@@ -86,7 +87,7 @@
   border: 1px dashed rgba(224,32,31,0.3);
   border-radius: var(--radius);
 }
-.events-empty span { font-size: 2.6rem; }
+.events-empty-icon { color: var(--accent); }
 .events-past { max-width: var(--max); margin: 80px auto 0; }
 .events-past-title {
   font-family: var(--font-tag);

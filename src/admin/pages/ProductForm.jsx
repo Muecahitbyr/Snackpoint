@@ -5,6 +5,7 @@ import {
   Button, Card, ErrorBox, Field, ImageField, PageHeader, SelectField, Spinner, TextField, Toggle, useConfirm, useToast,
 } from '../ui';
 import { AVAILABILITY } from './Products';
+import { Icon } from '../icons';
 
 const EMPTY = {
   name: '', brand: '', categoryId: '', description: '', emoji: '', image: null, price: '', availability: 'available',
@@ -31,7 +32,7 @@ function Preview({ form, categoryName }) {
   const price = parseEuro(form.price);
   return (
     <div className="preview-card">
-      <div className="preview-media">{form.image ? <img src={form.image.url} alt="" /> : <span>{form.emoji || '📦'}</span>}</div>
+      <div className="preview-media">{form.image ? <img src={form.image.url} alt="" /> : form.emoji ? <span>{form.emoji}</span> : <Icon name="package" size={34} />}</div>
       {form.availability !== 'available' && <div className="preview-sash">{AVAILABILITY[form.availability].label.toUpperCase()}</div>}
       <span className="preview-badge">{categoryName || 'Kategorie'}</span>
       <strong>{form.name || 'Produktname'}</strong>
@@ -44,7 +45,7 @@ function Preview({ form, categoryName }) {
 export default function ProductForm({ id }) {
   const product = useApi(id ? `/admin/products/${id}` : null);
   const categories = useApi('/admin/categories');
-  const settings = useApi('/admin/settings');
+  const settings = useApi('/admin/meta');
   const toast = useToast();
   const confirm = useConfirm();
   const [form, setForm] = useState(EMPTY);
@@ -120,7 +121,7 @@ export default function ProductForm({ id }) {
     <form onSubmit={save} noValidate>
       <PageHeader
         title={id ? form.name || 'Produkt bearbeiten' : 'Neues Produkt'}
-        description={<a href="#/produkte">← Zurück zur Übersicht</a>}
+        description={<a href="#/produkte" className="back-link"><Icon name="arrowLeft" size={15} /> Zurück zur Übersicht</a>}
         actions={
           <>
             {id && <Button variant="danger-ghost" onClick={remove}>Löschen</Button>}

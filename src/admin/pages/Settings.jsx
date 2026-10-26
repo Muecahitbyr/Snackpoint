@@ -3,6 +3,7 @@ import { api, formatDateTime, useApi } from '../api';
 import { Button, Card, ErrorBox, PageHeader, Spinner, TextField, Toggle, useToast } from '../ui';
 import { formatRelative } from '../api';
 import { describeChange } from './Dashboard';
+import { Icon } from '../icons';
 
 /** One settings card that saves its own topic (PUT /admin/settings/:key). */
 function SettingsCard({ title, description, settingKey, initial, toBody = (form) => form, children }) {
@@ -178,7 +179,7 @@ export default function Settings() {
             in einem privaten Cloud-Ordner, nicht weitergeben.
           </p>
           <div className="card-foot">
-            <a className="a-btn a-btn-primary a-btn-small" href="/api/admin/backup" download>💾 Backup herunterladen</a>
+            <a className="a-btn a-btn-primary a-btn-small" href="/api/admin/backup" download><Icon name="download" size={15} /> Backup herunterladen</a>
           </div>
         </Card>
       </div>

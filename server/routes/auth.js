@@ -5,7 +5,9 @@ import { z } from 'zod';
 import { query } from '../db/pool.js';
 import { burnVerifyTime, hashPassword, passwordProblem, verifyPassword } from '../auth/password.js';
 import { assertLoginAllowed, recordLoginAttempt } from '../auth/rateLimit.js';
-import { assertSameOrigin, createSession, destroyOtherSessions, destroySession, loadSession, requireAdmin } from '../auth/session.js';
+import {
+  assertSameOrigin, createSession, destroyOtherSessions, destroySession, loadSession, requireAdmin, requireDeveloper,
+} from '../auth/session.js';
 import { audit } from '../lib/audit.js';
 import { HttpError, badRequest } from '../lib/errors.js';
 import { clientIp } from '../lib/request.js';
@@ -34,7 +36,7 @@ auth.post('/login', async (c) => {
   const ip = clientIp(c);
   await assertLoginAllowed(ip, email);
 
-  const { rows } = await query('SELECT id, email, display_name, password_hash FROM admin_users WHERE lower(email) = $1', [email]);
+  const { rows } = await query('SELECT id, email, display_name, role, password_hash FROM admin_users WHERE lower(email) = $1', [email]);
   const user = rows[0];
   const valid = user ? await verifyPassword(user.password_hash, password) : (await burnVerifyTime(password), false);
   await recordLoginAttempt(ip, email, valid);
@@ -44,7 +46,7 @@ auth.post('/login', async (c) => {
   await query('UPDATE admin_users SET last_login_at = now() WHERE id = $1', [user.id]);
   c.set('session', { user: { id: user.id } });
   await audit(c, 'login', 'session', '', 'Anmeldung');
-  return c.json({ user: { id: user.id, email: user.email, displayName: user.display_name }, csrfToken });
+  return c.json({ user: { id: user.id, email: user.email, displayName: user.display_name, role: user.role }, csrfToken });
 });
 
 auth.get('/me', async (c) => {
@@ -60,7 +62,8 @@ auth.post('/logout', requireAdmin, async (c) => {
   return c.json({ ok: true });
 });
 
-auth.post('/password', requireAdmin, async (c) => {
+// Owners can't change their password themselves — the developer sets it.
+auth.post('/password', requireAdmin, requireDeveloper, async (c) => {
   const session = c.get('session');
   const { currentPassword, newPassword } = parse(passwordSchema, await readJson(c));
   const { rows } = await query('SELECT password_hash FROM admin_users WHERE id = $1', [session.user.id]);

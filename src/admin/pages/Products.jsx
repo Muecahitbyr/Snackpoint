@@ -4,6 +4,7 @@ import { navigate } from '../router';
 import {
   Badge, Button, EmptyState, ErrorBox, MoveButtons, PageHeader, SearchInput, Spinner, SwitchButton, useAction, useConfirm,
 } from '../ui';
+import { Icon } from '../icons';
 
 export const AVAILABILITY = {
   available: { label: 'Verfügbar', tone: 'success' },
@@ -97,24 +98,24 @@ export default function Products() {
       <PageHeader
         title="Produkte"
         description="Alles, was auf der Produktseite und unter „Frisch im Regal“ erscheint."
-        actions={<Button onClick={() => navigate('produkte/neu')}>＋ Neues Produkt</Button>}
+        actions={<Button onClick={() => navigate('produkte/neu')}><Icon name="plus" size={16} /> Neues Produkt</Button>}
       />
 
       <div className="toolbar">
         <SearchInput value={search} onChange={setSearch} placeholder="Produkt suchen…" />
-        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} aria-label="Kategorie">
+        <select className={`filter ${categoryId ? 'is-active' : ''}`} value={categoryId} onChange={(e) => setCategoryId(e.target.value)} aria-label="Kategorie">
           <option value="">Alle Kategorien</option>
           {(categories.data?.items ?? []).map((category) => (
             <option key={category.id} value={category.id}>{category.groupName} › {category.name}</option>
           ))}
         </select>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
+        <select className={`filter ${status ? 'is-active' : ''}`} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
           {STATUS_FILTERS.map((filter) => <option key={filter.id} value={filter.id}>{filter.label}</option>)}
         </select>
       </div>
       {reorderMode && (
         <p className="hint-bar">
-          ↕ Mit den Pfeilen änderst du die Reihenfolge {reorderMode === 'highlight' ? 'der Highlights auf der Startseite' : 'in dieser Kategorie'}.
+          Mit den Pfeilen änderst du die Reihenfolge {reorderMode === 'highlight' ? 'der Highlights auf der Startseite' : 'in dieser Kategorie'}.
         </p>
       )}
       {!reorderMode && !loading && (
@@ -122,7 +123,7 @@ export default function Products() {
       )}
 
       {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : visible.length === 0 ? (
-        <EmptyState icon="🔍" title="Keine Produkte gefunden">Passe Suche oder Filter an.</EmptyState>
+        <EmptyState icon="search" title="Keine Produkte gefunden">Passe Suche oder Filter an.</EmptyState>
       ) : (
         <div className="table-wrap">
           <table className="table">
@@ -141,7 +142,7 @@ export default function Products() {
                 <tr key={product.id} className={product.isActive ? '' : 'is-muted'}>
                   <td data-label="Produkt">
                     <a className="row-title" href={`#/produkte/${product.id}`}>
-                      <span className="thumb">{product.image ? <img src={product.image.thumbUrl} alt="" /> : product.emoji || '📦'}</span>
+                      <span className="thumb">{product.image ? <img src={product.image.thumbUrl} alt="" /> : product.emoji || <Icon name="package" />}</span>
                       <span>
                         <strong>{product.name}</strong>
                         {product.brand && <small>{product.brand}</small>}
@@ -153,7 +154,7 @@ export default function Products() {
                   <td data-label="Status">
                     <span className="badges">
                       {product.availability !== 'available' && <Badge tone={AVAILABILITY[product.availability].tone}>{AVAILABILITY[product.availability].label}</Badge>}
-                      {product.isHighlight && <Badge tone="accent">★ Highlight</Badge>}
+                      {product.isHighlight && <Badge tone="accent"><Icon name="star" size={11} filled /> Highlight</Badge>}
                       {!product.showInCatalog && <Badge>Nicht auf Produktseite</Badge>}
                     </span>
                   </td>
@@ -169,7 +170,7 @@ export default function Products() {
                     <div className="row-actions">
                       {reorderMode && <MoveButtons ids={visibleIds} id={product.id} onMove={move} disabled={busy} />}
                       <Button variant="ghost" size="small" onClick={() => navigate(`produkte/${product.id}`)}>Bearbeiten</Button>
-                      <Button variant="icon" size="small" onClick={() => remove(product)} aria-label={`${product.name} löschen`} title="Löschen">🗑</Button>
+                      <Button variant="icon" size="small" onClick={() => remove(product)} aria-label={`${product.name} löschen`} title="Löschen"><Icon name="trash" size={16} /></Button>
                     </div>
                   </td>
                 </tr>

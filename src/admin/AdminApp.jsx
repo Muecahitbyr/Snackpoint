@@ -14,19 +14,21 @@ import Hours from './pages/Hours';
 import Settings from './pages/Settings';
 import Password from './pages/Password';
 import Users from './pages/Users';
+import { Icon } from './icons';
 
+// `developer`: only for accounts with the developer role (also enforced by the API).
 const NAV = [
-  { path: 'dashboard', label: 'Dashboard', icon: '📊' },
-  { path: 'produkte', label: 'Produkte', icon: '🍫' },
-  { path: 'kategorien', label: 'Kategorien', icon: '🗂️' },
-  { path: 'events', label: 'Events', icon: '📅' },
-  { path: 'banner', label: 'Banner & Aktionen', icon: '📣' },
-  { path: 'inhalte', label: 'Webseiteninhalte', icon: '📝' },
-  { path: 'medien', label: 'Medienbibliothek', icon: '🖼️' },
-  { path: 'oeffnungszeiten', label: 'Öffnungszeiten', icon: '🕗' },
-  { path: 'einstellungen', label: 'Einstellungen', icon: '⚙️' },
-  { path: 'benutzer', label: 'Benutzer', icon: '👥' },
-  { path: 'passwort', label: 'Passwort ändern', icon: '🔑' },
+  { path: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { path: 'produkte', label: 'Produkte', icon: 'package' },
+  { path: 'kategorien', label: 'Kategorien', icon: 'folder' },
+  { path: 'events', label: 'Events', icon: 'calendar' },
+  { path: 'banner', label: 'Banner & Aktionen', icon: 'megaphone' },
+  { path: 'medien', label: 'Medienbibliothek', icon: 'image' },
+  { path: 'oeffnungszeiten', label: 'Öffnungszeiten', icon: 'clock' },
+  { path: 'inhalte', label: 'Webseiteninhalte', icon: 'text', developer: true },
+  { path: 'einstellungen', label: 'Einstellungen', icon: 'settings', developer: true },
+  { path: 'benutzer', label: 'Benutzer', icon: 'users', developer: true },
+  { path: 'passwort', label: 'Passwort ändern', icon: 'key', developer: true },
 ];
 
 // Routes live in the hash (#/produkte/123), so /admin needs no server routing.
@@ -48,7 +50,8 @@ function useRoute() {
   return route;
 }
 
-function Page({ route }) {
+function Page({ route, isDeveloper }) {
+  if (!isDeveloper && NAV.find((item) => item.path === route.page)?.developer) return <Dashboard />;
   switch (route.page) {
     case 'dashboard': return <Dashboard />;
     case 'produkte': return route.id ? <ProductForm id={route.id === 'neu' ? null : route.id} /> : <Products />;
@@ -97,7 +100,7 @@ function Login({ onLoggedIn }) {
         <TextField label="E-Mail" type="email" autoComplete="username" value={email} onChange={setEmail} required autoFocus />
         <TextField label="Passwort" type="password" autoComplete="current-password" value={password} onChange={setPassword} required />
         <Button type="submit" busy={busy} className="login-submit">Anmelden</Button>
-        <a href="/" className="login-back">← Zur Webseite</a>
+        <a href="/" className="login-back"><Icon name="arrowLeft" size={15} /> Zur Webseite</a>
       </form>
     </div>
   );
@@ -106,7 +109,9 @@ function Login({ onLoggedIn }) {
 function Shell({ user, onLogout }) {
   const route = useRoute();
   const [menuOpen, setMenuOpen] = useState(false);
-  const current = NAV.find((item) => item.path === route.page) ?? NAV[0];
+  const isDeveloper = user.role === 'developer';
+  const nav = NAV.filter((item) => isDeveloper || !item.developer);
+  const current = nav.find((item) => item.path === route.page) ?? nav[0];
 
   useEffect(() => {
     setMenuOpen(false);
@@ -120,17 +125,17 @@ function Shell({ user, onLogout }) {
           <span>SnackPoint<small>Verwaltung</small></span>
         </a>
         <nav className="sidebar-nav">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <a key={item.path} href={`#/${item.path}`} className={item.path === current.path ? 'is-active' : ''} aria-current={item.path === current.path ? 'page' : undefined}>
-              <span aria-hidden="true">{item.icon}</span>
+              <Icon name={item.icon} />
               {item.label}
             </a>
           ))}
         </nav>
         <div className="sidebar-foot">
-          <a href="/" target="_blank" rel="noopener noreferrer" className="sidebar-link">↗ Webseite ansehen</a>
+          <a href="/" target="_blank" rel="noopener noreferrer" className="sidebar-link"><Icon name="external" size={15} /> Webseite ansehen</a>
           <span className="sidebar-user" title={user.email}>{user.displayName || user.email}</span>
-          <button type="button" className="sidebar-logout" onClick={onLogout}>⎋ Abmelden</button>
+          <button type="button" className="sidebar-logout" onClick={onLogout}><Icon name="logout" size={16} /> Abmelden</button>
         </div>
       </aside>
       <div className="sidebar-backdrop" onClick={() => setMenuOpen(false)} aria-hidden="true" />
@@ -139,10 +144,10 @@ function Shell({ user, onLogout }) {
           <button type="button" className="topbar-burger" onClick={() => setMenuOpen((open) => !open)} aria-label="Menü" aria-expanded={menuOpen}>
             <span /><span /><span />
           </button>
-          <strong>{current.icon} {current.label}</strong>
+          <strong className="topbar-title"><Icon name={current.icon} /> {current.label}</strong>
         </header>
         <main className="content">
-          <Page route={route} />
+          <Page route={route} isDeveloper={isDeveloper} />
         </main>
       </div>
     </div>

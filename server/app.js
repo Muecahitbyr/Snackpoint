@@ -10,13 +10,13 @@ import { timingSafeEqual } from 'node:crypto';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
-import { requireAdmin } from './auth/session.js';
+import { requireAdmin, requireDeveloper } from './auth/session.js';
 import { config } from './config.js';
 import { HttpError } from './lib/errors.js';
 import { auth } from './routes/auth.js';
 import { mediaApi, publicApi } from './routes/public.js';
 import { banners, categories, events, groups, products, promotions, reviews, services } from './routes/adminEntities.js';
-import { auditLog, backup, content, dashboard, hours, mediaAdmin, settings } from './routes/adminSite.js';
+import { auditLog, backup, content, dashboard, hours, mediaAdmin, meta, settings } from './routes/adminSite.js';
 import { users } from './routes/users.js';
 
 // Connection-level failures (network codes and Postgres "unavailable" classes).
@@ -59,19 +59,26 @@ export function createApp() {
 
   const admin = new Hono();
   admin.use('*', requireAdmin);
+  // Daily business — every account (role "owner" and "developer").
   admin.route('/dashboard', dashboard);
+  admin.route('/meta', meta);
   admin.route('/products', products);
   admin.route('/groups', groups);
   admin.route('/categories', categories);
   admin.route('/events', events);
   admin.route('/banners', banners);
   admin.route('/promotions', promotions);
+  admin.route('/hours', hours);
+  admin.route('/media', mediaAdmin);
+  // Website texts, settings, accounts, backups — developer only.
+  for (const path of ['/services', '/reviews', '/content', '/settings', '/audit', '/users', '/backup']) {
+    admin.use(path, requireDeveloper);
+    admin.use(`${path}/*`, requireDeveloper);
+  }
   admin.route('/services', services);
   admin.route('/reviews', reviews);
   admin.route('/content', content);
   admin.route('/settings', settings);
-  admin.route('/hours', hours);
-  admin.route('/media', mediaAdmin);
   admin.route('/audit', auditLog);
   admin.route('/users', users);
   admin.route('/backup', backup);

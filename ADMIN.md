@@ -112,8 +112,16 @@ npm run admin:create
 
 ### Weitere Konten
 
-Weitere Konten legst du im Adminpanel unter **Benutzer** an (mit „Sicheres Passwort erzeugen“). Alle Konten
-haben volle Rechte. Anlegen, Löschen und das Setzen eines fremden Passworts musst du mit deinem eigenen
+Weitere Konten legst du im Adminpanel unter **Benutzer** an (mit „Sicheres Passwort erzeugen“). Es gibt zwei
+Rollen – auch serverseitig durchgesetzt:
+
+| Rolle | Sieht |
+| --- | --- |
+| **Inhaber** | Dashboard, Produkte, Kategorien, Events, Banner & Aktionen, Medienbibliothek, Öffnungszeiten |
+| **Entwickler** | zusätzlich Webseiteninhalte, Einstellungen (inkl. Rechtliches & Datensicherung), Benutzer, Passwort ändern |
+
+Der Inhaber wendet sich für Texte, Kontaktdaten, Rechtliches, Passwörter usw. an den Entwickler. Per
+Kommandozeile angelegte Konten sind Entwickler-Konten. Die eigene Rolle lässt sich nicht ändern. Anlegen, Löschen und das Setzen eines fremden Passworts musst du mit deinem eigenen
 Passwort bestätigen; das eigene Konto lässt sich nicht löschen, es bleibt also immer mindestens eins übrig.
 
 ### Passwort ändern / vergessen

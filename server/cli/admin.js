@@ -49,7 +49,7 @@ async function create() {
   }
   const password = await askPassword(email);
   await query('INSERT INTO admin_users (email, display_name, password_hash) VALUES ($1, $2, $3)', [
-    email, 'Inhaber', await hashPassword(password),
+    email, 'Entwickler', await hashPassword(password),
   ]);
   console.log(`✓ Admin-Konto ${email} angelegt. Anmeldung unter /admin`);
 }

@@ -132,14 +132,14 @@ export default function MediaLibrary() {
       />
       <div className="toolbar">
         <SearchInput value={search} onChange={setSearch} placeholder="Bilder durchsuchen…" />
-        <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter">
+        <select className={`filter ${filter !== 'all' ? 'is-active' : ''}`} value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter">
           <option value="all">Alle Bilder</option>
           <option value="used">In Verwendung</option>
           <option value="unused">Nicht verwendet</option>
         </select>
       </div>
       {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : items.length === 0 ? (
-        <EmptyState icon="🖼️" title="Keine Bilder gefunden">Lade Bilder hoch oder ändere den Filter.</EmptyState>
+        <EmptyState icon="image" title="Keine Bilder gefunden">Lade Bilder hoch oder ändere den Filter.</EmptyState>
       ) : (
         <div className="media-grid">
           {items.map((item) => (

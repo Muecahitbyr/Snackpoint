@@ -4,6 +4,7 @@
 // On phones the picker opens as a bottom sheet.
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { Field } from './ui';
+import { Icon } from './icons';
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 const MONTH = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' });
@@ -267,7 +268,7 @@ export function DateTimeField({ label, hint, error, required, value, onChange, m
           <span>{display || placeholder}</span>
         </button>
         {value && !required && (
-          <button type="button" className="picker-clear" onClick={() => onChange('')} aria-label={`${label} leeren`}>✕</button>
+          <button type="button" className="picker-clear" onClick={() => onChange('')} aria-label={`${label} leeren`}><Icon name="close" size={13} /></button>
         )}
       </div>
       {open && (

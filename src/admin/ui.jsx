@@ -2,6 +2,7 @@
 // status badges and the media picker.
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
 import { api, uploadImage, useApi } from './api';
+import { Icon } from './icons';
 
 // ── Toasts ────────────────────────────────────────────────────────────────
 
@@ -22,7 +23,7 @@ export function ToastProvider({ children }) {
       <div className="toasts" aria-live="polite">
         {toasts.map((toast) => (
           <div key={toast.id} className={`toast toast-${toast.type}`} role={toast.type === 'error' ? 'alert' : 'status'}>
-            <span aria-hidden="true">{toast.type === 'error' ? '⚠️' : '✅'}</span>
+            <Icon name={toast.type === 'error' ? 'alert' : 'checkCircle'} size={18} className="toast-icon" />
             {toast.message}
           </div>
         ))}
@@ -130,10 +131,10 @@ export function Card({ title, description, actions, children, className = '' }) 
   );
 }
 
-export function EmptyState({ icon = '📭', title, children }) {
+export function EmptyState({ icon = 'inbox', title, children }) {
   return (
     <div className="empty-state">
-      <span aria-hidden="true">{icon}</span>
+      <span className="empty-icon"><Icon name={icon} size={22} /></span>
       <strong>{title}</strong>
       {children}
     </div>
@@ -156,6 +157,7 @@ export function Tabs({ tabs, active, onChange }) {
           className={`tab ${active === tab.id ? 'is-active' : ''}`}
           onClick={() => onChange(tab.id)}
         >
+          {tab.icon && <Icon name={tab.icon} size={16} />}
           {tab.label}
           {tab.count !== undefined && <span className="tab-count">{tab.count}</span>}
         </button>
@@ -242,7 +244,7 @@ export function SwitchButton({ checked, onChange, label, busy }) {
 export function SearchInput({ value, onChange, placeholder = 'Suchen…' }) {
   return (
     <div className="search">
-      <span aria-hidden="true">🔍</span>
+      <Icon name="search" size={16} />
       <input type="search" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={placeholder} />
     </div>
   );
@@ -270,7 +272,7 @@ export function Modal({ title, onClose, children, size = 'medium' }) {
       <div className={`modal modal-${size}`} role="dialog" aria-modal="true" aria-label={title} ref={ref}>
         <div className="modal-head">
           <h2>{title}</h2>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="Schließen">✕</button>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Schließen"><Icon name="close" size={16} /></button>
         </div>
         <div className="modal-body">{children}</div>
       </div>
@@ -291,8 +293,8 @@ export function MoveButtons({ ids, id, onMove, disabled }) {
   };
   return (
     <span className="move-buttons">
-      <button type="button" onClick={() => move(-1)} disabled={disabled || index <= 0} aria-label="Nach oben">↑</button>
-      <button type="button" onClick={() => move(1)} disabled={disabled || index === -1 || index >= ids.length - 1} aria-label="Nach unten">↓</button>
+      <button type="button" onClick={() => move(-1)} disabled={disabled || index <= 0} aria-label="Nach oben"><Icon name="arrowUp" size={15} /></button>
+      <button type="button" onClick={() => move(1)} disabled={disabled || index === -1 || index >= ids.length - 1} aria-label="Nach unten"><Icon name="arrowDown" size={15} /></button>
     </span>
   );
 }
@@ -329,7 +331,7 @@ export function UploadButton({ onUploaded, multiple = true, maxBytes, label = 'B
 
   return (
     <>
-      <Button variant={variant} busy={busy} onClick={() => input.current?.click()}>⬆ {label}</Button>
+      <Button variant={variant} busy={busy} onClick={() => input.current?.click()}><Icon name="upload" size={16} /> {label}</Button>
       <input
         ref={input}
         type="file"
@@ -387,12 +389,12 @@ export function MediaPickerModal({ onSelect, onClose, multiple = false, initial 
                 <button key={item.id} type="button" className={`media-tile ${isSelected ? 'is-selected' : ''}`} onClick={() => pick(item)}>
                   <img src={item.thumbUrl} alt={item.altText} loading="lazy" />
                   <span className="media-tile-name">{item.originalName}</span>
-                  {isSelected && <span className="media-tile-check" aria-hidden="true">✓</span>}
+                  {isSelected && <span className="media-tile-check" aria-hidden="true"><Icon name="check" size={15} /></span>}
                 </button>
               );
             })}
           </div>
-        ) : <EmptyState icon="🖼️" title="Noch keine Bilder">Lade oben ein Bild hoch.</EmptyState>
+        ) : <EmptyState icon="image" title="Noch keine Bilder">Lade oben ein Bild hoch.</EmptyState>
       )}
       {multiple && (
         <div className="modal-actions">
@@ -411,7 +413,7 @@ export function ImageField({ label, hint, value, onChange }) {
     <Field label={label} hint={hint}>
       <div className="image-field">
         <div className="image-field-preview">
-          {value ? <img src={value.thumbUrl ?? value.url} alt="" /> : <span aria-hidden="true">🖼️</span>}
+          {value ? <img src={value.thumbUrl ?? value.url} alt="" /> : <Icon name="image" size={26} />}
         </div>
         <div className="image-field-actions">
           <Button variant="ghost" size="small" onClick={() => setOpen(true)}>{value ? 'Bild ändern' : 'Bild wählen'}</Button>
@@ -443,11 +445,11 @@ export function GalleryField({ label, hint, value, onChange }) {
             <img src={image.thumbUrl ?? image.url} alt="" />
             <div className="gallery-item-actions">
               <MoveButtons ids={ids} id={image.id} onMove={(order) => onChange(order.map((id) => value.find((v) => v.id === id)))} />
-              <button type="button" onClick={() => onChange(value.filter((v) => v.id !== image.id))} aria-label="Entfernen">✕</button>
+              <button type="button" onClick={() => onChange(value.filter((v) => v.id !== image.id))} aria-label="Entfernen"><Icon name="close" size={14} /></button>
             </div>
           </div>
         ))}
-        <button type="button" className="gallery-add" onClick={() => setOpen(true)}>＋ Bilder</button>
+        <button type="button" className="gallery-add" onClick={() => setOpen(true)}><Icon name="plus" size={18} /> Bilder</button>
       </div>
       {open && (
         <MediaPickerModal

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api, useApi } from '../api';
 import { Button, EmptyState, ErrorBox, Modal, MoveButtons, Spinner, SwitchButton, useAction, useConfirm, useToast } from '../ui';
+import { Icon } from '../icons';
 
 /**
  * List + edit dialog for the simple content types (banners, promotions,
@@ -63,7 +64,7 @@ export default function ManagedList({ endpoint, noun, newLabel, emptyText, empty
   return (
     <>
       <div className="toolbar toolbar-end">
-        <Button onClick={() => { setErrors({}); setEditing({ item: null }); }}>＋ {newLabel}</Button>
+        <Button onClick={() => { setErrors({}); setEditing({ item: null }); }}><Icon name="plus" size={16} /> {newLabel}</Button>
       </div>
       {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : items.length === 0 ? (
         <EmptyState icon={emptyIcon} title={emptyText}>
@@ -87,7 +88,7 @@ export default function ManagedList({ endpoint, noun, newLabel, emptyText, empty
                   <SwitchButton checked={item.isActive} busy={busy} label={item.isActive ? 'Deaktivieren' : 'Aktivieren'} onChange={(on) => toggle(item, on)} />
                   <MoveButtons ids={ids} id={item.id} onMove={move} disabled={busy} />
                   <Button variant="ghost" size="small" onClick={() => { setErrors({}); setEditing({ item }); }}>Bearbeiten</Button>
-                  <Button variant="icon" size="small" onClick={() => remove(item)} title="Löschen" aria-label="Löschen">🗑</Button>
+                  <Button variant="icon" size="small" onClick={() => remove(item)} title="Löschen" aria-label="Löschen"><Icon name="trash" size={16} /></Button>
                 </div>
               </li>
             );

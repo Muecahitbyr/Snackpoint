@@ -3,6 +3,7 @@ import { formatDateTime, fromLocalInput, toLocalInput } from '../api';
 import { DateTimeField } from '../DateTimePicker';
 import { Badge, Field, ImageField, PageHeader, SelectField, Tabs, TextField, Toggle } from '../ui';
 import ManagedList, { FormActions } from './ManagedList';
+import { Icon } from '../icons';
 
 /** live / scheduled / expired / off — what visitors see right now. */
 function liveState(item) {
@@ -10,7 +11,7 @@ function liveState(item) {
   if (!item.isActive) return <Badge>Aus</Badge>;
   if (item.startsAt && new Date(item.startsAt).getTime() > now) return <Badge tone="warning">Geplant ab {formatDateTime(item.startsAt)}</Badge>;
   if (item.endsAt && new Date(item.endsAt).getTime() <= now) return <Badge>Abgelaufen</Badge>;
-  return <Badge tone="success">● Live{item.endsAt ? ` bis ${formatDateTime(item.endsAt)}` : ''}</Badge>;
+  return <Badge tone="success"><span className="live-dot" aria-hidden="true" />Live{item.endsAt ? ` bis ${formatDateTime(item.endsAt)}` : ''}</Badge>;
 }
 
 function Schedule({ form, set, errors }) {
@@ -114,14 +115,17 @@ export default function BannersPromotions() {
         title="Banner & Aktionen"
         description="Banner sind Hinweisleisten ganz oben auf der Webseite. Aktionen erscheinen als eigener Bereich auf der Startseite."
       />
-      <Tabs active={tab} onChange={setTab} tabs={[{ id: 'banners', label: '📣 Banner' }, { id: 'promotions', label: '🔥 Aktionen & Angebote' }]} />
+      <Tabs active={tab} onChange={setTab} tabs={[
+          { id: 'banners', label: 'Banner', icon: 'megaphone' },
+          { id: 'promotions', label: 'Aktionen & Angebote', icon: 'tag' },
+        ]} />
       {tab === 'banners' ? (
         <ManagedList
           key="banners"
           endpoint="/admin/banners"
           noun="Banner"
           newLabel="Neuer Banner"
-          emptyIcon="📣"
+          emptyIcon="megaphone"
           emptyText="Noch keine Banner"
           Form={BannerForm}
           describe={(item) => ({ title: item.text, subtitle: item.linkUrl || undefined, badges: liveState(item) })}
@@ -132,11 +136,11 @@ export default function BannersPromotions() {
           endpoint="/admin/promotions"
           noun="Aktion"
           newLabel="Neue Aktion"
-          emptyIcon="🔥"
+          emptyIcon="tag"
           emptyText="Noch keine Aktionen"
           Form={PromotionForm}
           describe={(item) => ({
-            thumb: item.image ? <img src={item.image.thumbUrl} alt="" /> : item.emoji || '🔥',
+            thumb: item.image ? <img src={item.image.thumbUrl} alt="" /> : item.emoji || <Icon name="tag" />,
             title: item.title,
             subtitle: [item.priceText, item.badge].filter(Boolean).join(' · ') || undefined,
             badges: liveState(item),

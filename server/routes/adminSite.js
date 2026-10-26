@@ -17,6 +17,12 @@ import { httpUrl, parse, parseId, readJson, text, uuid } from '../lib/validation
 
 const iso = (value) => (value ? new Date(value).toISOString() : null);
 
+// ── Lookup data for forms (every role) ──────────────────────────────────────
+
+export const meta = new Hono();
+
+meta.get('/', (c) => c.json({ chatCategories: CHAT_CATEGORIES }));
+
 // ── Website texts ──────────────────────────────────────────────────────────
 
 export const content = new Hono();
@@ -348,6 +354,7 @@ const auditJson = (row) => ({
 export const dashboard = new Hono();
 
 dashboard.get('/', async (c) => {
+  const developer = c.get('session').user.role === 'developer';
   const [{ rows: counts }, { rows: recent }] = await Promise.all([
     query(`SELECT
       (SELECT count(*)::int FROM products) AS products,
@@ -371,7 +378,8 @@ dashboard.get('/', async (c) => {
   );
   return c.json({
     counts: counts[0],
-    lastBackupAt: await lastBackupAt(),
+    // Backups are the developer's job; owners don't see the reminder.
+    lastBackupAt: developer ? await lastBackupAt() : undefined,
     recent: recent.map(auditJson),
     nextEvents: next.map((row) => ({ id: row.id, title: row.title, startsAt: iso(row.starts_at), status: row.status })),
   });
