@@ -127,7 +127,23 @@ export default function Datenschutz() {
           Anbindung an einen externen KI-Dienst statt.
         </p>
 
-        <h2>9. Verwaltungsbereich</h2>
+        <h2>9. Wunschliste (Produktwünsche)</h2>
+        <p>
+          Auf der Startseite können Sie Produkte vorschlagen und über die Vorschläge anderer abstimmen. Dafür ist
+          keine Anmeldung nötig, und wir fragen weder Namen noch E-Mail-Adresse ab. Gespeichert werden der
+          Produktwunsch und ein optionaler Hinweis. Bitte geben Sie dort keine personenbezogenen Daten ein.
+          Wünsche erscheinen erst nach einer Prüfung durch uns auf der Website.
+        </p>
+        <p>
+          Damit jede Person nur einmal pro Wunsch abstimmen kann und um massenhafte Einsendungen zu verhindern,
+          bilden wir aus Ihrer IP-Adresse mit einem geheimen Schlüssel einen nicht umkehrbaren Code (Hash). Die
+          IP-Adresse selbst speichern wir dabei nicht. Der Code für die Begrenzung von Einsendungen wird nach
+          24 Stunden gelöscht, der Code einer abgegebenen Stimme, solange der jeweilige Wunsch besteht.
+          Rechtsgrundlage ist unser berechtigtes Interesse an einer fairen und missbrauchsfreien Abstimmung
+          (Art. 6 Abs. 1 lit. f DSGVO).
+        </p>
+
+        <h2>10. Verwaltungsbereich</h2>
         <p>
           Die Inhalte dieser Website pflegen wir über einen passwortgeschützten Verwaltungsbereich, der nur
           unseren Mitarbeitenden zugänglich ist. Für Besucherinnen und Besucher der Website werden dabei keine
@@ -138,7 +154,7 @@ export default function Datenschutz() {
           (Art. 6 Abs. 1 lit. f DSGVO, berechtigtes Interesse an der Sicherheit unserer Systeme).
         </p>
 
-        <h2>10. Änderung dieser Datenschutzerklärung</h2>
+        <h2>11. Änderung dieser Datenschutzerklärung</h2>
         <p>
           Wir behalten uns vor, diese Datenschutzerklärung anzupassen, damit sie stets den aktuellen
           rechtlichen Anforderungen entspricht oder um Änderungen unserer Leistungen umzusetzen.

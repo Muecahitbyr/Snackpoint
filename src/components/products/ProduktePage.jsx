@@ -186,6 +186,11 @@ export default function ProduktePage() {
         ) : (
           <div className="produkte-empty">
             <p>Keine Produkte gefunden. Versuch es mit einem anderen Suchbegriff oder einem anderen Bereich.</p>
+            {search.trim().length >= 2 && (
+              <a className="btn btn-primary produkte-wish-link" href={`/?wunsch=${encodeURIComponent(search.trim())}#wunschliste`}>
+                „{search.trim()}“ auf die Wunschliste setzen
+              </a>
+            )}
           </div>
         )}
       </main>

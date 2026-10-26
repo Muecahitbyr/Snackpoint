@@ -2,7 +2,7 @@
 // and the Vite dev server (vite.config.js). In production the browser talks
 // to it through the Cloudflare Worker (worker/index.js) on the site's domain.
 //
-//   /api/public/*  read-only website data         (no login)
+//   /api/public/*  website data (read-only) and product wishes (no login)
 //   /api/media/*   images                          (no login)
 //   /api/auth/*    login / logout / password       (login + CSRF where needed)
 //   /api/admin/*   everything that changes data    (login + CSRF, always)
@@ -18,6 +18,7 @@ import { mediaApi, publicApi } from './routes/public.js';
 import { banners, categories, events, groups, products, promotions } from './routes/adminEntities.js';
 import { auditLog, backup, dashboard, hours, mediaAdmin, meta } from './routes/adminSite.js';
 import { users } from './routes/users.js';
+import { adminWishes, publicWishes } from './routes/wishes.js';
 
 // Connection-level failures (network codes and Postgres "unavailable" classes).
 const DB_UNAVAILABLE = new Set([
@@ -53,6 +54,7 @@ export function createApp() {
   });
 
   app.get('/health', (c) => c.json({ ok: true }));
+  app.route('/public/wishes', publicWishes);
   app.route('/public', publicApi);
   app.route('/media', mediaApi);
   app.route('/auth', auth);
@@ -70,6 +72,7 @@ export function createApp() {
   admin.route('/promotions', promotions);
   admin.route('/hours', hours);
   admin.route('/media', mediaAdmin);
+  admin.route('/wishes', adminWishes);
   // Change log, accounts, backups — developer only.
   for (const path of ['/audit', '/users', '/backup']) {
     admin.use(path, requireDeveloper);

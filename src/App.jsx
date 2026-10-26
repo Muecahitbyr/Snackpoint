@@ -7,6 +7,7 @@ import Services from './components/Services';
 import Highlight from './components/Highlight';
 import NewProducts from './components/NewProducts';
 import Promotions from './components/Promotions';
+import Wishes from './components/Wishes';
 import Events from './components/events/Events';
 import Reviews from './components/Reviews';
 import Location from './components/Location';
@@ -42,6 +43,7 @@ export default function App() {
         <Promotions />
         <Highlight />
         <NewProducts />
+        <Wishes />
         <Reviews />
         <Location />
       </main>

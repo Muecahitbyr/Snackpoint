@@ -12,7 +12,8 @@ export const VERSION = 1;
 // Parents before children, so a restore can insert in this order.
 export const TABLES = [
   'admin_users', 'media', 'product_groups', 'product_categories', 'products', 'events', 'event_images',
-  'banners', 'promotions', 'services', 'reviews', 'opening_hours', 'site_content', 'settings', 'audit_log',
+  'banners', 'promotions', 'services', 'reviews', 'opening_hours', 'site_content', 'settings',
+  'product_wishes', 'wish_votes', 'audit_log',
 ];
 const BATCHED = new Set(['media']); // large rows: read a few at a time
 const BATCH = 20;
@@ -103,7 +104,7 @@ export async function restoreBackup(data, { log = console.log } = {}) {
     const columns = new Map(TABLES.map((table) => [table, new Set()]));
     for (const row of columnRows) columns.get(row.table_name).add(row.column_name);
 
-    await db.query(`TRUNCATE ${[...TABLES, 'admin_sessions', 'login_attempts'].join(', ')} RESTART IDENTITY CASCADE`);
+    await db.query(`TRUNCATE ${[...TABLES, 'admin_sessions', 'login_attempts', 'wish_submissions'].join(', ')} RESTART IDENTITY CASCADE`);
     const counts = {};
     for (const table of TABLES) {
       const rows = data.tables[table] ?? [];

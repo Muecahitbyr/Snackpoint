@@ -589,3 +589,75 @@ describe('backup & restore', () => {
     assert.equal((await admin.send('/api/admin/dashboard')).status, 401, 'sessions end after a restore');
   });
 });
+
+describe('product wishes', () => {
+  const visitor = (ip) => ({ ...VIA_WORKER, 'X-Client-IP': ip, Origin: ORIGIN, 'Content-Type': 'application/json' });
+  const wish = (body, ip = '198.51.100.1') =>
+    request('/api/public/wishes', { method: 'POST', headers: visitor(ip), body: JSON.stringify(body) }).then(async (r) => ({ status: r.status, data: await r.json() }));
+  const list = (ip = '198.51.100.1') => request('/api/public/wishes', { headers: visitor(ip) }).then((r) => r.json());
+  const vote = (id, ip, method = 'POST') =>
+    request(`/api/public/wishes/${id}/vote`, { method, headers: visitor(ip) }).then(async (r) => ({ status: r.status, data: await r.json() }));
+  let wishId;
+
+  before(async () => {
+    // The restore test above logged everyone out.
+    admin = client();
+    assert.equal((await admin.login(EMAIL, 'Ein-Neues-Passwort-2026')).status, 200);
+  });
+
+  it('accepts a wish but only shows it after approval', async () => {
+    const result = await wish({ name: '  Takis   Blue Heat ', note: 'Die blauen bitte' });
+    assert.equal(result.status, 201);
+    assert.equal((await list()).items.length, 0, 'not public before approval');
+    const admin_ = (await admin.send('/api/admin/wishes')).data.items;
+    assert.equal(admin_[0].name, 'Takis Blue Heat');
+    assert.equal(admin_[0].status, 'new');
+    wishId = admin_[0].id;
+    await admin.send(`/api/admin/wishes/${wishId}`, { method: 'PATCH', body: { status: 'approved' } });
+    assert.deepEqual((await list()).items.map((w) => w.name), ['Takis Blue Heat']);
+  });
+
+  it('folds duplicates into one wish and counts them as votes', async () => {
+    const again = await wish({ name: 'takis blue-heat!' }, '198.51.100.2');
+    assert.match(again.data.message, /Stimme/);
+    const item = (await list('198.51.100.2')).items[0];
+    assert.equal(item.mentions, 2);
+    assert.equal(item.votes, 1);
+    assert.equal(item.voted, true);
+  });
+
+  it('allows one vote per visitor and taking it back', async () => {
+    assert.equal((await vote(wishId, '198.51.100.3')).data.votes, 2);
+    assert.equal((await vote(wishId, '198.51.100.3')).data.votes, 2, 'second vote ignored');
+    assert.equal((await vote(wishId, '198.51.100.3', 'DELETE')).data.votes, 1);
+  });
+
+  it('rejects links, empty names, bots and floods', async () => {
+    assert.equal((await wish({ name: 'Billig bei www.spam.de' })).status, 400);
+    assert.equal((await wish({ name: '!!' })).status, 400);
+    const bot = await wish({ name: 'Bot-Produkt', website: 'http://x' });
+    assert.equal(bot.status, 200);
+    assert.equal((await admin.send('/api/admin/wishes')).data.items.some((w) => w.name === 'Bot-Produkt'), false, 'honeypot not saved');
+    let last;
+    for (let i = 0; i < 6; i += 1) last = await wish({ name: `Flut ${i}` }, '198.51.100.9');
+    assert.equal(last.status, 429);
+  });
+
+  it('cannot vote on hidden wishes, and only the team manages them', async () => {
+    const hidden = (await admin.send('/api/admin/wishes')).data.items.find((w) => w.status === 'new');
+    assert.equal((await vote(hidden.id, '198.51.100.4')).status, 404);
+    assert.equal((await client().send('/api/admin/wishes')).status, 401);
+    const foreign = await request('/api/public/wishes', { method: 'POST', headers: { ...visitor('198.51.100.5'), Origin: 'https://evil.example' }, body: JSON.stringify({ name: 'X Y' }) });
+    assert.equal(foreign.status, 403);
+  });
+
+  it('merges a duplicate into another wish', async () => {
+    const created = await wish({ name: 'Blaue Takis' }, '198.51.100.6');
+    assert.equal(created.status, 201);
+    const source = (await admin.send('/api/admin/wishes')).data.items.find((w) => w.name === 'Blaue Takis');
+    const merged = await admin.send(`/api/admin/wishes/${source.id}/merge`, { method: 'POST', body: { targetId: wishId } });
+    assert.equal(merged.status, 200);
+    assert.equal(merged.data.item.mentions, 3);
+    assert.equal((await admin.send('/api/admin/wishes')).data.items.some((w) => w.id === source.id), false);
+  });
+});

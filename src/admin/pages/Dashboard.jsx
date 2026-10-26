@@ -7,7 +7,7 @@ const ENTITY_LABELS = {
   product: 'Produkt', product_group: 'Bereich', product_category: 'Kategorie', event: 'Event', banner: 'Banner',
   promotion: 'Aktion', service: 'Leistung', review: 'Bewertung', content: 'Webseiteninhalt', settings: 'Einstellungen',
   opening_hours: 'Öffnungszeiten', media: 'Bild', password: 'Passwort', session: 'Sitzung',
-  admin_user: 'Benutzerkonto', backup: 'Datensicherung',
+  admin_user: 'Benutzerkonto', backup: 'Datensicherung', wish: 'Produktwunsch',
 };
 const ACTION_LABELS = { create: 'erstellt', update: 'geändert', delete: 'gelöscht', reorder: 'sortiert' };
 const BACKUP_DUE_DAYS = 14;
@@ -68,6 +68,12 @@ export default function Dashboard({ isDeveloper }) {
             <Stat label="Kommende Events" value={data.counts.upcoming_events} href="#/events" hint={data.counts.draft_events ? `${data.counts.draft_events} Entwürfe` : null} />
             <Stat label="Veröffentlichte Events" value={data.counts.published_events} href="#/events" />
             <Stat label="Banner live" value={data.counts.live_banners} href="#/banner" hint={`${data.counts.live_promotions} Aktionen aktiv`} />
+            <Stat
+              label="Neue Produktwünsche"
+              value={data.counts.new_wishes}
+              href="#/wuensche"
+              hint={data.counts.new_wishes ? 'warten auf Freigabe' : `${data.counts.open_wishes} auf der Webseite`}
+            />
             <Stat label="Bilder" value={data.counts.media} href="#/medien" />
           </div>
 

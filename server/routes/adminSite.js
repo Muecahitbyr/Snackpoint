@@ -233,7 +233,9 @@ dashboard.get('/', async (c) => {
       (SELECT count(*)::int FROM events WHERE status = 'draft') AS draft_events,
       (SELECT count(*)::int FROM banners WHERE is_active AND (starts_at IS NULL OR starts_at <= now()) AND (ends_at IS NULL OR ends_at > now())) AS live_banners,
       (SELECT count(*)::int FROM promotions WHERE is_active AND (starts_at IS NULL OR starts_at <= now()) AND (ends_at IS NULL OR ends_at > now())) AS live_promotions,
-      (SELECT count(*)::int FROM media) AS media`),
+      (SELECT count(*)::int FROM media) AS media,
+      (SELECT count(*)::int FROM product_wishes WHERE status = 'new') AS new_wishes,
+      (SELECT count(*)::int FROM product_wishes WHERE status IN ('approved', 'planned')) AS open_wishes`),
     query(
       `SELECT a.*, u.email FROM audit_log a LEFT JOIN admin_users u ON u.id = a.admin_user_id
         WHERE a.action NOT IN ('login', 'logout') ORDER BY a.created_at DESC LIMIT 10`

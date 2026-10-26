@@ -13,6 +13,7 @@ import Hours from './pages/Hours';
 import Protocol from './pages/Protocol';
 import Password from './pages/Password';
 import Users from './pages/Users';
+import Wishes from './pages/Wishes';
 import { Icon } from './icons';
 
 // `developer`: only for accounts with the developer role (also enforced by the API).
@@ -22,6 +23,7 @@ const NAV = [
   { path: 'kategorien', label: 'Kategorien', icon: 'folder' },
   { path: 'events', label: 'Events', icon: 'calendar' },
   { path: 'banner', label: 'Banner & Aktionen', icon: 'megaphone' },
+  { path: 'wuensche', label: 'Produktwünsche', icon: 'message' },
   { path: 'medien', label: 'Medienbibliothek', icon: 'image' },
   { path: 'oeffnungszeiten', label: 'Öffnungszeiten', icon: 'clock' },
   { path: 'protokoll', label: 'Protokoll', icon: 'activity', developer: true },
@@ -56,6 +58,7 @@ function Page({ route, isDeveloper }) {
     case 'kategorien': return <Categories />;
     case 'events': return route.id ? <EventForm id={route.id === 'neu' ? null : route.id} /> : <Events />;
     case 'banner': return <BannersPromotions />;
+    case 'wuensche': return <Wishes />;
     case 'medien': return <MediaLibrary />;
     case 'oeffnungszeiten': return <Hours />;
     case 'protokoll': return <Protocol />;

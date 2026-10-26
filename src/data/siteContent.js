@@ -37,6 +37,12 @@ export const CONTENT = {
   'new.text': 'Jede Woche neue Süßigkeiten-Trends aus aller Welt von internationalen Klassikern bis zu den heißesten Newcomern.',
   'new.tag': 'Snacks',
   'new.moreLink': 'Hier klicken, um alle Produkte zu sehen →',
+  // Wunschliste (product wishes)
+  'wishes.eyebrow': 'Wunschliste',
+  'wishes.title': 'Was fehlt dir?',
+  'wishes.text': 'Du vermisst einen Snack, ein Getränk oder eine Marke? Schreib es uns. Die beliebtesten Wünsche holen wir in den Laden.',
+  'wishes.listTitle': 'Das wünscht ihr euch',
+  'wishes.empty': 'Noch keine Wünsche in der Liste. Schreib uns deinen!',
   // Events
   'events.eyebrow': 'Events',
   'events.title': 'Bald bei uns.',

@@ -1,0 +1,154 @@
+/* Wish list: form on the left, the community's ranking on the right. */
+.wishes {
+  padding: 130px 24px;
+  background: linear-gradient(180deg, var(--bg-warm-2), #fff);
+}
+.wishes-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: start;
+}
+.wishes-intro .lead { margin-bottom: 28px; max-width: 520px; }
+
+.wish-form { display: flex; flex-direction: column; gap: 10px; max-width: 520px; }
+.wish-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  background: #fff;
+  border: 2px solid var(--card-border);
+  border-radius: 100px;
+  box-shadow: var(--shadow-md);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.wish-input-row:focus-within { border-color: rgba(224,32,31,0.5); box-shadow: 0 0 0 4px rgba(224,32,31,0.1), var(--shadow-md); }
+.wish-input-row input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  outline: none;
+}
+.wish-input-row .btn { padding: 12px 24px; border: none; cursor: pointer; font-family: inherit; }
+.wish-input-row .btn:disabled { opacity: 0.7; cursor: wait; }
+.wish-form textarea {
+  width: 100%;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 12px 16px;
+  font: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  background: #fff;
+}
+.wish-form textarea:focus { outline: none; border-color: rgba(224,32,31,0.45); }
+.wish-note-toggle {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 2px 6px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--accent-3);
+  cursor: pointer;
+}
+.wish-trap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.wish-status { font-weight: 600; font-size: 0.92rem; padding: 10px 14px; border-radius: 14px; }
+.wish-status.is-success { background: #e8f6ec; color: #15803d; }
+.wish-status.is-error { background: #fdecec; color: var(--accent-3); }
+.wish-privacy { font-size: 0.8rem; color: var(--text-dim); padding-left: 6px; }
+
+.wishes-list-wrap {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 28px 26px;
+}
+.wishes-list-title { font-family: var(--font-brush); font-weight: 400; font-size: 1.6rem; margin-bottom: 16px; }
+.wishes-empty { color: var(--text-dim); padding: 12px 0; }
+.wishes-list { list-style: none; display: flex; flex-direction: column; }
+.wish {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--card-border);
+}
+.wish:last-child { border-bottom: none; }
+.wish-rank {
+  width: 34px;
+  flex-shrink: 0;
+  text-align: center;
+  font-family: var(--font-tag);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 2px 2px 0 rgba(240,172,35,0.45);
+}
+.wish:nth-child(n+4) .wish-rank { color: var(--text-dim); text-shadow: none; font-size: 1.25rem; }
+.wish-body { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.wish-body strong { font-size: 1rem; overflow-wrap: anywhere; }
+.wish-badge {
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.wish.is-planned .wish-badge { background: #fff3d6; color: #8a5a00; }
+.wish.is-available .wish-badge { background: #e8f6ec; color: #15803d; }
+.wish-vote {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 70px;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 100px;
+  border: 2px solid var(--card-border);
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s, background 0.2s, color 0.2s;
+}
+.wish-vote:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+.wish-vote.is-voted,
+.wish-vote.is-voted:hover:not(:disabled) { background: linear-gradient(135deg, var(--accent), var(--accent-3)); border-color: transparent; color: #fff; }
+.wish-vote.is-voted svg { fill: currentColor; }
+.wish-vote:disabled { opacity: 0.6; cursor: wait; }
+.wish-votes-static { font-size: 0.85rem; font-weight: 700; color: var(--text-dim); white-space: nowrap; }
+.wishes-more {
+  margin-top: 14px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: var(--accent-3);
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .wishes { padding: 100px 20px; }
+  .wishes-inner { grid-template-columns: 1fr; gap: 36px; }
+}
+@media (max-width: 480px) {
+  .wish-input-row { flex-direction: column; border-radius: 24px; }
+  .wish-input-row input { padding: 12px 14px; }
+  .wish-input-row .btn { width: 100%; }
+  .wishes-list-wrap { padding: 22px 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wish-vote:hover:not(:disabled) { transform: none; }
+}
