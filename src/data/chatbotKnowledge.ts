@@ -1,9 +1,10 @@
 // Static topics and canned texts for the SnackPoint chat assistant — no
-// external AI API. Products live in ./products, opening hours in ./hours and
-// the address in ./constants; the chat logic (src/components/chatbot) reads
-// them from there, so each fact is maintained in exactly one place.
+// external AI API. Products, opening hours, address and services come from
+// the database via ./products, ./hours, ./constants and ./siteStore; the chat
+// logic (src/components/chatbot) reads them from there, so each fact is
+// maintained in exactly one place (the admin panel).
 import { ADDRESS } from './constants';
-import { services } from './services';
+import { getSite } from './siteStore';
 
 export interface ChatCTA {
   label: string;
@@ -57,7 +58,8 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   {
     id: 'ihle',
     keywords: ['ihle'],
-    getResponse: () => services.find((service: { target: string }) => service.target === 'ihle')?.text ?? 'Ihle gibt es bei uns im Kiosk.',
+    getResponse: () =>
+      getSite()?.services.find((service: { id: string }) => service.id === 'ihle')?.text ?? 'Ihle gibt es bei uns im Kiosk.',
     cta: { label: 'Leistungen ansehen', href: '#services' },
   },
   {

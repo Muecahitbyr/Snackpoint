@@ -7,15 +7,34 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node scripts/test-chatbot.mjs"
+    "start": "node server/node.js",
+    "start:api": "node server/node.js --api-only",
+    "release": "node server/cli/seed.js",
+    "test": "node scripts/test-chatbot.mjs",
+    "test:server": "node --test --test-reporter=spec tests/server/api.test.js",
+    "test:all": "npm test && npm run test:server",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "node server/cli/migrate.js",
+    "db:seed": "node server/cli/seed.js",
+    "db:backup": "node server/cli/backup.js",
+    "admin:create": "node server/cli/admin.js create",
+    "admin:reset-password": "node server/cli/admin.js reset-password",
+    "cf:dev": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "@node-rs/argon2": "^2.2.2",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
     "gsap": "^3.12.5",
+    "hono": "^4.13.14",
+    "pg": "^8.23.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "three": "^0.186.0"
+    "sharp": "^0.35.5",
+    "three": "^0.186.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
@@ -23,6 +42,10 @@
     "@vitejs/plugin-react": "^6.1.2",
     "esbuild": "^0.28.2",
     "typescript": "^5.6.3",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "wrangler": "^4.153.0"
+  },
+  "engines": {
+    "node": ">=22.6"
   }
 }

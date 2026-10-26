@@ -6,6 +6,7 @@ import { useNow } from '../hooks/useNow';
 import { useMagnetic } from '../hooks/useMagnetic';
 import Reveal from './Reveal';
 import SplitWords from './SplitWords';
+import { useContent, useSite } from '../site/SiteProvider';
 import './Location.css';
 
 const toMinutes = (time) => {
@@ -91,13 +92,15 @@ function OpeningHours() {
 export default function Location() {
   const { consent, accept } = useCookieConsent();
   const mapsButton = useMagnetic();
+  const content = useContent();
+  const { contact, rating } = useSite().settings;
 
   return (
     <section className="location" id="location" data-character-target="location">
       <div className="location-inner">
         <Reveal className="location-info">
-          <p className="eyebrow">Standort</p>
-          <h2><SplitWords text="Besuch uns." /></h2>
+          <p className="eyebrow">{content['location.eyebrow']}</p>
+          <h2><SplitWords text={content['location.title']} /></h2>
           <div className="info-row">
             <span className="info-icon">📍</span>
             <div>
@@ -114,11 +117,22 @@ export default function Location() {
             </div>
           </div>
 
+          {(contact.phone || contact.email) && (
+            <div className="info-row">
+              <span className="info-icon">📞</span>
+              <div>
+                <strong>Kontakt</strong>
+                {contact.phone && <p><a href={`tel:${contact.phone.replace(/[^0-9+]/g, '')}`}>{contact.phone}</a></p>}
+                {contact.email && <p><a href={`mailto:${contact.email}`}>{contact.email}</a></p>}
+              </div>
+            </div>
+          )}
+
           <div className="info-row">
             <span className="info-icon">⭐</span>
             <div>
               <strong>Bewertung</strong>
-              <p>4.9 von 5 · 48 Rezensionen auf Google</p>
+              <p>{rating.value} von 5 · {rating.count} Rezensionen auf Google</p>
             </div>
           </div>
           <a
@@ -131,7 +145,7 @@ export default function Location() {
             onMouseMove={mapsButton.onMouseMove}
             onMouseLeave={mapsButton.onMouseLeave}
           >
-            In Google Maps öffnen
+            {content['location.mapsButton']}
           </a>
         </Reveal>
         <Reveal className="location-map" delay={0.1} data-character-target="map">

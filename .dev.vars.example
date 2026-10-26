@@ -1,0 +1,4 @@
+# For `npm run cf:dev` (wrangler dev): copy to .dev.vars (git-ignored).
+# Run the API locally first: npm run build && PROXY_SECRET=local-dev-secret npm start
+API_ORIGIN=http://localhost:3000
+PROXY_SECRET=local-dev-secret

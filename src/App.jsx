@@ -6,6 +6,8 @@ import About from './components/About';
 import Services from './components/Services';
 import Highlight from './components/Highlight';
 import NewProducts from './components/NewProducts';
+import Promotions from './components/Promotions';
+import Events from './components/events/Events';
 import Reviews from './components/Reviews';
 import Location from './components/Location';
 import Footer from './components/Footer';
@@ -36,8 +38,10 @@ export default function App() {
         <Hero />
         <About />
         <Services />
+        <Promotions />
         <Highlight />
         <NewProducts />
+        <Events />
         <Reviews />
         <Location />
       </main>

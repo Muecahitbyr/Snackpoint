@@ -1,41 +1,22 @@
-import { services } from '../data/services';
 import { useTilt } from '../hooks/useTilt';
+import { useContent, useSite } from '../site/SiteProvider';
 import Reveal from './Reveal';
+import TickerBadge from './TickerBadge';
 import SplitWords from './SplitWords';
 import './Services.css';
-
-// Ticker sash across the card. The text is repeated in two identical halves
-// so the CSS translateX(-50%) loop is seamless; screen readers get it once.
-const BADGE_REPEATS = 6;
-
-function ServiceBadge({ text }) {
-  const half = Array.from({ length: BADGE_REPEATS }, (_, i) => (
-    <span key={i} className="service-badge-item">{text}</span>
-  ));
-
-  return (
-    <div className="service-badge">
-      <span className="sr-only">{text}</span>
-      <div className="service-badge-track" aria-hidden="true">
-        {half}
-        {half}
-      </div>
-    </div>
-  );
-}
 
 function ServiceCard({ service, delay }) {
   const tilt = useTilt(8);
 
   return (
-    <Reveal className="service-card-wrap" delay={delay} data-character-target={service.target}>
+    <Reveal className="service-card-wrap" delay={delay} data-character-target={service.id}>
       <div
         className={`service-card tilt-card ${service.badge ? 'has-badge' : ''}`}
         ref={tilt.ref}
         onMouseMove={tilt.onMouseMove}
         onMouseLeave={tilt.onMouseLeave}
       >
-        {service.badge && <ServiceBadge text={service.badge} />}
+        {service.badge && <TickerBadge text={service.badge} />}
         <div className={`service-icon ${service.logo ? 'has-logo' : `icon-${service.gradient}`}`}>
           {service.logo ? <img src={service.logo} alt={`${service.title} Logo`} /> : service.icon}
         </div>
@@ -47,14 +28,17 @@ function ServiceCard({ service, delay }) {
 }
 
 export default function Services() {
+  const { services } = useSite();
+  const content = useContent();
+
   return (
     <section className="services" id="services" data-character-target="services">
-      <Reveal as="p" className="eyebrow center">Leistungen</Reveal>
-      <Reveal as="h2" className="section-title center"><SplitWords text="Alles unter einem Dach." /></Reveal>
+      <Reveal as="p" className="eyebrow center">{content['services.eyebrow']}</Reveal>
+      <Reveal as="h2" className="section-title center"><SplitWords text={content['services.title']} /></Reveal>
 
       <div className="service-grid">
         {services.map((service, i) => (
-          <ServiceCard key={service.title} service={service} delay={i * 0.15} />
+          <ServiceCard key={service.id} service={service} delay={i * 0.15} />
         ))}
       </div>
     </section>

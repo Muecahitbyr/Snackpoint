@@ -1,6 +1,7 @@
 import { useInView } from '../hooks/useInView';
 import Reveal from './Reveal';
 import SplitWords from './SplitWords';
+import { useContent } from '../site/SiteProvider';
 import './Highlight.css';
 
 const FLOATERS = [
@@ -13,6 +14,7 @@ const FLOATERS = [
 
 export default function Highlight() {
   const { ref, inView } = useInView();
+  const content = useContent();
 
   return (
     <section
@@ -33,11 +35,11 @@ export default function Highlight() {
       </div>
 
       <Reveal className="highlight-inner">
-        <p className="highlight-eyebrow">Immer einen Besuch wert</p>
+        <p className="highlight-eyebrow">{content['highlight.eyebrow']}</p>
         <h2 className="highlight-quote">
-          <SplitWords text="„Der beste Kiosk den ich je gesehen habe … man wird herzlich empfangen und hat einfach Spaß beim Einkaufen!“" step={0.03} />
+          <SplitWords text={content['highlight.quote']} step={0.03} />
         </h2>
-        <span className="highlight-author">— Can Sadri, Google Rezension ★★★★★</span>
+        <span className="highlight-author">{content['highlight.author']}</span>
       </Reveal>
     </section>
   );

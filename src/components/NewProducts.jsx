@@ -1,6 +1,7 @@
-import { newProducts } from '../data/newProducts';
 import { useTilt } from '../hooks/useTilt';
 import { useParallax } from '../hooks/useParallax';
+import { useContent, useSite } from '../site/SiteProvider';
+import { AvailabilitySash, GRADIENTS, ProductDetails, ProductMedia } from './products/ProductParts';
 import Reveal from './Reveal';
 import SplitWords from './SplitWords';
 import './NewProducts.css';
@@ -16,12 +17,12 @@ function ProductCard({ product, delay, index }) {
         onMouseMove={tilt.onMouseMove}
         onMouseLeave={tilt.onMouseLeave}
       >
-        <div className={`product-media ${product.gradient}`}>
-          <span>{product.emoji}</span>
-        </div>
-        <div className="badge">{product.badge}</div>
+        <ProductMedia product={product} />
+        <AvailabilitySash product={product} />
+        {product.badge && <div className="badge">{product.badge}</div>}
         <h3>{product.title}</h3>
         <p>{product.text}</p>
+        <ProductDetails product={product} />
       </div>
     </Reveal>
   );
@@ -30,30 +31,33 @@ function ProductCard({ product, delay, index }) {
 export default function NewProducts() {
   // The side tag drifts sideways as the section scrolls past.
   const tagTrack = useParallax(1.4, 'x');
+  const content = useContent();
+  // Products marked "Auf der Startseite hervorheben" in the admin panel.
+  const highlights = useSite()
+    .products.filter((product) => product.isHighlight)
+    .sort((a, b) => a.highlightOrder - b.highlightOrder)
+    .map((product, i) => ({ ...product, gradient: GRADIENTS[i % GRADIENTS.length] }));
 
   return (
     <section className="new-products" id="new" data-character-target="products">
       <div className="new-products-tag-track" ref={tagTrack} aria-hidden="true">
-        <span className="new-products-tag">Snacks</span>
+        <span className="new-products-tag">{content['new.tag']}</span>
       </div>
       <Reveal className="new-header">
-        <p className="eyebrow">Neu eingetroffen</p>
-        <h2 className="section-title"><SplitWords text="Frisch im Regal." /></h2>
-        <p className="lead">
-          Jede Woche neue Süßigkeiten-Trends aus aller Welt — von internationalen Klassikern bis zu
-          den heißesten Newcomern.
-        </p>
+        <p className="eyebrow">{content['new.eyebrow']}</p>
+        <h2 className="section-title"><SplitWords text={content['new.title']} /></h2>
+        <p className="lead">{content['new.text']}</p>
       </Reveal>
 
       <div className="product-grid" data-character-target="products-grid">
-        {newProducts.map((product, i) => (
-          <ProductCard key={product.title} product={product} delay={i * 0.1} index={i} />
+        {highlights.map((product, i) => (
+          <ProductCard key={product.id} product={product} delay={i * 0.1} index={i} />
         ))}
       </div>
 
-      <Reveal className="products-more" delay={newProducts.length * 0.1}>
+      <Reveal className="products-more" delay={highlights.length * 0.1}>
         <a href="/produkte.html" className="products-more-link">
-          Hier klicken, um alle Produkte zu sehen →
+          {content['new.moreLink']}
         </a>
       </Reveal>
     </section>

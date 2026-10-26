@@ -98,3 +98,17 @@
   .new-products-tag-track { top: 40px; right: -24px; }
   .new-products-tag { -webkit-text-stroke-width: 1.5px; }
 }
+
+/* Optional extras managed in the admin panel: a real photo instead of the
+   emoji tile, price and details below the text. */
+.product-media.has-image { overflow: hidden; }
+.product-media.has-image img { width: 100%; height: 100%; object-fit: cover; }
+.product-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 20px 22px;
+  margin-top: -12px;
+}
+.product-price { font-weight: 800; font-size: 1.05rem; color: var(--accent-3); }
+.product-info { font-size: 0.78rem; color: var(--text-dim); }

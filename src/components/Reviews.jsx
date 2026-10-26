@@ -1,5 +1,5 @@
-import { reviews } from '../data/reviews';
 import { useInView } from '../hooks/useInView';
+import { useContent, useSite } from '../site/SiteProvider';
 import Reveal from './Reveal';
 import SplitWords from './SplitWords';
 import './Reviews.css';
@@ -22,8 +22,12 @@ function ReviewCard({ review }) {
 
 export default function Reviews() {
   // Render the review set twice so the CSS translateX(-50%) loop is seamless — no visible start or end.
+  const { reviews } = useSite();
+  const content = useContent();
   const loopedReviews = [...reviews, ...reviews];
   const { ref, inView } = useInView();
+
+  if (!reviews.length) return null;
 
   return (
     <section
@@ -32,13 +36,13 @@ export default function Reviews() {
       id="reviews"
       data-character-target="reviews"
     >
-      <Reveal as="p" className="eyebrow center">Bewertungen</Reveal>
-      <Reveal as="h2" className="section-title center"><SplitWords text="Das sagen unsere Kunden." /></Reveal>
+      <Reveal as="p" className="eyebrow center">{content['reviews.eyebrow']}</Reveal>
+      <Reveal as="h2" className="section-title center"><SplitWords text={content['reviews.title']} /></Reveal>
 
       <div className="marquee">
         <div className="marquee-track">
           {loopedReviews.map((review, i) => (
-            <ReviewCard key={`${review.name}-${i}`} review={review} />
+            <ReviewCard key={`${review.id}-${i}`} review={review} />
           ))}
         </div>
       </div>

@@ -4,6 +4,10 @@ dist
 *.local
 .env
 .env.*
+!.env.example
+backups/
 review-v2.1/
 .claude/
 public/models/character-v1-backup.glb
+.dev.vars
+.wrangler/

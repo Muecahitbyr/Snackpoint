@@ -1,0 +1,24 @@
+# Local development database only — production uses a managed Postgres
+# (see ADMIN.md). Start with `npm run db:up`.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: snackpoint-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: snackpoint
+      POSTGRES_PASSWORD: snackpoint_local_dev
+      POSTGRES_DB: snackpoint
+    ports:
+      - "127.0.0.1:5442:5432"
+    volumes:
+      - snackpoint-db:/var/lib/postgresql/data
+      - ./server/db/docker:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U snackpoint -d snackpoint"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  snackpoint-db:

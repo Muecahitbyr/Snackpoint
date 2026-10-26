@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { MAPS_URL } from '../data/constants';
 import { getOpenStatus } from './chatbot/openingHours';
 import { useNow } from '../hooks/useNow';
+import { useContent, useSite } from '../site/SiteProvider';
+import AnnouncementBar from './AnnouncementBar';
 import './Header.css';
 
 // Live "open / closed" pill: on the right of the desktop bar, in the middle
@@ -32,10 +34,15 @@ const LINKS = [
   { href: '/#reviews', label: 'Bewertungen' },
   { href: '/#location', label: 'Standort' },
 ];
+// Only listed while events are planned.
+const EVENTS_LINK = { href: '/events', label: 'Events' };
 
 export default function Header() {
   const navRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const content = useContent();
+  const { events } = useSite();
+  const links = events.current.length ? [...LINKS.slice(0, 2), EVENTS_LINK, ...LINKS.slice(2)] : LINKS;
 
   useEffect(() => {
     let ticking = false;
@@ -65,49 +72,52 @@ export default function Header() {
   }, [menuOpen]);
 
   return (
-    <header ref={navRef} className={`nav ${menuOpen ? 'menu-open' : ''}`}>
-      <div className="nav-inner">
-        <a href="/#home" className="brand" onClick={() => setMenuOpen(false)}>
-          <img src="/logo.jpg" alt="SnackPoint Logo" className="brand-logo" />
-          <span>SnackPoint</span>
-        </a>
-        <nav className="nav-links">
-          {LINKS.map((link) => (
-            <a key={link.href} href={link.href}>{link.label}</a>
-          ))}
-        </nav>
-        <OpenStatus />
-        <button
-          type="button"
-          className={`nav-burger ${menuOpen ? 'is-open' : ''}`}
-          aria-label={menuOpen ? 'Menü schließen' : 'Menü öffnen'}
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-      </div>
+    <>
+      <AnnouncementBar />
+      <header ref={navRef} className={`nav ${menuOpen ? 'menu-open' : ''}`}>
+        <div className="nav-inner">
+          <a href="/#home" className="brand" onClick={() => setMenuOpen(false)}>
+            <img src={content['brand.logo'] ?? '/logo.jpg'} alt={`${content['brand.name']} Logo`} className="brand-logo" />
+            <span>{content['brand.name']}</span>
+          </a>
+          <nav className="nav-links">
+            {links.map((link) => (
+              <a key={link.href} href={link.href}>{link.label}</a>
+            ))}
+          </nav>
+          <OpenStatus />
+          <button
+            type="button"
+            className={`nav-burger ${menuOpen ? 'is-open' : ''}`}
+            aria-label={menuOpen ? 'Menü schließen' : 'Menü öffnen'}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
 
-      <div className="nav-mobile-panel">
-        <nav>
-          {LINKS.map((link) => (
-            <a key={link.href} href={link.href} onClick={() => setMenuOpen(false)}>
-              {link.label}
-            </a>
-          ))}
-        </nav>
-        <a
-          className="btn btn-primary"
-          href={MAPS_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => setMenuOpen(false)}
-        >
-          Route planen
-        </a>
-      </div>
-    </header>
+        <div className="nav-mobile-panel">
+          <nav>
+            {links.map((link) => (
+              <a key={link.href} href={link.href} onClick={() => setMenuOpen(false)}>
+                {link.label}
+              </a>
+            ))}
+          </nav>
+          <a
+            className="btn btn-primary"
+            href={MAPS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMenuOpen(false)}
+          >
+            Route planen
+          </a>
+        </div>
+      </header>
+    </>
   );
 }

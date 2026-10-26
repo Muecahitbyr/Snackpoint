@@ -3,6 +3,7 @@ import { useParallax } from '../hooks/useParallax';
 import { useCountUp } from '../hooks/useCountUp';
 import { useMagnetic } from '../hooks/useMagnetic';
 import Reveal from './Reveal';
+import { useContent, useSite } from '../site/SiteProvider';
 import './Hero.css';
 
 const PARTICLES = [
@@ -14,7 +15,6 @@ const PARTICLES = [
   { emoji: '📦', top: '85%', left: '50%', delay: '0.3s', duration: '8.5s' },
 ];
 
-const HERO_NAME = 'SnackPoint';
 const SPARKLE = 'M0 -22C4 -6 6 -4 22 0C6 4 4 6 0 22C-4 6 -6 4 -22 0C-6 -4 -4 -6 0 -22Z';
 
 // Two hand-built graffiti pieces for the hero's corners. Both share the
@@ -121,9 +121,12 @@ export default function Hero() {
   const primaryCta = useMagnetic();
   const secondaryCta = useMagnetic();
   const heroRef = useRef(null);
+  const copy = useContent();
+  const { rating: ratingSettings } = useSite().settings;
+  const heroName = copy['hero.title'];
 
-  const reviewCount = useCountUp(48);
-  const rating = useCountUp(4.9, { decimals: 1 });
+  const reviewCount = useCountUp(ratingSettings.count);
+  const rating = useCountUp(ratingSettings.value, { decimals: 1 });
 
   // Pause the blobs/particles' infinite animations once the hero scrolls
   // out of view — they'd otherwise keep the compositor busy forever for
@@ -177,23 +180,23 @@ export default function Hero() {
       <HeroArtBottomLeft artRef={artBottomLeft} />
 
       <div className="hero-content" ref={content}>
-        <img src="/logo.jpg" alt="SnackPoint Logo" className="hero-logo" ref={logo} />
-        <Reveal as="p" className="eyebrow">Kiosk · Kaufbeuren</Reveal>
+        <img src={copy['brand.logo'] ?? '/logo.jpg'} alt={`${copy['brand.name']} Logo`} className="hero-logo" ref={logo} />
+        <Reveal as="p" className="eyebrow">{copy['hero.eyebrow']}</Reveal>
         {/* Letters are sprayed on one by one; the label keeps the heading's
             accessible name intact. */}
-        <Reveal as="h1" className="hero-title" aria-label="SnackPoint Kaufbeuren">
-          {HERO_NAME.split('').map((letter, i) => (
+        <Reveal as="h1" className="hero-title" aria-label={`${heroName} ${copy['hero.tag']}`.trim()}>
+          {heroName.split('').map((letter, i) => (
             <span key={i} className="hero-letter" style={{ '--i': i }} aria-hidden="true">{letter}</span>
           ))}
-          <br /><span className="hero-tag" aria-hidden="true">Kaufbeuren</span>
+          {copy['hero.tag'] && <><br /><span className="hero-tag" aria-hidden="true">{copy['hero.tag']}</span></>}
         </Reveal>
         <Reveal as="p" className="hero-subtitle">
-          Der Kiosk, der dich zum Leben erweckt.
+          {copy['hero.subtitle']}
         </Reveal>
 
         <Reveal className="hero-actions">
-          <a className="btn btn-primary" href="#new" data-character-target="cta-hero" {...primaryCta}>Neue Waren entdecken</a>
-          <a className="btn btn-ghost" href="#location" {...secondaryCta}>Öffnungszeiten &amp; Adresse</a>
+          <a className="btn btn-primary" href="#new" data-character-target="cta-hero" {...primaryCta}>{copy['hero.ctaPrimary']}</a>
+          <a className="btn btn-ghost" href="#location" {...secondaryCta}>{copy['hero.ctaSecondary']}</a>
         </Reveal>
 
         <Reveal className="hero-stats">

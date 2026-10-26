@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { allProducts, PRODUCT_GROUPS, groupCategories } from '../../data/allProducts';
 import { useTilt } from '../../hooks/useTilt';
+import { useContent, useSite } from '../../site/SiteProvider';
+import { AvailabilitySash, GRADIENTS, ProductDetails, ProductMedia } from './ProductParts';
 import Header from '../Header';
 import Footer from '../Footer';
 import CookieConsent from '../CookieConsent';
@@ -10,17 +11,15 @@ import '../NewProducts.css';
 import './Produkte.css';
 
 const ALL = 'Alle';
-const GROUP_BY_ID = new Map(PRODUCT_GROUPS.map((group) => [group.id, group]));
 
 // /produkte.html#lotto opens straight on that group.
-function groupFromHash() {
+function groupFromHash(groupById) {
   const id = window.location.hash.slice(1);
-  return GROUP_BY_ID.has(id) ? id : ALL;
+  return groupById.has(id) ? id : ALL;
 }
 
-function ProductCard({ product, delay }) {
+function ProductCard({ product, delay, ageRestricted }) {
   const tilt = useTilt(10);
-  const ageRestricted = GROUP_BY_ID.get(product.group)?.ageRestricted;
 
   return (
     <Reveal className="product-card-wrap" delay={delay}>
@@ -30,32 +29,43 @@ function ProductCard({ product, delay }) {
         onMouseMove={tilt.onMouseMove}
         onMouseLeave={tilt.onMouseLeave}
       >
-        <div className={`product-media ${product.gradient}`}>
-          <span>{product.emoji}</span>
-        </div>
+        <ProductMedia product={product} />
+        <AvailabilitySash product={product} />
         {ageRestricted && <div className="age-badge" title="Nur ab 18 Jahren">18+</div>}
         <div className="badge">{product.category}</div>
         <h3>{product.title}</h3>
         <p>{product.text}</p>
+        <ProductDetails product={product} />
       </div>
     </Reveal>
   );
 }
 
 export default function ProduktePage() {
+  const site = useSite();
+  const content = useContent();
+  // Catalog in display order; the tile colour follows the position, as before.
+  const { groups, groupById, catalog } = useMemo(() => {
+    const catalog = site.products
+      .filter((product) => product.showInCatalog)
+      .map((product, i) => ({ ...product, gradient: GRADIENTS[i % GRADIENTS.length] }));
+    const groups = site.groups.filter((g) => catalog.some((product) => product.group === g.id));
+    return { groups, groupById: new Map(groups.map((g) => [g.id, g])), catalog };
+  }, [site]);
+
   const [search, setSearch] = useState('');
-  const [group, setGroup] = useState(groupFromHash);
+  const [group, setGroup] = useState(() => groupFromHash(groupById));
   const [category, setCategory] = useState(ALL);
   const groupsRef = useRef(null);
 
   useEffect(() => {
     const onHashChange = () => {
-      setGroup(groupFromHash());
+      setGroup(groupFromHash(groupById));
       setCategory(ALL);
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
-  }, []);
+  }, [groupById]);
 
   // On phones the tab row scrolls sideways — keep the active tab in view.
   useEffect(() => {
@@ -71,33 +81,36 @@ export default function ProduktePage() {
     window.history.replaceState(null, '', id === ALL ? window.location.pathname : `#${id}`);
   };
 
-  const subCategories = group === ALL ? [] : groupCategories(group);
+  // Categories of the selected group that have products, in display order.
+  const subCategories =
+    group === ALL
+      ? []
+      : (groupById.get(group)?.categories ?? []).filter((name) => catalog.some((p) => p.group === group && p.category === name));
 
   const sections = useMemo(() => {
     const term = search.trim().toLowerCase();
-    const matches = allProducts.filter((product) => {
+    const matches = catalog.filter((product) => {
       if (group !== ALL && product.group !== group) return false;
       if (category !== ALL && product.category !== category) return false;
       if (!term) return true;
-      const groupName = GROUP_BY_ID.get(product.group)?.name ?? '';
-      return [product.title, product.text, product.category, groupName].some((text) => text.toLowerCase().includes(term));
+      const groupName = groupById.get(product.group)?.name ?? '';
+      return [product.title, product.brand ?? '', product.text, product.category, groupName].some((text) =>
+        text.toLowerCase().includes(term)
+      );
     });
-    return PRODUCT_GROUPS.map((g) => ({ group: g, products: matches.filter((p) => p.group === g.id) })).filter(
+    return groups.map((g) => ({ group: g, products: matches.filter((p) => p.group === g.id) })).filter(
       (section) => section.products.length > 0
     );
-  }, [search, group, category]);
+  }, [search, group, category, catalog, groups, groupById]);
 
   return (
     <div className="produkte-page">
       <Header />
       <main className="produkte-main">
         <div className="produkte-header">
-          <p className="eyebrow">Sortiment</p>
-          <h1 className="section-title"><SplitWords text="Alle Produkte." /></h1>
-          <p className="lead">
-            Snacks, Getränke, Tabakwaren, Lotto und mehr — eine Auswahl aus unserem Sortiment, oft in
-            mehreren Sorten und Marken. Genaue Verfügbarkeit direkt bei uns in Kaufbeuren.
-          </p>
+          <p className="eyebrow">{content['products.eyebrow']}</p>
+          <h1 className="section-title"><SplitWords text={content['products.title']} /></h1>
+          <p className="lead">{content['products.text']}</p>
         </div>
 
         <div className="produkte-controls">
@@ -125,7 +138,7 @@ export default function ProduktePage() {
             >
               <span aria-hidden="true">✨</span> Alle
             </button>
-            {PRODUCT_GROUPS.map((g) => (
+            {groups.map((g) => (
               <button
                 key={g.id}
                 type="button"
@@ -165,7 +178,7 @@ export default function ProduktePage() {
               {g.notice && <p className="produkte-notice">{g.notice}</p>}
               <div className="product-grid produkte-grid">
                 {products.map((product, i) => (
-                  <ProductCard key={product.title} product={product} delay={(i % 8) * 0.06} />
+                  <ProductCard key={product.id} product={product} delay={(i % 8) * 0.06} ageRestricted={g.ageRestricted} />
                 ))}
               </div>
             </section>

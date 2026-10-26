@@ -1,6 +1,7 @@
 .nav {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  /* Moves down while an announcement banner is shown (AnnouncementBar.jsx). */
+  top: var(--announce-h, 0px); left: 0; right: 0;
   z-index: 900;
   padding: 20px 0;
   transition: padding 0.3s ease, background 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease;

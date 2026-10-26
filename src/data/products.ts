@@ -1,15 +1,10 @@
-// Central product data for the chat assistant — the ONE place to maintain it.
+// Product data for the chat assistant. The products themselves come from
+// the database (maintained in the admin panel) and are handed in by
+// setChatProducts() when the page loads — see src/site/siteData.js. What
+// stays here is the chat's own vocabulary: its topics and their aliases.
 //
-//   • New product: add a row to BRANDED_PRODUCTS below. Name, brand, variant,
-//     aliases, tags and price are all picked up automatically; no chat rules
-//     need to change. (One row per flavour/variant, e.g. one per Takis sort.)
-//   • Price: the `price` field of that row.
-//   • Generic product groups from the /produkte page (allProducts.js) are
-//     picked up automatically; their extras are set in GENERIC_OVERRIDES.
-//
-// This is a static list, not a live inventory feed: the bot words its
-// answers accordingly and never claims a product is *definitely* out of range.
-import { allProducts } from './allProducts';
+// This is not a live inventory feed: the bot words its answers accordingly
+// and never claims a product is *definitely* out of range.
 
 export interface ProductCategory {
   id: string;
@@ -54,100 +49,50 @@ export const CATEGORIES: ProductCategory[] = [
   { id: 'guthaben', name: 'Guthabenkarten', aliases: ['guthaben', 'guthabenkarte', 'aufladen', 'prepaid', 'geschenkkarte'] },
 ];
 
-// Generic product groups from the /produkte catalog (allProducts.js): which
-// chat category they belong to, plus search words. Groups not listed here
-// fall back to their title only.
-const CATEGORY_BY_CATALOG_CATEGORY: Record<string, string> = {
-  'Süßigkeiten': 'suessigkeiten',
-  Schokolade: 'schokolade',
-  'Chips & Salziges': 'chips',
-  'Popcorn & Eis': 'snacks',
-  'Softdrinks & Wasser': 'getraenke',
-  'Energy Drinks': 'energy',
-  Kaffee: 'getraenke',
-  'Sandwiches & Snacks': 'belegtes',
-  'Zeitschriften & Zeitungen': 'zeitschriften',
-  Guthabenkarten: 'guthaben',
-};
+/** A product as the public site API delivers it (server/lib/publicSite.js). */
+export interface SiteProduct {
+  id: string;
+  title: string;
+  brand?: string;
+  price: number | null;
+  availability: 'available' | 'coming_soon' | 'sold_out';
+  searchTerms: string[];
+  tags: string[];
+  showInCatalog: boolean;
+  /** Chat topic, or null when the chat shouldn't answer for this product. */
+  chatCategory: string | null;
+}
 
-// Not offered as chat products: Lotto and DHL are answered by their own
-// topics in chatbotKnowledge.ts, tobacco by the 'zigaretten' category and
-// the branded rows below (catalog names like "Drehtabak" would otherwise
-// shadow it).
-const CHAT_SKIPPED_CATALOG_CATEGORIES = new Set([
-  'Zigaretten', 'Tabak', 'E-Zigaretten', 'Raucherbedarf',
-  'Lotterien', 'Rubbellose & Wetten', 'Lotto-Service', 'DHL Paketshop',
-]);
+/** Live list (mutated in place) — the chat's search index rebuilds when it changes. */
+export const PRODUCTS: Product[] = [];
+let catalogVersion = 0;
 
-const GENERIC_OVERRIDES: Record<string, { category?: string; aliases?: string[]; tags?: string[]; skip?: boolean }> = {
-  'Fruchtgummi-Mix': { aliases: ['gummi', 'gummibärchen', 'weingummi', 'lakritz', 'bärchen'], tags: ['suess', 'beliebt'] },
-  'Lutscher & Lollis': { aliases: ['lolli', 'lutscher'], tags: ['suess'] },
-  Kaubonbons: { aliases: ['bonbon', 'karamell', 'toffee'], tags: ['suess'] },
-  Marshmallows: { aliases: ['schaumzucker'], tags: ['suess'] },
-  'Sauer-Extrem': { aliases: ['sauer', 'saure'], tags: ['sauer'] },
-  'Schokoriegel-Klassiker': { aliases: ['riegel'], tags: ['suess', 'beliebt'] },
-  'Kekse & Gebäck': { aliases: ['keks', 'cookie', 'waffel'], tags: ['suess'] },
-  'Pralinen-Auswahl': { aliases: ['praline', 'konfekt'], tags: ['suess'] },
-  'Nuss-Schokolade': { aliases: ['tafel', 'zartbitter', 'vollmilch'], tags: ['suess'] },
-  'Cola & Limonaden': { aliases: ['limo', 'fanta', 'sprite', 'softdrink', 'brause'], tags: ['kalt', 'beliebt'] },
-  // Superseded by the branded Energy Drinks below.
-  'Energy Drinks': { category: 'energy', skip: true },
-  'Wasser still & medium': { aliases: ['mineralwasser', 'sprudel'], tags: ['kalt'] },
-  'Eistee & Fruchtsäfte': { aliases: ['eistee', 'saft', 'fruchtsaft', 'schorle'], tags: ['kalt'] },
-  'Kaffee to go': { aliases: ['coffee', 'cappuccino', 'latte', 'espresso'], tags: ['heiss'] },
-  Kartoffelchips: { aliases: ['chips', 'paprikachips'], tags: ['salzig', 'beliebt'] },
-  'Nachos & Dips': { aliases: ['nacho', 'dip', 'salsa', 'tortilla'], tags: ['salzig'] },
-  'Nüsse & Studentenfutter': { aliases: ['nuss', 'erdnuss', 'cashew', 'mandeln', 'pistazien'], tags: ['salzig'] },
-  'Belegte Sandwiches': { aliases: ['sandwich', 'toast'] },
-  Wraps: { aliases: ['wrap'] },
-  Baguettes: { aliases: ['baguette', 'brötchen'] },
-  'Frisches Gebäck': { aliases: ['gebäck', 'croissant', 'teilchen'] },
-  'Salat to go': { aliases: ['salat'] },
-  'Popcorn süß & salzig': { aliases: ['popcorn'], tags: ['suess', 'salzig'] },
-  'Eis am Stiel': { aliases: ['eis', 'eiscreme', 'speiseeis'], tags: ['kalt', 'suess'] },
-  'Tageszeitungen': { aliases: ['zeitung', 'tageszeitung'] },
-  'Magazine & Zeitschriften': { aliases: ['magazin', 'zeitschrift', 'heft'] },
-  'Rätselhefte': { aliases: ['rätsel', 'kreuzworträtsel', 'sudoku'] },
-  'Prepaid-Guthaben': { aliases: ['aufladekarte'] },
-  'Gaming- & Geschenkkarten': { aliases: ['psn', 'playstation', 'xbox', 'nintendo', 'steam', 'google play', 'netflix', 'spotify', 'gutschein'] },
-  paysafecard: { aliases: ['paysafe'] },
-};
+export function getCatalogVersion(): number {
+  return catalogVersion;
+}
 
-const GENERIC_PRODUCTS: Product[] = allProducts.flatMap((item: { title: string; category: string }) => {
-  const override = GENERIC_OVERRIDES[item.title];
-  if (override?.skip || CHAT_SKIPPED_CATALOG_CATEGORIES.has(item.category)) return [];
-  return [
-    {
-      name: item.title,
-      category: override?.category ?? CATEGORY_BY_CATALOG_CATEGORY[item.category] ?? 'snacks',
-      aliases: override?.aliases,
-      tags: override?.tags,
-    },
-  ];
-});
-
-// ⚠️ BEISPIELDATEN — please check against the real range and prices before
-// relying on them: the bot answers "Ja, haben wir" for every row that isn't
-// marked `available: false`, and quotes a price only where one is set.
-const BRANDED_PRODUCTS: Product[] = [
-  // Zigaretten & Tabak
-  { brand: 'Marlboro', variant: 'Red', category: 'zigaretten' },
-  { brand: 'Marlboro', variant: 'Gold', category: 'zigaretten' },
-  { name: 'Tabakwaren', category: 'zigaretten' },
-  // Chips
-  { brand: 'Takis', variant: 'Blue Heat', category: 'chips', aliases: ['blaue takis', 'takis blue'], tags: ['scharf', 'beliebt'] },
-  { brand: 'Takis', variant: 'Fuego', category: 'chips', tags: ['scharf'] },
-  { brand: 'Takis', variant: 'Intense Nacho', category: 'chips', tags: ['salzig', 'kaesig'] },
-  // Energy Drinks
-  { brand: 'Red Bull', variant: 'Original', category: 'energy', tags: ['kalt', 'beliebt'] },
-  { brand: 'Red Bull', variant: 'Sugarfree', category: 'energy', aliases: ['zuckerfrei'], tags: ['kalt', 'zuckerfrei'] },
-  { brand: 'Red Bull', variant: 'Red Edition', category: 'energy', aliases: ['wassermelone'], tags: ['kalt'] },
-  { brand: 'Monster', variant: 'Energy', category: 'energy', tags: ['kalt', 'beliebt'] },
-  { brand: 'Monster', variant: 'Ultra', category: 'energy', aliases: ['zero'], tags: ['kalt', 'zuckerfrei'] },
-  { brand: 'Monster', variant: 'Mango Loco', category: 'energy', tags: ['kalt'] },
-];
-
-export const PRODUCTS: Product[] = [...GENERIC_PRODUCTS, ...BRANDED_PRODUCTS];
+export function setChatProducts(siteProducts: SiteProduct[]): void {
+  // Catalog products first, then the extra brand rows — the order the
+  // chat lists them in.
+  const ordered = [...siteProducts.filter((item) => item.showInCatalog), ...siteProducts.filter((item) => !item.showInCatalog)];
+  const products = ordered
+    .filter((item) => item.chatCategory)
+    .map((item): Product => {
+      const variant = item.brand && item.title.startsWith(`${item.brand} `) ? item.title.slice(item.brand.length + 1) : undefined;
+      return {
+        name: item.title,
+        brand: item.brand,
+        variant,
+        category: item.chatCategory as string,
+        available: item.availability === 'available',
+        price: item.price === null ? undefined : item.price / 100,
+        aliases: item.searchTerms.length ? item.searchTerms : undefined,
+        tags: item.tags.length ? item.tags : undefined,
+      };
+    });
+  PRODUCTS.splice(0, PRODUCTS.length, ...products);
+  catalogVersion += 1;
+}
 
 export function getProductName(product: Product): string {
   return product.name ?? [product.brand, product.variant].filter(Boolean).join(' ');

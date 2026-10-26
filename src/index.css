@@ -43,7 +43,7 @@ body {
 
 img { display: block; max-width: 100%; }
 a { color: inherit; text-decoration: none; }
-section { position: relative; scroll-margin-top: 90px; }
+section { position: relative; scroll-margin-top: calc(90px + var(--announce-h, 0px)); }
 
 .eyebrow {
   display: inline-block;

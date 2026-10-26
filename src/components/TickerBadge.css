@@ -1,0 +1,37 @@
+/* A diagonal ticker sash running edge to edge across a card (services,
+   products); the card clips its ends to the rounded corners. Type matches the product
+   badges (NewProducts.css), in the brand red so it reads from a distance. */
+.service-badge {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: -25%;
+  right: -25%;
+  transform: translateY(-50%) rotate(-14deg);
+  overflow: hidden;
+  white-space: nowrap;
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+  color: #fff;
+  padding: 12px 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  box-shadow: 0 8px 22px rgba(224,32,31,0.35);
+  pointer-events: none;
+}
+.service-badge-track {
+  display: flex;
+  width: max-content;
+  animation: badge-ticker 17s linear infinite;
+}
+.service-badge-item { padding: 0 18px; }
+.service-badge-item::after { content: '•'; margin-left: 36px; opacity: 0.7; }
+@keyframes badge-ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+/* "Ausverkauft" on product cards: same sash, in ink instead of brand red. */
+.service-badge.is-dark {
+  background: linear-gradient(135deg, #2b2b2e, #111);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.3);
+}

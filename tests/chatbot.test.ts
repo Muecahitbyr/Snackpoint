@@ -4,8 +4,13 @@ import { respond } from '../src/components/chatbot/chatbotEngine';
 import { tokenSimilarity } from '../src/components/chatbot/fuzzySearch';
 import { PRODUCTS, getProductName } from '../src/data/products';
 import type { ChatContext, Intent } from '../src/components/chatbot/types';
+import { loadSeedSiteData } from './fixtures/siteData';
 
-// Samstag, 26.09.2026. Opening hours come from src/data/hours.js (08:00–20:00 daily).
+// The chat reads products, hours and the address from the database at page
+// load; here they come from the original seed content instead.
+loadSeedSiteData();
+
+// Samstag, 26.09.2026. Opening hours come from the seed data (08:00–20:00 daily).
 const SAT_NOON = new Date(2026, 8, 26, 12, 0);
 const SAT_1745 = new Date(2026, 8, 26, 17, 45);
 const SAT_NIGHT = new Date(2026, 8, 26, 22, 30);

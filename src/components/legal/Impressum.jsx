@@ -1,4 +1,4 @@
-import { ADDRESS } from '../../data/constants';
+import { ADDRESS, CONTACT } from '../../data/constants';
 import LegalHeader from './LegalHeader';
 import Placeholder from './Placeholder';
 import Footer from '../Footer';
@@ -26,9 +26,9 @@ export default function Impressum() {
 
         <h2>Kontakt</h2>
         <p>
-          Telefon: <Placeholder>[Telefonnummer einfügen]</Placeholder>
+          Telefon: {CONTACT.phone || <Placeholder>[Telefonnummer einfügen]</Placeholder>}
           <br />
-          E-Mail: <Placeholder>[E-Mail-Adresse einfügen]</Placeholder>
+          E-Mail: {CONTACT.email || <Placeholder>[E-Mail-Adresse einfügen]</Placeholder>}
         </p>
 
         <h2>Umsatzsteuer-ID</h2>

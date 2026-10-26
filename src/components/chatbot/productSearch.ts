@@ -5,6 +5,7 @@
 import {
   CATEGORIES,
   PRODUCTS,
+  getCatalogVersion,
   getProductId,
   getProductName,
   type Product,
@@ -49,18 +50,25 @@ const CATEGORY_BY_ID = new Map(CATEGORIES.map((category) => [category.id, catego
 const toWords = (texts: (string | undefined)[], kind: IndexedWord['kind']): IndexedWord[] =>
   texts.flatMap((text) => (text ? tokenize(text) : [])).map((raw) => ({ raw, stem: stem(raw), kind }));
 
-const INDEX: IndexedProduct[] = PRODUCTS.map((product) => ({
-  product,
-  id: getProductId(product),
-  words: [
-    ...toWords([product.brand], 'brand'),
-    ...toWords([getProductName(product), product.variant, ...(product.aliases ?? [])], 'name'),
-    ...toWords([CATEGORY_BY_ID.get(product.category)?.name], 'category'),
-    ...toWords(product.tags ?? [], 'tag'),
-  ],
-}));
+// Built on first use and rebuilt whenever the product list is reloaded.
+let index: { version: number; entries: IndexedProduct[]; tagWords: IndexedWord[] } | null = null;
 
-const TAG_WORDS = INDEX.flatMap((entry) => entry.words.filter((word) => word.kind === 'tag'));
+function getIndex() {
+  if (index?.version === getCatalogVersion()) return index;
+  const entries = PRODUCTS.map((product) => ({
+    product,
+    id: getProductId(product),
+    words: [
+      ...toWords([product.brand], 'brand'),
+      ...toWords([getProductName(product), product.variant, ...(product.aliases ?? [])], 'name'),
+      ...toWords([CATEGORY_BY_ID.get(product.category)?.name], 'category'),
+      ...toWords(product.tags ?? [], 'tag'),
+    ],
+  }));
+  const tagWords = entries.flatMap((entry) => entry.words.filter((word) => word.kind === 'tag'));
+  index = { version: getCatalogVersion(), entries, tagWords };
+  return index;
+}
 
 const CATEGORY_ALIASES = CATEGORIES.map((category) => ({
   category,
@@ -97,7 +105,8 @@ export function searchSegment(segment: QuerySegment, fuzzy = true): SegmentResul
   let bestScore = 0;
   let best: Product[] = [];
 
-  for (const entry of INDEX) {
+  const { entries, tagWords } = getIndex();
+  for (const entry of entries) {
     let matched = 0;
     let score = 0;
     let similaritySum = 0;
@@ -130,7 +139,7 @@ export function searchSegment(segment: QuerySegment, fuzzy = true): SegmentResul
   const confidence = full.length ? Math.max(...full.map((hit) => hit.confidence)) : 0;
   const tagOnly =
     full.length > 0 &&
-    segment.stems.every((queryStem, i) => TAG_WORDS.some((word) => bestSimilarity(segment.tokens[i], queryStem, word, fuzzy) >= CONFIDENT));
+    segment.stems.every((queryStem, i) => tagWords.some((word) => bestSimilarity(segment.tokens[i], queryStem, word, fuzzy) >= CONFIDENT));
 
   return {
     display: segment.display,
@@ -163,7 +172,7 @@ export function rootCategory(categoryId: string): ProductCategory | undefined {
 
 export function getProductsByIds(ids: string[]): Product[] {
   return ids.flatMap((id) => {
-    const found = INDEX.find((entry) => entry.id === id);
+    const found = getIndex().entries.find((entry) => entry.id === id);
     return found ? [found.product] : [];
   });
 }

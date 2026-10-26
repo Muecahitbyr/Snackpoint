@@ -48,3 +48,5 @@
   padding: 0;
 }
 .footer-legal-dot { color: var(--card-border); }
+
+.footer-social-item { display: inline-flex; align-items: center; gap: 8px; }
