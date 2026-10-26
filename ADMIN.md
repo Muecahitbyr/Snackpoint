@@ -25,7 +25,7 @@ Die Railway-Adresse der API antwortet nur auf Anfragen, die das gemeinsame `PROX
 | `src/admin/` | Das Adminpanel |
 | `src/site/SiteProvider.jsx` | Lädt die Inhalte für die Webseite |
 | `worker/index.js`, `wrangler.jsonc`, `public/_headers` | Cloudflare (Worker, Seiten, Header) |
-| `railway.json` | Railway (Build, Migration beim Deploy, Start, Health-Check) |
+| `.railway/railway.ts` | Railway-Konfiguration als Code (Build, Migration beim Deploy, Start, Health-Check); Änderungen mit `npx railway config plan` / `apply` |
 
 ---
 
@@ -165,7 +165,7 @@ Webseite aus und reicht `/api/*` an Railway weiter. Beide deployen automatisch b
 3. API-Dienst → *Variables*: `DATABASE_URL=${{Postgres.DATABASE_URL}}`, `PROXY_SECRET=<zufällig>`,
    `NODE_ENV=production`.
 4. API-Dienst → *Settings → Networking* → **Generate Domain** → URL notieren (für `API_ORIGIN`).
-5. `railway.json` regelt den Rest: Bei jedem Deploy laufen vorher `npm run release` (Migrationen + einmalige
+5. `.railway/railway.ts` regelt den Rest (nach Änderungen: `railway config plan` und `railway config apply`): Bei jedem Deploy laufen vorher `npm run release` (Migrationen + einmalige
    Übernahme der ursprünglichen Inhalte), dann `npm run start:api`; Health-Check `/api/health`.
    Die Übernahme der Inhalte passiert genau einmal pro Datenbank – später geleerte Listen bleiben leer.
 
