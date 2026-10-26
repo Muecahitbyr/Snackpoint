@@ -19,7 +19,7 @@ export const CONTENT = {
   // Über uns
   'about.eyebrow': 'Über uns',
   'about.title': 'Mehr als nur ein Kiosk.',
-  'about.text': 'Bei SnackPoint Kaufbeuren erwartet dich ein herzlicher Empfang, frische Ware und ein Service, der weit über den klassischen Kiosk hinausgeht. Ob schneller Snack zwischendurch, Paket abholen oder Lottoschein abgeben — hier bist du in besten Händen.',
+  'about.text': 'Bei SnackPoint Kaufbeuren erwartet dich ein herzlicher Empfang, frische Ware und ein Service, der weit über den klassischen Kiosk hinausgeht. Ob schneller Snack zwischendurch, Paket abholen oder Lottoschein abgeben hier bist du in besten Händen.',
   'about.image': '/logo.jpg',
   // Leistungen
   'services.eyebrow': 'Leistungen',
@@ -34,7 +34,7 @@ export const CONTENT = {
   // Neu eingetroffen
   'new.eyebrow': 'Neu eingetroffen',
   'new.title': 'Frisch im Regal.',
-  'new.text': 'Jede Woche neue Süßigkeiten-Trends aus aller Welt — von internationalen Klassikern bis zu den heißesten Newcomern.',
+  'new.text': 'Jede Woche neue Süßigkeiten-Trends aus aller Welt von internationalen Klassikern bis zu den heißesten Newcomern.',
   'new.tag': 'Snacks',
   'new.moreLink': 'Hier klicken, um alle Produkte zu sehen →',
   // Events
@@ -51,7 +51,7 @@ export const CONTENT = {
   // Produktseite
   'products.eyebrow': 'Sortiment',
   'products.title': 'Alle Produkte.',
-  'products.text': 'Snacks, Getränke, Tabakwaren, Lotto und mehr — eine Auswahl aus unserem Sortiment, oft in mehreren Sorten und Marken. Genaue Verfügbarkeit direkt bei uns in Kaufbeuren.',
+  'products.text': 'Snacks, Getränke, Tabakwaren, Lotto und mehr. Eine Auswahl aus unserem Sortiment, oft in mehreren Sorten und Marken. Genaue Verfügbarkeit direkt bei uns in Kaufbeuren.',
 };
 
 // Address, contact, links and legal details (Impressum / Datenschutz).
@@ -103,7 +103,7 @@ export const SERVICES = [
     logo: '/logo.jpg',
     gradient: 'red',
     title: 'Kiosk',
-    text: 'Süßigkeiten, Getränke, Zeitschriften und alles für den kleinen Hunger — täglich frisch sortiert.',
+    text: 'Süßigkeiten, Getränke, Zeitschriften und alles für den kleinen Hunger täglich frisch sortiert.',
   },
   {
     id: 'dhl',
@@ -127,7 +127,7 @@ export const SERVICES = [
     logo: '/logos/ihle.png',
     gradient: 'red',
     title: 'Ihle',
-    text: 'Frische Sandwiches, Wraps & Gebäck von Ihle — direkt bei uns im Kiosk.',
+    text: 'Frische Sandwiches, Wraps & Gebäck von Ihle direkt bei uns im Kiosk.',
     badge: 'BALD VERFÜGBAR',
   },
 ];
