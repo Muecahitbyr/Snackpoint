@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, useApi } from '../api';
+import { TimeField } from '../DateTimePicker';
 import { Button, Card, ErrorBox, PageHeader, Spinner, Toggle, useToast } from '../ui';
 
 export default function Hours() {
@@ -53,9 +54,9 @@ export default function Hours() {
                 <strong className="hours-day">{day.day}</strong>
                 <Toggle label={day.closed ? 'Geschlossen' : 'Geöffnet'} checked={!day.closed} onChange={(open) => update(i, { closed: !open })} />
                 <div className="hours-times">
-                  <input type="time" value={day.open} disabled={day.closed} onChange={(e) => update(i, { open: e.target.value })} aria-label={`${day.day} öffnet`} />
+                  <TimeField value={day.open} disabled={day.closed} onChange={(open) => update(i, { open })} ariaLabel={`${day.day} öffnet`} />
                   <span>bis</span>
-                  <input type="time" value={day.close} disabled={day.closed} onChange={(e) => update(i, { close: e.target.value })} aria-label={`${day.day} schließt`} />
+                  <TimeField value={day.close} disabled={day.closed} onChange={(close) => update(i, { close })} ariaLabel={`${day.day} schließt`} />
                 </div>
                 {errors[`days.${i}.close`] && <p className="field-error hours-error">{errors[`days.${i}.close`]}</p>}
               </div>

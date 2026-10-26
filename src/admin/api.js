@@ -88,7 +88,7 @@ export function formatEuroInput(cents) {
 const EURO = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
 export const formatEuro = (cents) => (cents === null || cents === undefined ? '–' : EURO.format(cents / 100));
 
-/** ISO → value for <input type="datetime-local"> in the browser's time zone. */
+/** ISO → "YYYY-MM-DDTHH:MM" in the browser's time zone (DateTimeField's format). */
 export function toLocalInput(iso) {
   if (!iso) return '';
   const date = new Date(iso);

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { formatDateTime, fromLocalInput, toLocalInput } from '../api';
+import { DateTimeField } from '../DateTimePicker';
 import { Badge, Field, ImageField, PageHeader, SelectField, Tabs, TextField, Toggle } from '../ui';
 import ManagedList, { FormActions } from './ManagedList';
 
@@ -15,8 +16,17 @@ function liveState(item) {
 function Schedule({ form, set, errors }) {
   return (
     <div className="field-row">
-      <TextField label="Anzeigen ab" hint="Optional" type="datetime-local" value={form.startsAt} onChange={set('startsAt')} error={errors.startsAt} />
-      <TextField label="Anzeigen bis" hint="Optional — danach automatisch aus" type="datetime-local" value={form.endsAt} onChange={set('endsAt')} error={errors.endsAt} />
+      <DateTimeField label="Anzeigen ab" hint="Optional" value={form.startsAt} onChange={set('startsAt')} error={errors.startsAt} defaultTime="00:00" placeholder="Sofort" />
+      <DateTimeField
+        label="Anzeigen bis"
+        hint="Optional — danach automatisch aus"
+        value={form.endsAt}
+        onChange={set('endsAt')}
+        error={errors.endsAt}
+        min={form.startsAt || undefined}
+        defaultTime="23:55"
+        placeholder="Unbegrenzt"
+      />
     </div>
   );
 }

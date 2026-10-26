@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, formatEuroInput, fromLocalInput, parseEuro, toLocalInput, useApi } from '../api';
 import { navigate } from '../router';
+import { DateTimeField } from '../DateTimePicker';
 import {
   Badge, Button, Card, ErrorBox, Field, GalleryField, ImageField, PageHeader, Spinner, TextField, Toggle, useConfirm, useToast,
 } from '../ui';
@@ -133,8 +134,17 @@ export default function EventForm({ id }) {
 
           <Card title="Datum & Uhrzeit">
             <div className="field-row">
-              <TextField label="Beginn" required type="datetime-local" value={form.startsAt} onChange={set('startsAt')} error={errors.startsAt} />
-              <TextField label="Ende" hint="Optional" type="datetime-local" value={form.endsAt} onChange={set('endsAt')} error={errors.endsAt} min={form.startsAt || undefined} />
+              <DateTimeField label="Beginn" required value={form.startsAt} onChange={set('startsAt')} error={errors.startsAt} defaultTime="18:00" />
+              <DateTimeField
+                label="Ende"
+                hint="Optional"
+                value={form.endsAt}
+                onChange={set('endsAt')}
+                error={errors.endsAt}
+                min={form.startsAt || undefined}
+                defaultTime={form.startsAt ? form.startsAt.slice(11, 16) : '20:00'}
+                placeholder="Ende wählen (optional)"
+              />
             </div>
           </Card>
 
