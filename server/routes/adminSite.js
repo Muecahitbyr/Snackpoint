@@ -277,3 +277,20 @@ backup.get('/', async (c) => {
   c.header('Cache-Control', 'no-store');
   return c.body(Readable.toWeb(createBackupStream()));
 });
+
+// Login attempts of the last 7 days (developer only, via /audit/*): spot
+// password guessing early. Passwords are never stored.
+auditLog.get('/logins', async (c) => {
+  const [{ rows }, { rows: summary }] = await Promise.all([
+    query('SELECT identifier, ip, success, created_at FROM login_attempts ORDER BY created_at DESC LIMIT 200'),
+    query(`SELECT
+      count(*) FILTER (WHERE NOT success AND created_at > now() - interval '24 hours')::int AS failed_24h,
+      count(*) FILTER (WHERE success AND created_at > now() - interval '24 hours')::int AS success_24h,
+      count(DISTINCT ip) FILTER (WHERE NOT success AND created_at > now() - interval '24 hours')::int AS failed_ips_24h
+      FROM login_attempts`),
+  ]);
+  return c.json({
+    summary: summary[0],
+    items: rows.map((row) => ({ identifier: row.identifier, ip: row.ip, success: row.success, createdAt: iso(row.created_at) })),
+  });
+});

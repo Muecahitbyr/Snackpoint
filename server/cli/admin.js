@@ -7,6 +7,7 @@
 //
 // Without a terminal (e.g. CI), the values can come from ADMIN_EMAIL and
 // ADMIN_PASSWORD instead; don't leave those set afterwards.
+import './owner-connection.js';
 import { hashPassword, passwordProblem } from '../auth/password.js';
 import { migrate } from '../db/migrate.js';
 import { closePool, query } from '../db/pool.js';
@@ -22,13 +23,13 @@ async function askEmail() {
 
 async function askPassword(email) {
   if (process.env.ADMIN_PASSWORD) {
-    const problem = passwordProblem(process.env.ADMIN_PASSWORD, { email });
+    const problem = passwordProblem(process.env.ADMIN_PASSWORD);
     if (problem) throw new Error(problem);
     return process.env.ADMIN_PASSWORD;
   }
   for (;;) {
     const password = await prompt('Passwort (mind. 12 Zeichen, wird nicht angezeigt): ', { hidden: true });
-    const problem = passwordProblem(password, { email });
+    const problem = passwordProblem(password);
     if (problem) {
       console.log(`  ✗ ${problem}`);
       continue;

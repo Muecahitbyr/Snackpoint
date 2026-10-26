@@ -2,6 +2,7 @@
 // Replaces ALL data in DATABASE_URL with a backup downloaded from the admin
 // panel (Einstellungen → Datensicherung). "-" reads the file from stdin, e.g.
 //   railway ssh --service snackpoint-api -- npm run db:restore -- - --replace < backup.json.gz
+import './owner-connection.js';
 import { createReadStream } from 'node:fs';
 import { readBackup, restoreBackup } from '../lib/backup.js';
 import { migrate } from '../db/migrate.js';

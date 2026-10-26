@@ -36,8 +36,14 @@ export const config = {
   // Without the Worker in front: read the client IP from X-Forwarded-For.
   trustProxy: bool(env.TRUST_PROXY, false),
   maxUploadBytes: Math.round(Number(env.MAX_UPLOAD_MB || 10) * 1024 * 1024),
-  sessionIdleHours: Number(env.SESSION_IDLE_HOURS || 72),
-  sessionMaxDays: Number(env.SESSION_MAX_DAYS || 30),
+  sessionIdleHours: Number(env.SESSION_IDLE_HOURS || 24),
+  sessionMaxDays: Number(env.SESSION_MAX_DAYS || 7),
+  // Every login answer takes at least this long (success or not), so timing
+  // reveals nothing and password guessing is slowed down.
+  loginMinMs: Number(env.LOGIN_MIN_MS ?? 800),
+  // Optional Cloudflare Turnstile bot check on the login (both keys needed).
+  turnstileSiteKey: env.TURNSTILE_SITE_KEY ?? '',
+  turnstileSecretKey: env.TURNSTILE_SECRET_KEY ?? '',
   // Extra origins allowed to call the admin API, comma separated (the
   // site's own origin is always allowed).
   allowedOrigins: (env.ALLOWED_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean),

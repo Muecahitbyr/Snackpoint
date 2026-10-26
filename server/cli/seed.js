@@ -1,5 +1,6 @@
 // npm run db:seed — moves the original website content into an empty
 // database. Never overwrites existing data.
+import './owner-connection.js';
 import { migrate } from '../db/migrate.js';
 import { seed } from '../db/seed.js';
 import { closePool } from '../db/pool.js';

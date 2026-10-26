@@ -25,16 +25,14 @@ export async function burnVerifyTime(password) {
   await verifyPassword(dummyHash, password);
 }
 
-/** German message for a too-weak password, or null if it's acceptable. */
-export function passwordProblem(password, { email = '' } = {}) {
+/** German message for a too-weak password, or null if it's acceptable.
+ * Only looks at the password itself — never compares it with other
+ * accounts or data, so no message can hint at anyone else's password. */
+export function passwordProblem(password) {
   if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
     return `Das Passwort muss mindestens ${MIN_PASSWORD_LENGTH} Zeichen lang sein.`;
   }
   if (password.length > 200) return 'Das Passwort darf höchstens 200 Zeichen lang sein.';
-  if (new Set(password).size < 5) return 'Das Passwort ist zu einfach.';
-  const local = email.split('@')[0]?.toLowerCase();
-  if (local && local.length >= 4 && password.toLowerCase().includes(local)) {
-    return 'Das Passwort darf die E-Mail-Adresse nicht enthalten.';
-  }
+  if (new Set(password).size < 6) return 'Das Passwort ist zu einfach. Nutze mehr verschiedene Zeichen.';
   return null;
 }

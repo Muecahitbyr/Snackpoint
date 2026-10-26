@@ -55,6 +55,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .login-card h1 { text-align: center; font-size: 1.35rem; }
 .login-sub { text-align: center; color: var(--a-dim); margin-bottom: 18px; }
 .login-error { background: #fdecec; color: var(--a-danger); padding: 10px 14px; border-radius: 10px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem; }
+.login-turnstile { display: flex; justify-content: center; min-height: 65px; margin: 4px 0; }
 .login-submit { width: 100%; justify-content: center; margin-top: 8px; padding: 13px; }
 .login-back { text-align: center; margin-top: 16px; font-size: 0.88rem; color: var(--a-dim); text-decoration: none; }
 

@@ -1,4 +1,5 @@
 // npm run db:migrate — applies pending migrations to DATABASE_URL.
+import './owner-connection.js';
 import { migrate } from '../db/migrate.js';
 import { closePool } from '../db/pool.js';
 import { describeTarget } from './util.js';

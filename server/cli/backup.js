@@ -2,6 +2,7 @@
 // backups/ with pg_dump. Restore: pg_restore --clean --no-owner -d <url> <file>
 // The connection details go to pg_dump via environment variables, so the
 // password never shows up in the process list.
+import './owner-connection.js';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { config } from '../config.js';

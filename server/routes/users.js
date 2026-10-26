@@ -39,8 +39,8 @@ async function confirmActor(c, password) {
   }
 }
 
-function assertStrong(password, address) {
-  const problem = passwordProblem(password, { email: address });
+function assertStrong(password) {
+  const problem = passwordProblem(password);
   if (problem) throw badRequest(problem, { fields: { password: problem } });
 }
 
@@ -56,7 +56,7 @@ users.post('/', async (c) => {
     z.object({ email, displayName: text(80).optional(), role: role.default('owner'), password: z.string().max(200), currentPassword }),
     await readJson(c)
   );
-  assertStrong(data.password, data.email);
+  assertStrong(data.password);
   await confirmActor(c, data.currentPassword);
   let row;
   try {
@@ -89,6 +89,10 @@ users.patch('/:id', async (c) => {
     throw mapDbError(error);
   }
   if (!row) throw notFound();
+  // New role or login name: that person has to sign in again.
+  if ((data.role || data.email) && id !== c.get('session').user.id) {
+    await query('DELETE FROM admin_sessions WHERE user_id = $1', [id]);
+  }
   await audit(c, 'update', 'admin_user', id, row.email);
   return c.json({ item: userJson(row, c.get('session').user.id) });
 });
@@ -100,7 +104,7 @@ users.post('/:id/password', async (c) => {
   const { rows } = await query('SELECT email FROM admin_users WHERE id = $1', [id]);
   if (!rows[0]) throw notFound();
   if (id === c.get('session').user.id) throw badRequest('Dein eigenes Passwort änderst du unter „Passwort ändern“.');
-  assertStrong(data.password, rows[0].email);
+  assertStrong(data.password);
   await confirmActor(c, data.currentPassword);
   await query('UPDATE admin_users SET password_hash = $2, password_changed_at = now() WHERE id = $1', [id, await hashPassword(data.password)]);
   await query('DELETE FROM admin_sessions WHERE user_id = $1', [id]);

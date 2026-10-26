@@ -14,9 +14,12 @@ process.env.DATABASE_URL = TEST_URL;
 // Production setup: the API only answers requests forwarded by the
 // Cloudflare Worker, which runs on the website's host.
 process.env.PROXY_SECRET = 'test-proxy-secret';
+process.env.LOGIN_MIN_MS = '0'; // the constant-time delay is tested separately
 delete process.env.NODE_ENV;
 
 const { query, closePool } = await import('../../server/db/pool.js');
+const { config } = await import('../../server/config.js');
+const pg = (await import('pg')).default;
 const { migrate } = await import('../../server/db/migrate.js');
 const { seed } = await import('../../server/db/seed.js');
 const { hashPassword } = await import('../../server/auth/password.js');
@@ -71,18 +74,50 @@ async function pngFile(color = { r: 224, g: 32, b: 31 }, width = 300, height = 2
 }
 
 let admin;
+const OWNER_URL = TEST_URL;
+const APP_PASSWORD = (await import('node:crypto')).randomBytes(24).toString('hex');
+const appUrl = (() => {
+  const url = new URL(TEST_URL);
+  url.username = 'snackpoint_app';
+  url.password = APP_PASSWORD;
+  return url.toString();
+})();
+
+/** Switches the shared pool to another connection (owner or restricted app role). */
+async function useConnection(url) {
+  config.databaseUrl = url;
+  await closePool();
+}
 
 before(async () => {
   await query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
   await migrate({ log: () => {} });
   await seed({ log: () => {} });
   await query('INSERT INTO admin_users (email, password_hash) VALUES ($1, $2)', [EMAIL, await hashPassword(PASSWORD)]);
+  await query(`ALTER ROLE snackpoint_app WITH LOGIN PASSWORD '${APP_PASSWORD}'`);
+  // From here on the API runs exactly like in production: as the restricted role.
+  await useConnection(appUrl);
   admin = client();
   assert.equal((await admin.login()).status, 200);
 });
 
 after(async () => {
   await closePool();
+});
+
+describe('login timing', () => {
+  it('answers a failed and a successful login after the same minimum time', async () => {
+    config.loginMinMs = 400;
+    try {
+      for (const [email, password] of [['nobody@test.local', 'egal-egal-egal'], [EMAIL, 'falsch-aber-lang']]) {
+        const started = Date.now();
+        await client().login(email, password);
+        assert.ok(Date.now() - started >= 390, `${email} answered too fast`);
+      }
+    } finally {
+      config.loginMinMs = 0;
+    }
+  });
 });
 
 describe('migrated content', () => {
@@ -100,7 +135,9 @@ describe('migrated content', () => {
 
   it('seeding twice changes nothing', async () => {
     const before = (await query('SELECT count(*)::int AS n FROM products')).rows[0].n;
+    await useConnection(OWNER_URL);
     await seed({ log: () => {} });
+    await useConnection(appUrl);
     assert.equal((await query('SELECT count(*)::int AS n FROM products')).rows[0].n, before);
   });
 });
@@ -467,6 +504,31 @@ describe('admin accounts', () => {
   });
 });
 
+describe('database privileges', () => {
+  it('the website\'s database user can read and write rows, nothing more', async () => {
+    const db = new pg.Client({ connectionString: appUrl });
+    await db.connect();
+    try {
+      assert.ok((await db.query('SELECT count(*) FROM products')).rows[0]);
+      for (const sql of [
+        'DROP TABLE products',
+        'TRUNCATE products',
+        'ALTER TABLE products ADD COLUMN hacked text',
+        'CREATE TABLE hacked (id int)',
+        'DELETE FROM schema_migrations',
+        "CREATE ROLE intruder LOGIN PASSWORD 'x'",
+        "SELECT pg_read_file('/etc/passwd')",
+        "COPY products TO PROGRAM 'id'",
+      ]) {
+        await assert.rejects(db.query(sql), (error) => ['42501', '42P01'].includes(error.code) || /permission denied|must be/.test(error.message), sql);
+      }
+      assert.equal((await db.query('SHOW statement_timeout')).rows[0].statement_timeout, '15s');
+    } finally {
+      await db.end();
+    }
+  });
+});
+
 describe('roles', () => {
   const OWN = 'Ein-Neues-Passwort-2026';
 
@@ -516,7 +578,11 @@ describe('backup & restore', () => {
     assert.ok(!('admin_sessions' in data.tables), 'no sessions in the file');
 
     await query("DELETE FROM products WHERE name = 'Kartoffelchips'");
+    // Restoring is an owner task (npm run db:restore), not something the API can do.
+    await assert.rejects(restoreBackup(data, { log: () => {} }), /permission denied|must be owner/);
+    await useConnection(OWNER_URL);
     await restoreBackup(data, { log: () => {} });
+    await useConnection(appUrl);
     assert.equal((await site()).products.length, before);
     const image = data.tables.media[0];
     assert.equal((await request(`/api/media/${image.id}`)).status, 200, 'restored images are served');

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, setCsrfToken, setUnauthorizedHandler } from './api';
 import { Button, ConfirmProvider, Spinner, TextField, ToastProvider, useToast } from './ui';
 import Dashboard from './pages/Dashboard';
@@ -65,23 +65,71 @@ function Page({ route, isDeveloper }) {
   }
 }
 
+/** Cloudflare Turnstile bot check — only when the server has keys for it. */
+function useTurnstile(containerRef) {
+  const [siteKey, setSiteKey] = useState(null);
+  const [token, setToken] = useState('');
+  const widget = useRef(null);
+
+  useEffect(() => {
+    api('/auth/config').then((data) => setSiteKey(data.turnstileSiteKey)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!siteKey) return undefined;
+    const render = () => {
+      if (!containerRef.current || widget.current !== null) return;
+      widget.current = window.turnstile.render(containerRef.current, {
+        sitekey: siteKey,
+        language: 'de',
+        callback: setToken,
+        'expired-callback': () => setToken(''),
+        'error-callback': () => setToken(''),
+      });
+    };
+    if (window.turnstile) render();
+    else {
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      script.async = true;
+      script.onload = render;
+      document.head.appendChild(script);
+    }
+    return undefined;
+  }, [siteKey, containerRef]);
+
+  const reset = useCallback(() => {
+    if (widget.current !== null) window.turnstile?.reset(widget.current);
+    setToken('');
+  }, []);
+
+  return { enabled: Boolean(siteKey), token, reset };
+}
+
 function Login({ onLoggedIn }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const turnstileRef = useRef(null);
+  const turnstile = useTurnstile(turnstileRef);
 
   async function submit(e) {
     e.preventDefault();
+    if (turnstile.enabled && !turnstile.token) {
+      setError('Bitte warte kurz, bis die Sicherheitsprüfung abgeschlossen ist.');
+      return;
+    }
     setBusy(true);
     setError('');
     try {
-      const data = await api('/auth/login', { method: 'POST', body: { email, password } });
+      const data = await api('/auth/login', { method: 'POST', body: { email, password, turnstileToken: turnstile.token || undefined } });
       setCsrfToken(data.csrfToken);
       onLoggedIn(data.user);
     } catch (err) {
       setError(err.message);
       setPassword('');
+      turnstile.reset();
     } finally {
       setBusy(false);
     }
@@ -96,6 +144,7 @@ function Login({ onLoggedIn }) {
         {error && <p className="login-error" role="alert">{error}</p>}
         <TextField label="E-Mail" type="email" autoComplete="username" value={email} onChange={setEmail} required autoFocus />
         <TextField label="Passwort" type="password" autoComplete="current-password" value={password} onChange={setPassword} required />
+        {turnstile.enabled && <div className="login-turnstile" ref={turnstileRef} />}
         <Button type="submit" busy={busy} className="login-submit">Anmelden</Button>
         <a href="/" className="login-back"><Icon name="arrowLeft" size={15} /> Zur Webseite</a>
       </form>

@@ -73,12 +73,15 @@ wenn deren Name nicht „test“ enthält. Niemals auf eine echte Datenbank zeig
 
 | Variable | Pflicht | Beschreibung |
 | --- | --- | --- |
-| `DATABASE_URL` | ja | `${{Postgres.DATABASE_URL}}` (Referenz auf die Railway-Datenbank, privates Netz) |
+| `DATABASE_URL` | ja | Verbindung der **eingeschränkten** Rolle `snackpoint_app` (nur Daten lesen/schreiben), siehe „Datenbank-Rechte“ unten |
+| `MIGRATION_DATABASE_URL` | ja | `${{Postgres.DATABASE_URL}}` – Eigentümer-Zugang, nur für Migrationen, Erstbefüllung, Wiederherstellung und Kommandozeilen-Befehle |
 | `PROXY_SECRET` | ja | Langer Zufallswert (`openssl rand -hex 32`), identisch mit dem Cloudflare-Secret |
 | `NODE_ENV` | ja | `production` (Login-Cookie nur über HTTPS) |
 | `MAX_UPLOAD_MB` | nein | Max. Bildgröße beim Upload (Standard 10). Handyfotos werden schon im Browser verkleinert. |
-| `SESSION_IDLE_HOURS` | nein | Automatisches Abmelden nach Inaktivität (Standard 72 h) |
-| `SESSION_MAX_DAYS` | nein | Maximale Sitzungsdauer (Standard 30 Tage) |
+| `SESSION_IDLE_HOURS` | nein | Automatisches Abmelden nach Inaktivität (Standard 24 h) |
+| `SESSION_MAX_DAYS` | nein | Maximale Sitzungsdauer (Standard 7 Tage) |
+| `LOGIN_MIN_MS` | nein | Mindestdauer jeder Login-Antwort in ms (Standard 800) |
+| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | nein | Cloudflare-Turnstile-Botschutz für den Login (nur aktiv, wenn beide gesetzt sind) |
 | `DATABASE_SSL` | nein | `true` / `false` / `no-verify`. Standard: aus für `localhost` und `*.railway.internal`, sonst an. Für die *öffentliche* Railway-DB-URL vom eigenen Rechner: `no-verify`. |
 | `ALLOWED_ORIGINS` | nein | Nur nötig für Sonderfälle (zusätzliche Domains, die die Admin-API direkt aufrufen) |
 
@@ -238,27 +241,50 @@ eigene Datensicherung:
 
 ## 6. Sicherheit (Überblick)
 
-- **Login**: Argon2id-Hashes; gleiche Fehlermeldung und Antwortzeit für falsche E-Mail und falsches Passwort;
-  Sperre nach 5 Fehlversuchen pro Konto bzw. 20 pro IP in 15 Minuten (datenbankgestützt). Die echte
-  Besucher-IP kommt vom Worker und wird nur mit gültigem `PROXY_SECRET` akzeptiert.
-- **API-Zugang**: Die Railway-Adresse beantwortet ohne `PROXY_SECRET` nur `/api/health`.
-- **Sessions**: zufälliger 256-Bit-Token im Cookie `__Host-sp_admin` (`HttpOnly`, `Secure`, `SameSite=Strict`);
-  in der Datenbank nur dessen SHA-256-Hash. Automatisches Abmelden nach Inaktivität; Passwortänderung meldet
-  alle anderen Geräte ab.
+- **Login**: Argon2id-Hashes; gleiche Fehlermeldung *und* gleiche Antwortzeit (mind. 800 ms) für falsche
+  E-Mail und falsches Passwort – verrät nicht, ob ein Konto existiert, und bremst Durchprobieren.
+  Sperren werden immer länger: pro Konto 5 Fehlversuche/15 min → 15 min, 15 in 24 h → 1 h, 30 in 24 h →
+  24 h; pro IP 20/15 min → 15 min, 60 in 24 h → 24 h. Die echte Besucher-IP kommt vom Worker und wird nur
+  mit gültigem `PROXY_SECRET` akzeptiert. Optional Bot-Schutz per Cloudflare Turnstile.
+- **Passwortregeln**: mind. 12 Zeichen, mind. 6 verschiedene Zeichen. Passwörter werden nie mit anderen
+  Konten oder Daten verglichen – keine Meldung kann etwas über fremde Passwörter verraten.
+- **Sitzungen**: zufälliger 256-Bit-Token im Cookie `__Host-sp_admin` (`HttpOnly`, `Secure`,
+  `SameSite=Strict`); in der Datenbank nur dessen SHA-256-Hash. Abmeldung nach 24 h Inaktivität, spätestens
+  nach 7 Tagen. Passwort-, Rollen- oder E-Mail-Änderung meldet die betroffene Person überall ab.
 - **CSRF**: Pro Sitzung ein Token, das bei jeder Änderung im Header mitgeschickt werden muss, plus
   Origin-Prüfung.
-- **Zugriffskontrolle**: Jede Route unter `/api/admin/*` prüft serverseitig die Sitzung. Die öffentliche API
-  liefert nur veröffentlichte, aktive Inhalte ohne interne Felder; der Browser greift nie direkt auf die
-  Datenbank zu.
-- **Eingaben**: Jede Anfrage wird mit `zod` validiert; alle SQL-Abfragen sind parametrisiert. Links in
-  Bannern dürfen nur `https://`, `/`, `#`, `mailto:` oder `tel:` sein (kein `javascript:`).
-- **Uploads**: Nur JPG/PNG/WebP/GIF/AVIF (kein SVG); jede Datei wird dekodiert und neu als WebP
-  kodiert, dabei werden EXIF-Daten (z. B. GPS-Position von Handyfotos) entfernt; Größenlimit; Auslieferung mit
-  `nosniff` und restriktiver CSP.
-- **Header**: `/admin` mit CSP, `X-Frame-Options: DENY`, `noindex` (`public/_headers`); die API sendet
-  Sicherheits-Header (HSTS u. a.).
-- **Logs**: Fehler werden mit einer kurzen Referenz-ID protokolliert, ohne Passwörter, Tokens oder
-  Formularinhalte.
+- **Zugriffskontrolle**: Jede Route unter `/api/admin/*` prüft serverseitig Sitzung und Rolle. Die Railway-Adresse
+  beantwortet ohne `PROXY_SECRET` nur `/api/health`.
+- **Überwachung**: Protokoll → *Anmeldungen* zeigt alle Anmeldeversuche der letzten 7 Tage (Entwickler).
+- **SQL-Injection**: Alle Abfragen sind parametrisiert; Tabellen-/Spaltennamen stammen nur aus festem Code
+  (beim Wiederherstellen zusätzlich gegen das echte Schema geprüft). Jede Eingabe wird mit `zod` validiert.
+- **Datenbank-Rechte**: Die laufende Webseite verbindet sich als `snackpoint_app` – darf nur Zeilen lesen
+  und schreiben, keine Tabellen anlegen, ändern, leeren oder löschen, keine Rollen anlegen, keine Dateien
+  lesen; Abfragen werden nach 15 s abgebrochen (getestet in `tests/server/api.test.js`). Migrationen,
+  Erstbefüllung und Wiederherstellung laufen mit dem Eigentümer-Zugang (`MIGRATION_DATABASE_URL`). Die
+  Datenbank hat keine öffentliche Adresse (nur Railways privates Netz).
+- **Uploads**: Nur JPG/PNG/WebP/GIF/AVIF (kein SVG); jede Datei wird neu als WebP kodiert, EXIF-Daten
+  (z. B. GPS) werden entfernt; Größenlimit; Auslieferung mit `nosniff` und restriktiver CSP.
+- **Header**: `/admin` mit strenger CSP, `X-Frame-Options: DENY`, `noindex`; die ganze Seite mit HSTS,
+  `nosniff`, Einbettungsschutz und `Permissions-Policy` (`public/_headers`).
+- **Logs**: Fehler mit kurzer Referenz-ID, ohne Passwörter, Tokens oder Formularinhalte.
+
+### Datenbank-Rechte einrichten (einmalig, Railway)
+
+```bash
+openssl rand -hex 24 > /tmp/app-pw                                   # Passwort erzeugen
+railway variable set MIGRATION_DATABASE_URL='${{Postgres.DATABASE_URL}}' --service snackpoint-api --skip-deploys
+railway ssh --service snackpoint-api -- npm run db:app-role < /tmp/app-pw
+printf 'postgresql://snackpoint_app:%s@${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}' "$(cat /tmp/app-pw)" \
+  | railway variable set DATABASE_URL --stdin --service snackpoint-api
+rm /tmp/app-pw
+```
+
+### Bot-Schutz (optional): Cloudflare Turnstile
+
+Cloudflare-Dashboard → *Turnstile* → *Add widget* → Hostname der Seite (z. B.
+`snackpoint.mucahitbayar.workers.dev`, später die eigene Domain), Modus „Managed“. Den *Site Key* als
+`TURNSTILE_SITE_KEY` und den *Secret Key* als `TURNSTILE_SECRET_KEY` beim Railway-Dienst eintragen.
 
 **Rechtliches:** Betreiber, Rechtsform, Vertretung, USt-IdNr., Registereintrag und Inhaltsverantwortlicher
 stehen in `src/data/siteContent.js` (`SETTINGS.legal`) und werden automatisch in Impressum und
