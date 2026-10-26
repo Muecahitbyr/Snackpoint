@@ -1,15 +1,19 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { CONTENT, REVIEWS, SERVICES, SETTINGS } from '../data/siteContent';
 import { applySiteData } from '../data/siteStore';
 import './SiteProvider.css';
 
 const SiteContext = createContext(null);
 
 // The HTML pages preload this URL (<link rel="preload">), so the request is
-// usually done by the time React starts.
+// usually done by the time React starts. The API delivers what the admin
+// panel manages (products, events, banners, promotions, opening hours);
+// texts, contact details, services and reviews come from src/data/siteContent.js.
 async function fetchSite() {
   const response = await fetch('/api/public/site', { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return response.json();
+  const data = await response.json();
+  return { ...data, content: CONTENT, settings: SETTINGS, services: SERVICES, reviews: REVIEWS };
 }
 
 /** Loads the website's content from the API, then renders the page. */

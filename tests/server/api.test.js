@@ -86,18 +86,16 @@ after(async () => {
 });
 
 describe('migrated content', () => {
-  it('serves every original product, service, review and the opening hours from the database', async () => {
+  it('serves every original product and the opening hours from the database', async () => {
     const data = await site();
     assert.equal(data.products.filter((p) => p.showInCatalog).length, 49);
     const highlights = data.products.filter((p) => p.isHighlight).sort((a, b) => a.highlightOrder - b.highlightOrder);
     assert.deepEqual(highlights.map((p) => p.title), ['Import-Süßwaren', 'Viral-Snacks', 'Trend-Drinks', 'Schoko-Spezialitäten']);
     assert.deepEqual(data.groups.map((g) => g.id), ['snacks', 'getraenke', 'essen', 'tabak', 'lotto', 'service']);
-    assert.equal(data.services.find((s) => s.id === 'ihle').badge, 'BALD VERFÜGBAR');
-    assert.equal(data.reviews.length, 5);
     assert.equal(data.hours.length, 7);
-    assert.equal(data.content['hero.subtitle'], 'Der Kiosk, der dich zum Leben erweckt.');
-    assert.equal(data.settings.contact.address, 'Neugablonzer Str. 25, 87600 Kaufbeuren');
     assert.deepEqual(data.events, { current: [], past: [] });
+    // Texts, settings, services and reviews come from src/data/siteContent.js.
+    for (const key of ['content', 'settings', 'services', 'reviews']) assert.equal(data[key], undefined, key);
   });
 
   it('seeding twice changes nothing', async () => {
@@ -321,25 +319,14 @@ describe('events', () => {
     await admin.send(`/api/admin/events/${eventId}`, { method: 'PATCH', body: { isActive: true } });
   });
 
-  it('archives past events automatically and can show the archive', async () => {
+  it('archives past events automatically', async () => {
     const past = await admin.send('/api/admin/events', {
       method: 'POST',
       body: { title: 'Sommerfest', startsAt: inDays(-10), endsAt: inDays(-10, 23), status: 'published' },
     });
-    let data = await site();
+    const data = await site();
     assert.deepEqual(data.events.current.map((e) => e.title), ['Verkostung']);
-    assert.equal(data.events.past.length, 0, 'archive hidden by default');
-
-    await admin.send('/api/admin/settings/events', { method: 'PUT', body: { autoArchive: true, showPast: true } });
-    data = await site();
-    assert.deepEqual(data.events.past.map((e) => e.title), ['Sommerfest']);
-
-    await admin.send('/api/admin/settings/events', { method: 'PUT', body: { autoArchive: false, showPast: false } });
-    data = await site();
-    const kept = data.events.current.find((e) => e.title === 'Sommerfest');
-    assert.equal(kept.isPast, true, 'without auto-archive the event stays, marked as past');
-
-    await admin.send('/api/admin/settings/events', { method: 'PUT', body: { autoArchive: true, showPast: false } });
+    assert.equal(data.events.past.length, 0, 'archive not listed');
     await admin.send(`/api/admin/events/${past.data.item.id}`, { method: 'DELETE' });
   });
 
@@ -391,13 +378,6 @@ describe('banners, promotions, content, hours', () => {
   it('shows active promotions', async () => {
     await admin.send('/api/admin/promotions', { method: 'POST', body: { title: '2 für 4 €', isActive: true, priceText: '4 €' } });
     assert.deepEqual((await site()).promotions.map((p) => p.title), ['2 für 4 €']);
-  });
-
-  it('updates website texts and refuses unknown keys', async () => {
-    assert.equal((await admin.send('/api/admin/content', { method: 'PUT', body: { values: { 'hero.subtitle': 'Neuer Slogan' } } })).status, 200);
-    assert.equal((await site()).content['hero.subtitle'], 'Neuer Slogan');
-    const bad = await admin.send('/api/admin/content', { method: 'PUT', body: { values: { 'admin.secret': 'x' } } });
-    assert.equal(bad.status, 400);
   });
 
   it('updates opening hours with validation', async () => {
@@ -504,11 +484,10 @@ describe('roles', () => {
     for (const path of ['/api/admin/dashboard', '/api/admin/products', '/api/admin/events', '/api/admin/banners', '/api/admin/media', '/api/admin/hours', '/api/admin/meta']) {
       assert.equal((await owner.send(path)).status, 200, path);
     }
-    for (const path of ['/api/admin/content', '/api/admin/settings', '/api/admin/users', '/api/admin/backup', '/api/admin/audit', '/api/admin/services', '/api/admin/reviews']) {
+    for (const path of ['/api/admin/users', '/api/admin/backup', '/api/admin/audit']) {
       assert.equal((await owner.send(path)).status, 403, path);
     }
-    assert.equal((await owner.send('/api/admin/content', { method: 'PUT', body: { values: { 'hero.subtitle': 'x' } } })).status, 403);
-    assert.equal((await owner.send('/api/admin/settings/legal', { method: 'PUT', body: {} })).status, 403);
+    assert.equal((await owner.send('/api/admin/users', { method: 'POST', body: {} })).status, 403);
     assert.equal((await owner.send('/api/auth/password', { method: 'POST', body: { currentPassword: 'x', newPassword: 'y' } })).status, 403);
     assert.equal((await owner.send('/api/admin/dashboard')).data.lastBackupAt, undefined, 'no backup reminder for owners');
     const category = (await owner.send('/api/admin/categories')).data.items[0];
@@ -537,8 +516,8 @@ describe('backup & restore', () => {
     await query("DELETE FROM products WHERE name = 'Kartoffelchips'");
     await restoreBackup(data, { log: () => {} });
     assert.equal((await site()).products.length, before);
-    const logo = (await site()).services.find((service) => service.logo).logo;
-    assert.equal((await request(logo)).status, 200, 'restored images are served');
+    const image = data.tables.media[0];
+    assert.equal((await request(`/api/media/${image.id}`)).status, 200, 'restored images are served');
     assert.equal((await admin.send('/api/admin/dashboard')).status, 401, 'sessions end after a restore');
   });
 });

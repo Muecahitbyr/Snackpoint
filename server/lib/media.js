@@ -13,6 +13,4 @@ export const MEDIA_REFERENCES = [
   { table: 'events', column: 'cover_media_id', label: 'Event', nameColumn: 'title' },
   { table: 'event_images', column: 'media_id', label: 'Event-Galerie', nameColumn: null },
   { table: 'promotions', column: 'image_media_id', label: 'Aktion', nameColumn: 'title' },
-  { table: 'services', column: 'logo_media_id', label: 'Leistung', nameColumn: 'title' },
-  { table: 'site_content', column: 'media_id', label: 'Webseiteninhalt', nameColumn: 'key' },
 ];

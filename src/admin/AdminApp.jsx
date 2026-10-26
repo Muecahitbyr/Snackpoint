@@ -8,10 +8,9 @@ import Categories from './pages/Categories';
 import Events from './pages/Events';
 import EventForm from './pages/EventForm';
 import BannersPromotions from './pages/BannersPromotions';
-import Content from './pages/Content';
 import MediaLibrary from './pages/MediaLibrary';
 import Hours from './pages/Hours';
-import Settings from './pages/Settings';
+import Protocol from './pages/Protocol';
 import Password from './pages/Password';
 import Users from './pages/Users';
 import { Icon } from './icons';
@@ -25,8 +24,7 @@ const NAV = [
   { path: 'banner', label: 'Banner & Aktionen', icon: 'megaphone' },
   { path: 'medien', label: 'Medienbibliothek', icon: 'image' },
   { path: 'oeffnungszeiten', label: 'Öffnungszeiten', icon: 'clock' },
-  { path: 'inhalte', label: 'Webseiteninhalte', icon: 'text', developer: true },
-  { path: 'einstellungen', label: 'Einstellungen', icon: 'settings', developer: true },
+  { path: 'protokoll', label: 'Protokoll', icon: 'activity', developer: true },
   { path: 'benutzer', label: 'Benutzer', icon: 'users', developer: true },
   { path: 'passwort', label: 'Passwort ändern', icon: 'key', developer: true },
 ];
@@ -51,20 +49,19 @@ function useRoute() {
 }
 
 function Page({ route, isDeveloper }) {
-  if (!isDeveloper && NAV.find((item) => item.path === route.page)?.developer) return <Dashboard />;
+  if (!isDeveloper && NAV.find((item) => item.path === route.page)?.developer) return <Dashboard isDeveloper={isDeveloper} />;
   switch (route.page) {
-    case 'dashboard': return <Dashboard />;
+    case 'dashboard': return <Dashboard isDeveloper={isDeveloper} />;
     case 'produkte': return route.id ? <ProductForm id={route.id === 'neu' ? null : route.id} /> : <Products />;
     case 'kategorien': return <Categories />;
     case 'events': return route.id ? <EventForm id={route.id === 'neu' ? null : route.id} /> : <Events />;
     case 'banner': return <BannersPromotions />;
-    case 'inhalte': return <Content />;
     case 'medien': return <MediaLibrary />;
     case 'oeffnungszeiten': return <Hours />;
-    case 'einstellungen': return <Settings />;
+    case 'protokoll': return <Protocol />;
     case 'passwort': return <Password />;
     case 'benutzer': return <Users />;
-    default: return <Dashboard />;
+    default: return <Dashboard isDeveloper={isDeveloper} />;
   }
 }
 

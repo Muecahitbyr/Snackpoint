@@ -1,8 +1,12 @@
-// Everything the public website shows, in one payload: only published,
-// active and currently valid entries, and no internal fields.
+// What the admin panel manages, for the public website in one payload: only
+// published, active and currently valid entries, no internal fields. (Texts,
+// contact details, services and reviews live in src/data/siteContent.js.)
 import { query } from '../db/pool.js';
-import { CONTENT_FIELDS, SETTINGS_DEFAULTS } from './contentRegistry.js';
 import { mediaUrl } from './media.js';
+
+// Past events leave the "current" list; set showPast to list the last ones
+// on /events under "Das war los".
+const EVENT_ARCHIVE = { autoArchive: true, showPast: false };
 
 // An event without an end time counts as running until the end of its day.
 const EVENT_END_SQL = `coalesce(e.ends_at,
@@ -11,27 +15,6 @@ const EVENT_END_SQL = `coalesce(e.ends_at,
 const ACTIVE_WINDOW_SQL = `is_active AND (starts_at IS NULL OR starts_at <= now()) AND (ends_at IS NULL OR ends_at > now())`;
 
 const iso = (value) => (value ? new Date(value).toISOString() : null);
-
-async function loadContent() {
-  const { rows } = await query(
-    `SELECT sc.key, sc.value, sc.media_id, m.checksum FROM site_content sc LEFT JOIN media m ON m.id = sc.media_id`
-  );
-  const byKey = new Map(rows.map((row) => [row.key, row]));
-  const content = {};
-  for (const field of CONTENT_FIELDS) {
-    const row = byKey.get(field.key);
-    content[field.key] = field.type === 'image' ? mediaUrl(row?.media_id, row?.checksum) : row?.value ?? '';
-  }
-  return content;
-}
-
-async function loadSettings() {
-  const { rows } = await query('SELECT key, value FROM settings');
-  const stored = Object.fromEntries(rows.map((row) => [row.key, row.value]));
-  return Object.fromEntries(
-    Object.entries(SETTINGS_DEFAULTS).map(([key, defaults]) => [key, { ...defaults, ...(stored[key] ?? {}) }])
-  );
-}
 
 async function loadCatalog() {
   const [groupRows, productRows] = await Promise.all([
@@ -85,7 +68,7 @@ async function loadCatalog() {
   };
 }
 
-async function loadEvents(settings) {
+async function loadEvents() {
   const { rows } = await query(
     `SELECT e.*, m.checksum AS cover_checksum, ${EVENT_END_SQL} < now() AS is_past,
             coalesce((SELECT json_agg(json_build_object('id', gm.id, 'checksum', gm.checksum) ORDER BY ei.sort_order)
@@ -109,25 +92,18 @@ async function loadEvents(settings) {
     gallery: row.gallery.map((image) => mediaUrl(image.id, image.checksum)),
   });
   const all = rows.map(toEvent);
-  if (!settings.events.autoArchive) return { current: all, past: [] };
+  if (!EVENT_ARCHIVE.autoArchive) return { current: all, past: [] };
   const past = all
     .filter((event) => event.isPast)
     .sort((a, b) => b.startsAt.localeCompare(a.startsAt))
     .slice(0, 12);
-  return { current: all.filter((event) => !event.isPast), past: settings.events.showPast ? past : [] };
+  return { current: all.filter((event) => !event.isPast), past: EVENT_ARCHIVE.showPast ? past : [] };
 }
 
 export async function buildPublicSite() {
-  const settings = await loadSettings();
-  const [content, catalog, events, services, reviews, hours, banners, promotions] = await Promise.all([
-    loadContent(),
+  const [catalog, events, hours, banners, promotions] = await Promise.all([
     loadCatalog(),
-    loadEvents(settings),
-    query(
-      `SELECT s.*, m.checksum FROM services s LEFT JOIN media m ON m.id = s.logo_media_id
-        WHERE s.is_active ORDER BY s.sort_order, s.title`
-    ),
-    query('SELECT * FROM reviews WHERE is_active ORDER BY sort_order, created_at'),
+    loadEvents(),
     query('SELECT * FROM opening_hours ORDER BY position'),
     query(`SELECT * FROM banners WHERE ${ACTIVE_WINDOW_SQL} ORDER BY sort_order, created_at DESC`),
     query(
@@ -139,27 +115,8 @@ export async function buildPublicSite() {
 
   return {
     generatedAt: new Date().toISOString(),
-    content,
-    settings,
     ...catalog,
     events,
-    services: services.rows.map((row) => ({
-      id: row.slug,
-      title: row.title,
-      text: row.description,
-      icon: row.icon,
-      logo: mediaUrl(row.logo_media_id, row.checksum),
-      gradient: row.gradient,
-      badge: row.badge || undefined,
-    })),
-    reviews: reviews.rows.map((row) => ({
-      id: row.id,
-      name: row.author_name,
-      initials: row.initials,
-      color: row.color,
-      time: row.time_label,
-      text: row.text,
-    })),
     hours: hours.rows.map((row) => ({
       day: row.day_name,
       jsDay: row.weekday,

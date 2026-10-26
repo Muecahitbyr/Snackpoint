@@ -4,7 +4,7 @@ import { Badge, Button, EmptyState, ErrorBox, Modal, PageHeader, SelectField, Sp
 
 export const ROLES = {
   owner: { label: 'Inhaber', hint: 'Produkte, Kategorien, Events, Banner & Aktionen, Medien, Öffnungszeiten' },
-  developer: { label: 'Entwickler', hint: 'Alles, inkl. Webseiteninhalte, Einstellungen, Benutzer und Datensicherung' },
+  developer: { label: 'Entwickler', hint: 'Alles, inkl. Protokoll, Benutzer, Passwort und Datensicherung' },
 };
 
 function RoleField({ value, onChange, error, disabled }) {

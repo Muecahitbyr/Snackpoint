@@ -1,6 +1,7 @@
-// The website's original content, moved here from the old static files in
-// src/data/. `npm run db:seed` writes it into an empty database once; after
-// that the database is the only source and everything is edited in /admin.
+// The website's original product range and opening hours, moved here from
+// the old static files in src/data/. `npm run db:seed` writes them into an
+// empty database once; after that they're edited in /admin. (Texts, services
+// and reviews stay in code: src/data/siteContent.js.)
 
 // Übergruppen with their categories, in display order. chat = the chat
 // assistant topic (null = the chat answers these through its own topics).
@@ -148,22 +149,6 @@ export const CHAT_PRODUCTS = [
   { brand: 'Monster', name: 'Monster Mango Loco', category: 'Energy Drinks', tags: ['kalt'] },
 ];
 
-// `logo` is a file under public/ that's imported into the media library.
-export const SERVICES = [
-  { slug: 'kiosk', icon: '🍫', logo: 'logo.jpg', gradient: 'red', title: 'Kiosk', description: 'Süßigkeiten, Getränke, Zeitschriften und alles für den kleinen Hunger — täglich frisch sortiert.' },
-  { slug: 'dhl', icon: '📦', logo: 'logos/dhl.png', gradient: 'gold', title: 'DHL Paketshop', description: 'Pakete abgeben und abholen — schnell, freundlich und unkompliziert, ganz ohne Warteschlangen im Postamt.' },
-  { slug: 'lotto', icon: '🎰', logo: 'logos/lotto.png', gradient: 'deep', title: 'Lotto', description: 'Offizielle Lotto-Annahmestelle: Tippscheine abgeben, Gewinne prüfen und dein Glück versuchen.' },
-  { slug: 'ihle', icon: '🥪', logo: 'logos/ihle.png', gradient: 'red', title: 'Ihle', description: 'Frische Sandwiches, Wraps & Gebäck von Ihle — direkt bei uns im Kiosk.', badge: 'BALD VERFÜGBAR' },
-];
-
-export const REVIEWS = [
-  { name: 'sabri can soyalp', initials: 'SS', color: '#f0ac23', time: 'vor einem Monat', text: 'Das Café ist wirklich sehr schön. Das Personal ist freundlich und kümmert sich gut um die Kunden. Die Produkte sind frisch, besonders der Kaffee ist sehr lecker. Ich kann das Café nur weiterempfehlen.' },
-  { name: 'Cigdem Fidan', initials: 'CF', color: '#e0201f', time: 'vor 2 Monaten', text: 'Super netter Typ. Kann man negativ gelaunt rein, kommt positiv gelaunt wieder. Sagin gibt einfach schöne Energie von sich. 😊' },
-  { name: 'Sarah Petzold', initials: 'SP', color: '#c4181c', time: 'vor 5 Monaten', text: 'Einfach top! Mein Mann und ich gehen sehr gerne hin, Päckchen abgeben und abholen. Soo nett und beide immer super freundlich! So macht es Spaß.' },
-  { name: 'Can Sadri', initials: 'CS', color: '#b9861f', time: 'vor 2 Monaten', text: 'Der beste Kiosk den ich je gesehen habe … man wird herzlich empfangen und hat einfach Spaß beim Einkaufen! Immer einen Besuch wert. Top top top 👍' },
-  { name: 'Moritz Betz', initials: 'MB', color: '#7a0000', time: 'vor 3 Monaten', text: 'Die Mitarbeiter sind nett und der Kundenservice ist ideal. Ebenfalls fühle ich mich sehr wohl im Laden.' },
-];
-
 // Monday first, as displayed. weekday = Date#getDay().
 export const OPENING_HOURS = [
   { day: 'Montag', weekday: 1 },
@@ -174,6 +159,3 @@ export const OPENING_HOURS = [
   { day: 'Samstag', weekday: 6 },
   { day: 'Sonntag', weekday: 0 },
 ].map((entry) => ({ ...entry, open: '08:00', close: '20:00', closed: false }));
-
-// Content images imported from public/ into the media library.
-export const CONTENT_IMAGES = { 'brand.logo': 'logo.jpg', 'about.image': 'logo.jpg' };

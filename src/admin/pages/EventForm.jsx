@@ -183,7 +183,7 @@ export default function EventForm({ id }) {
           <Card title="So geht's">
             <p className="muted small">
               <strong>Entwurf</strong> = nur hier sichtbar. <strong>Veröffentlichen</strong> = sofort auf der Webseite. Vergangene Events
-              werden automatisch archiviert (einstellbar unter Einstellungen).
+              werden automatisch archiviert.
             </p>
           </Card>
         </div>

@@ -45,7 +45,7 @@ function Preview({ form, categoryName }) {
 export default function ProductForm({ id }) {
   const product = useApi(id ? `/admin/products/${id}` : null);
   const categories = useApi('/admin/categories');
-  const settings = useApi('/admin/meta');
+  const meta = useApi('/admin/meta');
   const toast = useToast();
   const confirm = useConfirm();
   const [form, setForm] = useState(EMPTY);
@@ -163,7 +163,7 @@ export default function ProductForm({ id }) {
             <Toggle label="Im Chat-Assistenten auffindbar" checked={form.inChat} onChange={set('inChat')} />
             <SelectField label="Chat-Bereich" value={form.chatCategory} onChange={set('chatCategory')} hint="„Automatisch“ übernimmt den Bereich der Kategorie.">
               <option value="">Automatisch (aus der Kategorie)</option>
-              {(settings.data?.chatCategories ?? []).map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+              {(meta.data?.chatCategories ?? []).map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </SelectField>
           </Card>
         </div>

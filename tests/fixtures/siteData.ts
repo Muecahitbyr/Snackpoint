@@ -1,8 +1,8 @@
-// A public-site payload (as GET /api/public/site returns it) built from the
-// original content in server/db/seedData.js — lets the chat tests run without
-// a database.
-import { CATALOG_PRODUCTS, CHAT_PRODUCTS, GROUPS, HIGHLIGHT_PRODUCTS, OPENING_HOURS, SERVICES } from '../../server/db/seedData.js';
-import { SETTINGS_DEFAULTS } from '../../server/lib/contentRegistry.js';
+// The site data the chat sees in the browser — API part built from the
+// original content in server/db/seedData.js, the rest from
+// src/data/siteContent.js — so the chat tests run without a database.
+import { CATALOG_PRODUCTS, CHAT_PRODUCTS, GROUPS, HIGHLIGHT_PRODUCTS, OPENING_HOURS } from '../../server/db/seedData.js';
+import { SERVICES, SETTINGS } from '../../src/data/siteContent.js';
 import { applySiteData } from '../../src/data/siteStore';
 
 interface SeedProduct {
@@ -37,7 +37,7 @@ function toSiteProduct(product: SeedProduct, showInCatalog: boolean, inChat = pr
 
 export function loadSeedSiteData() {
   applySiteData({
-    settings: SETTINGS_DEFAULTS,
+    settings: SETTINGS,
     hours: OPENING_HOURS.map((entry: { day: string; weekday: number; open: string; close: string; closed: boolean }) => ({
       day: entry.day, jsDay: entry.weekday, open: entry.open, close: entry.close, closed: entry.closed,
     })),
@@ -46,8 +46,6 @@ export function loadSeedSiteData() {
       ...HIGHLIGHT_PRODUCTS.map((product: SeedProduct) => toSiteProduct(product, false, false)),
       ...CHAT_PRODUCTS.map((product: SeedProduct) => toSiteProduct(product, false)),
     ],
-    services: SERVICES.map((service: { slug: string; title: string; description: string }) => ({
-      id: service.slug, title: service.title, text: service.description,
-    })),
+    services: SERVICES,
   });
 }

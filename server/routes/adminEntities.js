@@ -1,5 +1,5 @@
 // Admin CRUD endpoints for the list-style content: products, groups,
-// categories, events, banners, promotions, services and reviews.
+// categories, events, banners and promotions.
 import { z } from 'zod';
 import { transaction } from '../db/pool.js';
 import { audit } from '../lib/audit.js';
@@ -304,87 +304,6 @@ export const promotions = crudRoutes({
     updatedAt: iso(row.updated_at),
   }),
 });
-
-// ── Services & reviews ─────────────────────────────────────────────────────
-
-export const services = crudRoutes({
-  entity: 'service',
-  table: 'services',
-  columns: {
-    title: 'title', description: 'description', icon: 'icon', logoMediaId: 'logo_media_id', gradient: 'gradient',
-    badge: 'badge', isActive: 'is_active', sortOrder: 'sort_order',
-  },
-  schema: z.object({
-    title: requiredText(80),
-    description: text(600).optional(),
-    icon: text(16).optional(),
-    logoMediaId: uuid.nullable().optional(),
-    gradient: z.enum(['red', 'gold', 'deep']).optional(),
-    badge: text(40).optional(),
-    isActive: z.boolean().optional(),
-    sortOrder: sortOrder.optional(),
-  }),
-  extraColumns: async (data, { db, existing }) => (existing ? {} : { slug: await uniqueSlug(db, 'services', data.title) }),
-  select: 'SELECT t.*, m.checksum AS logo_checksum FROM services t LEFT JOIN media m ON m.id = t.logo_media_id',
-  orderBy: 't.sort_order, t.title',
-  describe: (item) => item.title,
-  toJson: (row) => ({
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    description: row.description,
-    icon: row.icon,
-    logoMediaId: row.logo_media_id,
-    logo: media(row.logo_media_id, row.logo_checksum),
-    gradient: row.gradient,
-    badge: row.badge,
-    isActive: row.is_active,
-    sortOrder: row.sort_order,
-    updatedAt: iso(row.updated_at),
-  }),
-});
-
-const initialsOf = (name) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join('');
-
-export const reviews = crudRoutes({
-  entity: 'review',
-  table: 'reviews',
-  columns: {
-    authorName: 'author_name', initials: 'initials', color: 'color', timeLabel: 'time_label', text: 'text',
-    isActive: 'is_active', sortOrder: 'sort_order',
-  },
-  schema: z.object({
-    authorName: requiredText(80),
-    initials: text(4).optional(),
-    color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Farbe im Format #RRGGBB').optional(),
-    timeLabel: text(40).optional(),
-    text: requiredText(1000),
-    isActive: z.boolean().optional(),
-    sortOrder: sortOrder.optional(),
-  }),
-  extraColumns: (data) => (data.authorName && !data.initials ? { initials: initialsOf(data.authorName) } : {}),
-  select: 'SELECT t.* FROM reviews t',
-  orderBy: 't.sort_order, t.created_at',
-  describe: (item) => item.authorName,
-  toJson: (row) => ({
-    id: row.id,
-    authorName: row.author_name,
-    initials: row.initials,
-    color: row.color,
-    timeLabel: row.time_label,
-    text: row.text,
-    isActive: row.is_active,
-    sortOrder: row.sort_order,
-    updatedAt: iso(row.updated_at),
-  }),
-});
-
 
 // Order of the "Frisch im Regal" highlights, independent of the catalog order.
 products.post('/highlight-order', async (c) => {

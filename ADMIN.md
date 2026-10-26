@@ -1,7 +1,11 @@
 # SnackPoint – Adminpanel, Backend & Datenbank
 
-Die Webseite lädt alle Inhalte (Produkte, Kategorien, Events, Banner, Aktionen, Texte, Bilder, Öffnungszeiten,
-Kontaktdaten) aus einer PostgreSQL-Datenbank. Gepflegt wird alles im Adminpanel unter **`/admin`**.
+Was sich im Tagesgeschäft ändert – **Produkte, Kategorien, Events, Banner, Aktionen, Bilder, Öffnungszeiten** –
+liegt in einer PostgreSQL-Datenbank und wird im Adminpanel unter **`/admin`** gepflegt.
+
+**Texte, Kontaktdaten, Social-Media-Links, Google-Bewertung, rechtliche Angaben, Leistungen und Bewertungen**
+pflegt der Entwickler im Code: [`src/data/siteContent.js`](src/data/siteContent.js) bearbeiten, committen,
+pushen – Cloudflare deployt automatisch.
 
 ```
 Browser ──► Cloudflare (Worker + Static Assets, eine Domain)
@@ -17,11 +21,11 @@ Die Railway-Adresse der API antwortet nur auf Anfragen, die das gemeinsame `PROX
 | Ordner / Datei | Inhalt |
 | --- | --- |
 | `server/app.js` | API: `/api/public`, `/api/media`, `/api/auth`, `/api/admin` |
-| `server/routes/` | Endpunkte (CRUD, Inhalte, Medien, Einstellungen, Dashboard) |
+| `server/routes/` | Endpunkte (CRUD, Medien, Öffnungszeiten, Benutzer, Dashboard, Backup) |
 | `server/auth/` | Passwort-Hashing (Argon2id), Sessions, CSRF, Login-Sperre |
 | `server/db/migrations/` | SQL-Migrationen (werden genau einmal, in Reihenfolge, angewendet) |
-| `server/db/seedData.js` | Die ursprünglichen Inhalte der Webseite (Erstbefüllung) |
-| `server/lib/contentRegistry.js` | Alle editierbaren Texte/Bilder der Webseite + Standard-Einstellungen |
+| `server/db/seedData.js` | Ursprüngliches Sortiment + Öffnungszeiten (einmalige Erstbefüllung) |
+| `src/data/siteContent.js` | Texte, Kontakt, Rechtliches, Leistungen, Bewertungen der Webseite (im Code gepflegt) |
 | `src/admin/` | Das Adminpanel |
 | `src/site/SiteProvider.jsx` | Lädt die Inhalte für die Webseite |
 | `worker/index.js`, `wrangler.jsonc`, `public/_headers` | Cloudflare (Worker, Seiten, Header) |
@@ -118,7 +122,7 @@ Rollen – auch serverseitig durchgesetzt:
 | Rolle | Sieht |
 | --- | --- |
 | **Inhaber** | Dashboard, Produkte, Kategorien, Events, Banner & Aktionen, Medienbibliothek, Öffnungszeiten |
-| **Entwickler** | zusätzlich Webseiteninhalte, Einstellungen (inkl. Rechtliches & Datensicherung), Benutzer, Passwort ändern |
+| **Entwickler** | zusätzlich Protokoll, Benutzer, Passwort ändern und die Datensicherung (Dashboard) |
 
 Der Inhaber wendet sich für Texte, Kontaktdaten, Rechtliches, Passwörter usw. an den Entwickler. Per
 Kommandozeile angelegte Konten sind Entwickler-Konten. Die eigene Rolle lässt sich nicht ändern. Anlegen, Löschen und das Setzen eines fremden Passworts musst du mit deinem eigenen
@@ -144,10 +148,9 @@ Anmelden unter `/admin`. Das Panel funktioniert auch auf dem Smartphone (Menü o
 | **Kategorien** | Bereiche (Reiter auf der Produktseite, z. B. „Getränke“, mit Hinweistext und 18+) und Kategorien (Filter darunter): anlegen, umbenennen, sortieren, löschen. Löschen geht erst, wenn nichts mehr darin ist – so geht nichts versehentlich verloren. |
 | **Events** | Anlegen mit Titel, Beschreibung, Ort, Beginn/Ende, Eintritt (frei / Preis / Hinweis), Titelbild und Galerie. **Als Entwurf speichern** = unsichtbar, **Veröffentlichen** = sofort online. Aktiv-Schalter, Hervorheben, Duplizieren (praktisch für wiederkehrende Events). |
 | **Banner & Aktionen** | *Banner*: Hinweisleiste ganz oben („Heute Sonderaktion!“), mit Link, Farbe und optionalem Zeitraum – schaltet sich automatisch ein/aus. *Aktionen*: Angebotskarten mit Bild, Preis und Etikett; erscheinen als eigener Bereich auf der Startseite. |
-| **Webseiteninhalte** | Alle Überschriften und Texte der Webseite, Logo und Bilder; Reiter *Leistungen* (Kiosk, DHL, Lotto, Ihle – inkl. Laufband „BALD VERFÜGBAR“) und *Bewertungen*. |
 | **Medienbibliothek** | Bilder hochladen (auch per Drag & Drop), ansehen, Beschreibung pflegen, **ersetzen** (alle Stellen, die das Bild nutzen, zeigen sofort das neue), löschen (nur wenn nirgends verwendet). |
 | **Öffnungszeiten** | Pro Wochentag; gelten auch für „Geöffnet/Geschlossen“ oben und für den Chat-Assistenten. |
-| **Einstellungen** | Adresse, Telefon, E-Mail, Google-Maps-Links, Social-Media-Links, Google-Bewertung, Infos für den Chat-Assistenten, Event-Archivierung, **Rechtliche Angaben** (Impressum/Datenschutz), **Datensicherung**, Änderungsprotokoll. |
+| **Protokoll** | Wer hat wann was geändert (nur Entwickler). |
 | **Benutzer** | Weitere Admin-Konten anlegen, umbenennen, Passwort setzen, löschen. |
 
 Änderungen sind **sofort** auf der Webseite sichtbar – die Webseite fragt die Daten bei jedem Aufruf neu
@@ -158,7 +161,7 @@ Adresse automatisch.
 - Bereiche *Aktionen* und *Events* auf der Startseite sowie der Menüpunkt „Events“ erscheinen nur, wenn es
   aktive Einträge gibt – ohne Einträge sieht die Seite genau wie vorher aus. `/events` zeigt ohne Events einen
   freundlichen Hinweis.
-- Vergangene Events werden automatisch archiviert (abschaltbar unter *Einstellungen → Events*). Ein Event
+- Vergangene Events werden automatisch archiviert (`EVENT_ARCHIVE` in `server/lib/publicSite.js`). Ein Event
   ohne Ende gilt bis Mitternacht als laufend.
 - Die 12 zusätzlichen Markenprodukte des Chat-Assistenten (Takis, Red Bull, Monster, Marlboro) wurden als
   Produkte mit „Auf der Produktseite anzeigen = aus“ übernommen. Sie waren im alten Code als
@@ -210,7 +213,7 @@ bei Weitem). Railway: nutzungsbasiert im bestehenden Railway-Tarif (API-Dienst +
 Railways eingebaute Datenbank-Backups sind im Hobby-Tarif nicht enthalten. Deshalb hat das Adminpanel eine
 eigene Datensicherung:
 
-- **Sichern:** *Einstellungen → Datensicherung → Backup herunterladen* (oder „Jetzt sichern“ im Dashboard).
+- **Sichern:** Dashboard → *Datensicherung → Backup herunterladen* (nur Entwickler).
   Eine Datei `snackpoint-backup-<datum>.json.gz` mit allen Inhalten, Bildern und Benutzerkonten (ohne
   Sitzungen). Das Dashboard erinnert, wenn die letzte Sicherung älter als 14 Tage ist.
   Empfehlung: alle 1–2 Wochen und vor größeren Änderungen; Datei an einem sicheren Ort aufbewahren
@@ -228,7 +231,7 @@ eigene Datensicherung:
 - Löschen fragt immer nach; Produkte/Events lassen sich stattdessen deaktivieren.
 - Bilder, Kategorien und Bereiche, die noch verwendet werden, können nicht gelöscht werden.
 - Migrationen ergänzen nur und löschen keine Daten; die Inhalts-Übernahme überschreibt nie etwas.
-- Jede Änderung steht im Änderungsprotokoll (Einstellungen).
+- Jede Änderung steht im Protokoll.
 
 ---
 
@@ -257,7 +260,7 @@ eigene Datensicherung:
   Formularinhalte.
 
 **Rechtliches:** Betreiber, Rechtsform, Vertretung, USt-IdNr., Registereintrag und Inhaltsverantwortlicher
-werden unter *Einstellungen → Rechtliche Angaben* gepflegt und automatisch in Impressum und
+stehen in `src/data/siteContent.js` (`SETTINGS.legal`) und werden automatisch in Impressum und
 Datenschutzerklärung übernommen.
 
 **Datenschutz:** Die Datenschutzerklärung nennt Cloudflare und Railway, den Verwaltungsbereich

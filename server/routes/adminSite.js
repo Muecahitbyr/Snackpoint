@@ -1,5 +1,5 @@
-// Admin endpoints for website texts, settings, opening hours, the media
-// library, the dashboard and the change log.
+// Admin endpoints for opening hours, the media library, the dashboard, the
+// change log and backups.
 import { Readable } from 'node:stream';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
@@ -9,11 +9,10 @@ import { query, transaction } from '../db/pool.js';
 import { audit } from '../lib/audit.js';
 import { createBackupStream, lastBackupAt, markBackupDone } from '../lib/backup.js';
 import { CHAT_CATEGORIES } from '../lib/chatCategories.js';
-import { CONTENT_FIELD_BY_KEY, CONTENT_SECTIONS, SETTINGS_DEFAULTS } from '../lib/contentRegistry.js';
 import { HttpError, badRequest, conflict, mapDbError, notFound } from '../lib/errors.js';
 import { optimizeUpload } from '../lib/images.js';
 import { MEDIA_REFERENCES, mediaUrl } from '../lib/media.js';
-import { httpUrl, parse, parseId, readJson, text, uuid } from '../lib/validation.js';
+import { parse, parseId, readJson, text } from '../lib/validation.js';
 
 const iso = (value) => (value ? new Date(value).toISOString() : null);
 
@@ -22,136 +21,6 @@ const iso = (value) => (value ? new Date(value).toISOString() : null);
 export const meta = new Hono();
 
 meta.get('/', (c) => c.json({ chatCategories: CHAT_CATEGORIES }));
-
-// ── Website texts ──────────────────────────────────────────────────────────
-
-export const content = new Hono();
-
-content.get('/', async (c) => {
-  const { rows } = await query(
-    'SELECT sc.key, sc.value, sc.media_id, sc.updated_at, m.checksum FROM site_content sc LEFT JOIN media m ON m.id = sc.media_id'
-  );
-  const values = Object.fromEntries(
-    rows.map((row) => [
-      row.key,
-      {
-        value: row.value,
-        mediaId: row.media_id,
-        mediaUrl: mediaUrl(row.media_id, row.checksum),
-        thumbUrl: mediaUrl(row.media_id, row.checksum, 'thumb'),
-        updatedAt: iso(row.updated_at),
-      },
-    ])
-  );
-  return c.json({ sections: CONTENT_SECTIONS, values });
-});
-
-const contentSchema = z.object({
-  values: z.record(z.string(), z.string().max(5000)).default({}),
-  media: z.record(z.string(), uuid.nullable()).default({}),
-});
-
-content.put('/', async (c) => {
-  const body = parse(contentSchema, await readJson(c));
-  const errors = {};
-  for (const [key, value] of Object.entries(body.values)) {
-    const field = CONTENT_FIELD_BY_KEY.get(key);
-    if (!field || field.type === 'image') errors[key] = 'Unbekanntes Feld';
-    else if (value.length > (field.max ?? (field.type === 'textarea' ? 3000 : 300))) errors[key] = 'Zu lang';
-  }
-  for (const key of Object.keys(body.media)) {
-    if (CONTENT_FIELD_BY_KEY.get(key)?.type !== 'image') errors[key] = 'Unbekanntes Bildfeld';
-  }
-  if (Object.keys(errors).length) throw badRequest('Bitte überprüfe die markierten Felder.', { fields: errors });
-
-  try {
-    await transaction(async (db) => {
-      for (const [key, value] of Object.entries(body.values)) {
-        await db.query(
-          `INSERT INTO site_content (key, value) VALUES ($1, $2)
-           ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value WHERE site_content.value IS DISTINCT FROM EXCLUDED.value`,
-          [key, value.trim()]
-        );
-      }
-      for (const [key, mediaId] of Object.entries(body.media)) {
-        await db.query(
-          `INSERT INTO site_content (key, media_id) VALUES ($1, $2)
-           ON CONFLICT (key) DO UPDATE SET media_id = EXCLUDED.media_id WHERE site_content.media_id IS DISTINCT FROM EXCLUDED.media_id`,
-          [key, mediaId]
-        );
-      }
-    });
-  } catch (error) {
-    throw mapDbError(error);
-  }
-  const keys = [...Object.keys(body.values), ...Object.keys(body.media)];
-  const labels = keys.map((key) => CONTENT_FIELD_BY_KEY.get(key)?.label ?? key);
-  await audit(c, 'update', 'content', keys[0] ?? '', `Texte: ${labels.slice(0, 4).join(', ')}${labels.length > 4 ? ' …' : ''}`);
-  return c.json({ ok: true });
-});
-
-// ── Settings ───────────────────────────────────────────────────────────────
-
-const optionalEmail = z.union([z.literal(''), z.string().trim().email('Ungültige E-Mail').max(254)]);
-const mapsEmbed = httpUrl.refine(
-  (value) => value === '' || /^https:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.google\.[a-z.]+\/)/i.test(value),
-  'Nur Google-Maps-Einbettungslinks'
-);
-
-const SETTINGS_SCHEMAS = {
-  contact: z.object({
-    address: text(200).min(1, 'Pflichtfeld'),
-    phone: text(40).regex(/^[0-9+()\/\s-]*$/, 'Nur Ziffern, Leerzeichen und + ( ) / -'),
-    email: optionalEmail,
-    mapsUrl: httpUrl,
-    mapsEmbedUrl: mapsEmbed,
-  }),
-  social: z.object({ instagram: httpUrl, facebook: httpUrl, tiktok: httpUrl, whatsapp: httpUrl, google: httpUrl }),
-  rating: z.object({ value: z.number().min(0).max(5), count: z.number().int().min(0).max(1_000_000) }),
-  info: z.object({
-    paymentMethods: z.array(text(40).min(1)).max(20),
-    deliveryInfo: text(500),
-    parkingInfo: text(500),
-  }),
-  events: z.object({ autoArchive: z.boolean(), showPast: z.boolean() }),
-  legal: z.object({
-    operator: text(120),
-    legalForm: text(80),
-    representative: text(120),
-    vatId: text(30).regex(/^([A-Z]{2}[A-Z0-9]{2,13})?$/, 'Format z. B. DE123456789'),
-    register: text(120),
-    responsible: text(200),
-  }),
-};
-
-const SETTINGS_LABELS = {
-  contact: 'Kontaktdaten', social: 'Social Media', rating: 'Google-Bewertung', info: 'Zusatzinfos', events: 'Event-Einstellungen',
-  legal: 'Rechtliche Angaben',
-};
-
-export const settings = new Hono();
-
-settings.get('/', async (c) => {
-  const { rows } = await query('SELECT key, value FROM settings');
-  const stored = Object.fromEntries(rows.map((row) => [row.key, row.value]));
-  const values = Object.fromEntries(
-    Object.entries(SETTINGS_DEFAULTS).map(([key, defaults]) => [key, { ...defaults, ...(stored[key] ?? {}) }])
-  );
-  return c.json({ settings: values, chatCategories: CHAT_CATEGORIES, lastBackupAt: await lastBackupAt() });
-});
-
-settings.put('/:key', async (c) => {
-  const key = c.req.param('key');
-  const schema = SETTINGS_SCHEMAS[key];
-  if (!schema) throw notFound();
-  const value = parse(schema, await readJson(c));
-  await query(
-    'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
-    [key, value]
-  );
-  await audit(c, 'update', 'settings', key, SETTINGS_LABELS[key]);
-  return c.json({ settings: value });
-});
 
 // ── Opening hours ──────────────────────────────────────────────────────────
 
@@ -232,10 +101,7 @@ async function mediaUsage(id) {
     MEDIA_REFERENCES.map(async (ref) => {
       const name = ref.nameColumn ? `r.${ref.nameColumn}` : `(SELECT title FROM events e WHERE e.id = r.event_id)`;
       const { rows } = await query(`SELECT ${name} AS name FROM ${ref.table} r WHERE r.${ref.column} = $1`, [id]);
-      return rows.map((row) => ({
-        type: ref.label,
-        name: ref.table === 'site_content' ? CONTENT_FIELD_BY_KEY.get(row.name)?.label ?? row.name : row.name,
-      }));
+      return rows.map((row) => ({ type: ref.label, name: row.name }));
     })
   );
   return parts.flat();

@@ -41,7 +41,7 @@ function Stat({ label, value, hint, href }) {
   );
 }
 
-export default function Dashboard() {
+export default function Dashboard({ isDeveloper }) {
   const { data, error, loading, reload } = useApi('/admin/dashboard');
 
   return (
@@ -61,7 +61,7 @@ export default function Dashboard() {
 
       {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : (
         <>
-          <BackupReminder lastBackupAt={data.lastBackupAt} />
+          {isDeveloper && <BackupReminder lastBackupAt={data.lastBackupAt} />}
           <div className="stats">
             <Stat label="Produkte" value={data.counts.products} href="#/produkte" hint={`${data.counts.categories} Kategorien`} />
             <Stat label="Aktive Produkte" value={data.counts.active_products} href="#/produkte" hint={`${data.counts.highlights} Highlights`} />
@@ -72,7 +72,7 @@ export default function Dashboard() {
           </div>
 
           <div className="dashboard-grid">
-            <Card title="Letzte Änderungen" actions={<a className="card-link" href="#/einstellungen">Alle ansehen</a>}>
+            <Card title="Letzte Änderungen" actions={isDeveloper && <a className="card-link" href="#/protokoll">Alle ansehen</a>}>
               {data.recent.length ? (
                 <ul className="activity">
                   {data.recent.map((entry) => (
@@ -108,6 +108,20 @@ export default function Dashboard() {
               )}
             </Card>
           </div>
+
+          {isDeveloper && (
+            <Card
+              title="Datensicherung"
+              description="Eine Datei mit allen Produkten, Events, Bannern, Bildern und Benutzerkonten — kostenlos, ohne Zusatzdienst."
+              className="backup-card"
+              actions={<a className="a-btn a-btn-primary a-btn-small" href="/api/admin/backup" download><Icon name="download" size={15} /> Backup herunterladen</a>}
+            >
+              <p className="muted small">
+                {data.lastBackupAt ? `Letzte Sicherung ${formatRelative(data.lastBackupAt)}.` : 'Noch keine Sicherung heruntergeladen.'} Empfehlung:
+                alle 1–2 Wochen. Die Datei enthält auch die verschlüsselten Passwörter — sicher aufbewahren, nicht weitergeben.
+              </p>
+            </Card>
+          )}
         </>
       )}
     </>

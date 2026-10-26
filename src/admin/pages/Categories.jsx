@@ -99,7 +99,7 @@ function CategoryModal({ category, groups, chatCategories, defaultGroupId, onClo
 export default function Categories() {
   const groups = useApi('/admin/groups');
   const categories = useApi('/admin/categories');
-  const settings = useApi('/admin/meta');
+  const meta = useApi('/admin/meta');
   const confirm = useConfirm();
   const [run, busy] = useAction();
   const [modal, setModal] = useState(null);
@@ -115,7 +115,7 @@ export default function Categories() {
 
   const groupList = groups.data?.items ?? [];
   const categoryList = categories.data?.items ?? [];
-  const chatLabels = Object.fromEntries((settings.data?.chatCategories ?? []).map((c) => [c.id, c.label]));
+  const chatLabels = Object.fromEntries((meta.data?.chatCategories ?? []).map((c) => [c.id, c.label]));
 
   async function removeGroup(group) {
     if (group.categoryCount > 0) return;
@@ -220,7 +220,7 @@ export default function Categories() {
           category={modal.item}
           groups={groupList}
           defaultGroupId={modal.groupId}
-          chatCategories={settings.data?.chatCategories ?? []}
+          chatCategories={meta.data?.chatCategories ?? []}
           onClose={() => setModal(null)}
           onSaved={closeAndReload}
         />
