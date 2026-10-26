@@ -120,6 +120,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .search span { position: absolute; left: 12px; font-size: 0.85rem; opacity: 0.55; pointer-events: none; }
 .search input { width: 100%; height: 42px; border: 1px solid var(--a-border); border-radius: 10px; padding: 0 12px 0 36px; background: #fff; }
 .hint-bar { background: #fff8e8; border: 1px solid #f6dfa6; color: #7a5208; padding: 9px 14px; border-radius: 10px; font-size: 0.86rem; margin-bottom: 14px; }
+.backup-reminder { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.confirm-own { margin-top: 8px; padding-top: 14px; border-top: 1px dashed var(--a-border); }
+.password-tools { margin: -8px 0 14px; }
 .hint-bar.subtle { background: transparent; border-color: transparent; color: var(--a-dim); padding: 0; }
 
 /* ── Buttons ───────────────────────────────────────────────────────────── */

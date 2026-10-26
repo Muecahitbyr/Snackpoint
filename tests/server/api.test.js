@@ -437,3 +437,74 @@ describe('password change', () => {
     assert.equal((await client().login(EMAIL, 'Ein-Neues-Passwort-2026')).status, 200);
   });
 });
+
+describe('admin accounts', () => {
+  const OWN = 'Ein-Neues-Passwort-2026'; // set by the password-change test above
+  let colleagueId;
+
+  it('creates a second account after confirming the own password', async () => {
+    const wrong = await admin.send('/api/admin/users', {
+      method: 'POST',
+      body: { email: 'kollege@test.local', displayName: 'Kollege', password: 'Sicheres-Teampasswort-2026', currentPassword: 'falsch' },
+    });
+    assert.equal(wrong.status, 400, JSON.stringify(wrong.data));
+    assert.ok(wrong.data.fields?.currentPassword, JSON.stringify(wrong.data));
+    const weak = await admin.send('/api/admin/users', {
+      method: 'POST', body: { email: 'kollege@test.local', password: 'kurz', currentPassword: OWN },
+    });
+    assert.ok(weak.data.fields.password);
+    const created = await admin.send('/api/admin/users', {
+      method: 'POST',
+      body: { email: 'Kollege@Test.local', displayName: 'Kollege', password: 'Sicheres-Teampasswort-2026', currentPassword: OWN },
+    });
+    assert.equal(created.status, 201);
+    assert.equal(created.data.item.email, 'kollege@test.local');
+    colleagueId = created.data.item.id;
+    const duplicate = await admin.send('/api/admin/users', {
+      method: 'POST', body: { email: 'kollege@test.local', password: 'Noch-Ein-Passwort-2026', currentPassword: OWN },
+    });
+    assert.equal(duplicate.status, 409);
+    assert.equal((await client().login('kollege@test.local', 'Sicheres-Teampasswort-2026')).status, 200);
+  });
+
+  it('sets another account\'s password and logs it out', async () => {
+    const colleague = client();
+    await colleague.login('kollege@test.local', 'Sicheres-Teampasswort-2026');
+    const result = await admin.send(`/api/admin/users/${colleagueId}/password`, {
+      method: 'POST', body: { password: 'Ganz-Neues-Teampasswort-26', currentPassword: OWN },
+    });
+    assert.equal(result.status, 200);
+    assert.equal((await colleague.send('/api/admin/dashboard')).status, 401);
+    assert.equal((await client().login('kollege@test.local', 'Ganz-Neues-Teampasswort-26')).status, 200);
+  });
+
+  it('never deletes the own account, deletes others with confirmation', async () => {
+    const me = (await admin.send('/api/admin/users')).data.items.find((u) => u.isSelf);
+    assert.equal((await admin.send(`/api/admin/users/${me.id}`, { method: 'DELETE', body: { currentPassword: OWN } })).status, 400);
+    assert.equal((await admin.send(`/api/admin/users/${colleagueId}`, { method: 'DELETE', body: { currentPassword: 'falsch' } })).status, 400);
+    assert.equal((await admin.send(`/api/admin/users/${colleagueId}`, { method: 'DELETE', body: { currentPassword: OWN } })).status, 200);
+    assert.equal((await client().login('kollege@test.local', 'Ganz-Neues-Teampasswort-26')).status, 401);
+  });
+});
+
+describe('backup & restore', () => {
+  it('downloads a complete backup and restores it exactly', async () => {
+    const { readBackup, restoreBackup } = await import('../../server/lib/backup.js');
+    const { Readable } = await import('node:stream');
+    const response = await admin.send('/api/admin/backup');
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('content-disposition'), /snackpoint-backup-.*\.json\.gz/);
+    const data = await readBackup(Readable.from([Buffer.from(response.data)]));
+    const before = (await site()).products.length;
+    assert.equal(data.tables.products.length, (await query('SELECT count(*)::int AS n FROM products')).rows[0].n);
+    assert.ok(data.tables.media.length > 0 && data.tables.media[0].data.$bytes, 'images are included');
+    assert.ok(!('admin_sessions' in data.tables), 'no sessions in the file');
+
+    await query("DELETE FROM products WHERE name = 'Kartoffelchips'");
+    await restoreBackup(data, { log: () => {} });
+    assert.equal((await site()).products.length, before);
+    const logo = (await site()).services.find((service) => service.logo).logo;
+    assert.equal((await request(logo)).status, 200, 'restored images are served');
+    assert.equal((await admin.send('/api/admin/dashboard')).status, 401, 'sessions end after a restore');
+  });
+});

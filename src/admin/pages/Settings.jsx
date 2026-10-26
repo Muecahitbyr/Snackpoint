@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, formatDateTime, useApi } from '../api';
 import { Button, Card, ErrorBox, PageHeader, Spinner, TextField, Toggle, useToast } from '../ui';
+import { formatRelative } from '../api';
 import { describeChange } from './Dashboard';
 
 /** One settings card that saves its own topic (PUT /admin/settings/:key). */
@@ -77,7 +78,7 @@ export default function Settings() {
   const { data, error, loading, reload } = useApi('/admin/settings');
   if (loading && !data) return <Spinner />;
   if (error) return <ErrorBox error={error} onRetry={reload} />;
-  const { contact, social, rating, info, events } = data.settings;
+  const { contact, social, rating, info, events, legal } = data.settings;
 
   return (
     <>
@@ -148,6 +149,38 @@ export default function Settings() {
             </>
           )}
         </SettingsCard>
+        <SettingsCard
+          title="Rechtliche Angaben"
+          description="Erscheinen im Impressum und in der Datenschutzerklärung. Leere Pflichtfelder werden dort rot markiert."
+          settingKey="legal"
+          initial={legal}
+        >
+          {({ form, set, errors }) => (
+            <>
+              <div className="field-row">
+                <TextField label="Betreiber (Name bzw. Firma)" placeholder="z. B. Max Mustermann" value={form.operator} onChange={set('operator')} error={errors.operator} maxLength={120} />
+                <TextField label="Rechtsform / Zusatz" placeholder="z. B. e.K., GmbH – leer bei Einzelunternehmen" value={form.legalForm} onChange={set('legalForm')} error={errors.legalForm} maxLength={80} />
+              </div>
+              <TextField label="Vertreten durch" hint="Nur bei GmbH/UG o. Ä.: Geschäftsführer" value={form.representative} onChange={set('representative')} error={errors.representative} maxLength={120} />
+              <div className="field-row">
+                <TextField label="USt-IdNr." hint="Nur falls vorhanden (nicht die Steuernummer)" placeholder="DE123456789" value={form.vatId} onChange={set('vatId')} error={errors.vatId} maxLength={30} />
+                <TextField label="Registereintrag" hint="Nur falls im Handelsregister" placeholder="Amtsgericht Kempten, HRA 1234" value={form.register} onChange={set('register')} error={errors.register} maxLength={120} />
+              </div>
+              <TextField label="Verantwortlich für den Inhalt" hint="Name + Anschrift. Leer = Betreiber an der Shop-Adresse." value={form.responsible} onChange={set('responsible')} error={errors.responsible} maxLength={200} />
+            </>
+          )}
+        </SettingsCard>
+
+        <Card title="Datensicherung" description="Eine Datei mit allen Inhalten, Bildern und Benutzerkonten – kostenlos, ohne Zusatzdienst.">
+          <p className="muted small">
+            {data.lastBackupAt ? `Letzte Sicherung: ${formatRelative(data.lastBackupAt)}.` : 'Noch keine Sicherung heruntergeladen.'} Empfehlung: alle
+            1–2 Wochen und vor größeren Änderungen. Die Datei enthält auch die (verschlüsselten) Passwörter – sicher aufbewahren, z. B.
+            in einem privaten Cloud-Ordner, nicht weitergeben.
+          </p>
+          <div className="card-foot">
+            <a className="a-btn a-btn-primary a-btn-small" href="/api/admin/backup" download>💾 Backup herunterladen</a>
+          </div>
+        </Card>
       </div>
       <AuditLog />
     </>

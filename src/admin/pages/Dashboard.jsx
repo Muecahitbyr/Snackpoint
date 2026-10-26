@@ -6,8 +6,25 @@ const ENTITY_LABELS = {
   product: 'Produkt', product_group: 'Bereich', product_category: 'Kategorie', event: 'Event', banner: 'Banner',
   promotion: 'Aktion', service: 'Leistung', review: 'Bewertung', content: 'Webseiteninhalt', settings: 'Einstellungen',
   opening_hours: 'Öffnungszeiten', media: 'Bild', password: 'Passwort', session: 'Sitzung',
+  admin_user: 'Benutzerkonto', backup: 'Datensicherung',
 };
 const ACTION_LABELS = { create: 'erstellt', update: 'geändert', delete: 'gelöscht', reorder: 'sortiert' };
+const BACKUP_DUE_DAYS = 14;
+
+/** Nudges towards a fresh backup when the last download is old (or never happened). */
+function BackupReminder({ lastBackupAt }) {
+  const days = lastBackupAt ? (Date.now() - new Date(lastBackupAt).getTime()) / 86400000 : Infinity;
+  if (days < BACKUP_DUE_DAYS) return null;
+  return (
+    <div className="hint-bar backup-reminder">
+      <span>
+        💾 {lastBackupAt ? `Letzte Datensicherung ${formatRelative(lastBackupAt)}.` : 'Es wurde noch keine Datensicherung heruntergeladen.'} Lade
+        regelmäßig eine Sicherung herunter (alle 1–2 Wochen) und bewahre sie gut auf.
+      </span>
+      <a className="a-btn a-btn-primary a-btn-small" href="/api/admin/backup" download>Jetzt sichern</a>
+    </div>
+  );
+}
 
 export function describeChange(entry) {
   return `${ENTITY_LABELS[entry.entityType] ?? entry.entityType} ${ACTION_LABELS[entry.action] ?? entry.action}`;
@@ -43,6 +60,7 @@ export default function Dashboard() {
 
       {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : (
         <>
+          <BackupReminder lastBackupAt={data.lastBackupAt} />
           <div className="stats">
             <Stat label="Produkte" value={data.counts.products} href="#/produkte" hint={`${data.counts.categories} Kategorien`} />
             <Stat label="Aktive Produkte" value={data.counts.active_products} href="#/produkte" hint={`${data.counts.highlights} Highlights`} />

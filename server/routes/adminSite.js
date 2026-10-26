@@ -1,11 +1,13 @@
 // Admin endpoints for website texts, settings, opening hours, the media
 // library, the dashboard and the change log.
+import { Readable } from 'node:stream';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import { config } from '../config.js';
 import { query, transaction } from '../db/pool.js';
 import { audit } from '../lib/audit.js';
+import { createBackupStream, lastBackupAt, markBackupDone } from '../lib/backup.js';
 import { CHAT_CATEGORIES } from '../lib/chatCategories.js';
 import { CONTENT_FIELD_BY_KEY, CONTENT_SECTIONS, SETTINGS_DEFAULTS } from '../lib/contentRegistry.js';
 import { HttpError, badRequest, conflict, mapDbError, notFound } from '../lib/errors.js';
@@ -106,9 +108,20 @@ const SETTINGS_SCHEMAS = {
     parkingInfo: text(500),
   }),
   events: z.object({ autoArchive: z.boolean(), showPast: z.boolean() }),
+  legal: z.object({
+    operator: text(120),
+    legalForm: text(80),
+    representative: text(120),
+    vatId: text(30).regex(/^([A-Z]{2}[A-Z0-9]{2,13})?$/, 'Format z. B. DE123456789'),
+    register: text(120),
+    responsible: text(200),
+  }),
 };
 
-const SETTINGS_LABELS = { contact: 'Kontaktdaten', social: 'Social Media', rating: 'Google-Bewertung', info: 'Zusatzinfos', events: 'Event-Einstellungen' };
+const SETTINGS_LABELS = {
+  contact: 'Kontaktdaten', social: 'Social Media', rating: 'Google-Bewertung', info: 'Zusatzinfos', events: 'Event-Einstellungen',
+  legal: 'Rechtliche Angaben',
+};
 
 export const settings = new Hono();
 
@@ -118,7 +131,7 @@ settings.get('/', async (c) => {
   const values = Object.fromEntries(
     Object.entries(SETTINGS_DEFAULTS).map(([key, defaults]) => [key, { ...defaults, ...(stored[key] ?? {}) }])
   );
-  return c.json({ settings: values, chatCategories: CHAT_CATEGORIES });
+  return c.json({ settings: values, chatCategories: CHAT_CATEGORIES, lastBackupAt: await lastBackupAt() });
 });
 
 settings.put('/:key', async (c) => {
@@ -358,6 +371,7 @@ dashboard.get('/', async (c) => {
   );
   return c.json({
     counts: counts[0],
+    lastBackupAt: await lastBackupAt(),
     recent: recent.map(auditJson),
     nextEvents: next.map((row) => ({ id: row.id, title: row.title, startsAt: iso(row.starts_at), status: row.status })),
   });
@@ -374,4 +388,18 @@ auditLog.get('/', async (c) => {
     [limit, offset]
   );
   return c.json({ items: rows.map(auditJson) });
+});
+
+// ── Backup download ────────────────────────────────────────────────────────
+
+export const backup = new Hono();
+
+backup.get('/', async (c) => {
+  await markBackupDone();
+  await audit(c, 'create', 'backup', '', 'Datensicherung heruntergeladen');
+  const date = new Date().toISOString().slice(0, 10);
+  c.header('Content-Type', 'application/gzip');
+  c.header('Content-Disposition', `attachment; filename="snackpoint-backup-${date}.json.gz"`);
+  c.header('Cache-Control', 'no-store');
+  return c.body(Readable.toWeb(createBackupStream()));
 });

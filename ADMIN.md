@@ -110,6 +110,12 @@ npm run admin:create
   npm run admin:create        # im Container; danach: exit
   ```
 
+### Weitere Konten
+
+Weitere Konten legst du im Adminpanel unter **Benutzer** an (mit „Sicheres Passwort erzeugen“). Alle Konten
+haben volle Rechte. Anlegen, Löschen und das Setzen eines fremden Passworts musst du mit deinem eigenen
+Passwort bestätigen; das eigene Konto lässt sich nicht löschen, es bleibt also immer mindestens eins übrig.
+
 ### Passwort ändern / vergessen
 
 - Im Adminpanel: **Passwort ändern** (alle anderen Geräte werden dabei abgemeldet).
@@ -133,7 +139,8 @@ Anmelden unter `/admin`. Das Panel funktioniert auch auf dem Smartphone (Menü o
 | **Webseiteninhalte** | Alle Überschriften und Texte der Webseite, Logo und Bilder; Reiter *Leistungen* (Kiosk, DHL, Lotto, Ihle – inkl. Laufband „BALD VERFÜGBAR“) und *Bewertungen*. |
 | **Medienbibliothek** | Bilder hochladen (auch per Drag & Drop), ansehen, Beschreibung pflegen, **ersetzen** (alle Stellen, die das Bild nutzen, zeigen sofort das neue), löschen (nur wenn nirgends verwendet). |
 | **Öffnungszeiten** | Pro Wochentag; gelten auch für „Geöffnet/Geschlossen“ oben und für den Chat-Assistenten. |
-| **Einstellungen** | Adresse, Telefon, E-Mail, Google-Maps-Links, Social-Media-Links, Google-Bewertung, Infos für den Chat-Assistenten, Event-Archivierung, Änderungsprotokoll. |
+| **Einstellungen** | Adresse, Telefon, E-Mail, Google-Maps-Links, Social-Media-Links, Google-Bewertung, Infos für den Chat-Assistenten, Event-Archivierung, **Rechtliche Angaben** (Impressum/Datenschutz), **Datensicherung**, Änderungsprotokoll. |
+| **Benutzer** | Weitere Admin-Konten anlegen, umbenennen, Passwort setzen, löschen. |
 
 Änderungen sind **sofort** auf der Webseite sichtbar – die Webseite fragt die Daten bei jedem Aufruf neu
 ab. Bilder werden zusätzlich von Cloudflare zwischengespeichert; wird ein Bild ersetzt, ändert sich seine
@@ -190,16 +197,23 @@ Alternativ per Kommandozeile: `npx wrangler login`, `npx wrangler secret put PRO
 Worker im kostenlosen Tarif (Worker-Aufrufe nur für `/api/*`, Tageskontingent reicht für eine Kiosk-Seite
 bei Weitem). Railway: nutzungsbasiert im bestehenden Railway-Tarif (API-Dienst + Postgres, beide klein).
 
-### Backups
+### Backups (kostenlos)
 
-- **Empfohlen:** Railways eingebaute Postgres-Backups aktivieren (Point-in-Time-Recovery mit
-  automatischem Zeitplan): `railway postgres pitr enable --service Postgres` bzw. im Dashboard unter
-  Postgres → *Backups*. Kostet etwas Speicher im Railway-Tarif.
-- Manuelles Backup vom eigenen Rechner (`npm run db:backup`) braucht eine öffentliche Datenbankadresse.
-  Dafür vorübergehend in Railway bei Postgres *Settings → Networking → TCP Proxy* aktivieren, die
-  `DATABASE_PUBLIC_URL` verwenden (`DATABASE_SSL=no-verify`) und den Proxy danach wieder entfernen.
-- Wiederherstellen in eine **leere** Datenbank: `pg_restore --no-owner -d "<url>" backups/<datei>.dump`
-- Backups enthalten Passwort-**Hashes** und alle Bilder: sicher aufbewahren, nicht öffentlich teilen.
+Railways eingebaute Datenbank-Backups sind im Hobby-Tarif nicht enthalten. Deshalb hat das Adminpanel eine
+eigene Datensicherung:
+
+- **Sichern:** *Einstellungen → Datensicherung → Backup herunterladen* (oder „Jetzt sichern“ im Dashboard).
+  Eine Datei `snackpoint-backup-<datum>.json.gz` mit allen Inhalten, Bildern und Benutzerkonten (ohne
+  Sitzungen). Das Dashboard erinnert, wenn die letzte Sicherung älter als 14 Tage ist.
+  Empfehlung: alle 1–2 Wochen und vor größeren Änderungen; Datei an einem sicheren Ort aufbewahren
+  (enthält Passwort-*Hashes*), nicht weitergeben.
+- **Wiederherstellen** (ersetzt **alle** Daten, in einer Transaktion – bei einem Fehler bleibt alles wie es war;
+  danach müssen sich alle neu anmelden):
+  ```bash
+  cd ~/VSProjects/SnackPoint
+  railway ssh --service snackpoint-api -- npm run db:restore -- - --replace < snackpoint-backup-2026-11-01.json.gz
+  ```
+  Lokal bzw. gegen eine andere Datenbank: `npm run db:restore -- <datei> --replace`.
 
 ### Schutz vor Datenverlust
 
@@ -233,6 +247,10 @@ bei Weitem). Railway: nutzungsbasiert im bestehenden Railway-Tarif (API-Dienst +
   Sicherheits-Header (HSTS u. a.).
 - **Logs**: Fehler werden mit einer kurzen Referenz-ID protokolliert, ohne Passwörter, Tokens oder
   Formularinhalte.
+
+**Rechtliches:** Betreiber, Rechtsform, Vertretung, USt-IdNr., Registereintrag und Inhaltsverantwortlicher
+werden unter *Einstellungen → Rechtliche Angaben* gepflegt und automatisch in Impressum und
+Datenschutzerklärung übernommen.
 
 **Datenschutz:** Die Datenschutzerklärung nennt Cloudflare und Railway, den Verwaltungsbereich
 (Sitzungs-Cookie, 7 Tage Speicherung von IP/E-Mail bei Anmeldeversuchen) und die Speicherung im Browser.

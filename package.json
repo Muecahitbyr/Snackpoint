@@ -17,6 +17,7 @@
     "db:migrate": "node server/cli/migrate.js",
     "db:seed": "node server/cli/seed.js",
     "db:backup": "node server/cli/backup.js",
+    "db:restore": "node server/cli/restore.js",
     "admin:create": "node server/cli/admin.js create",
     "admin:reset-password": "node server/cli/admin.js reset-password",
     "cf:dev": "npm run build && wrangler dev",

@@ -13,6 +13,7 @@ import MediaLibrary from './pages/MediaLibrary';
 import Hours from './pages/Hours';
 import Settings from './pages/Settings';
 import Password from './pages/Password';
+import Users from './pages/Users';
 
 const NAV = [
   { path: 'dashboard', label: 'Dashboard', icon: '📊' },
@@ -24,6 +25,7 @@ const NAV = [
   { path: 'medien', label: 'Medienbibliothek', icon: '🖼️' },
   { path: 'oeffnungszeiten', label: 'Öffnungszeiten', icon: '🕗' },
   { path: 'einstellungen', label: 'Einstellungen', icon: '⚙️' },
+  { path: 'benutzer', label: 'Benutzer', icon: '👥' },
   { path: 'passwort', label: 'Passwort ändern', icon: '🔑' },
 ];
 
@@ -58,6 +60,7 @@ function Page({ route }) {
     case 'oeffnungszeiten': return <Hours />;
     case 'einstellungen': return <Settings />;
     case 'passwort': return <Password />;
+    case 'benutzer': return <Users />;
     default: return <Dashboard />;
   }
 }
@@ -126,7 +129,7 @@ function Shell({ user, onLogout }) {
         </nav>
         <div className="sidebar-foot">
           <a href="/" target="_blank" rel="noopener noreferrer" className="sidebar-link">↗ Webseite ansehen</a>
-          <span className="sidebar-user" title={user.email}>{user.email}</span>
+          <span className="sidebar-user" title={user.email}>{user.displayName || user.email}</span>
           <button type="button" className="sidebar-logout" onClick={onLogout}>⎋ Abmelden</button>
         </div>
       </aside>

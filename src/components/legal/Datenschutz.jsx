@@ -1,4 +1,5 @@
 import { ADDRESS, CONTACT } from '../../data/constants';
+import { useSite } from '../../site/SiteProvider';
 import LegalHeader from './LegalHeader';
 import Placeholder from './Placeholder';
 import Footer from '../Footer';
@@ -6,6 +7,8 @@ import CookieConsent from '../CookieConsent';
 import './Legal.css';
 
 export default function Datenschutz() {
+  const legal = useSite().settings.legal;
+
   return (
     <div className="legal-page">
       <LegalHeader />
@@ -18,7 +21,11 @@ export default function Datenschutz() {
         <div className="legal-card">
           <p>
             <strong>
-              <Placeholder>Vor- und Nachname des Betreibers / Firmenname und Rechtsform</Placeholder>
+              {legal.operator ? (
+                [legal.operator, legal.legalForm].filter(Boolean).join(' ')
+              ) : (
+                <Placeholder>Vor- und Nachname des Betreibers / Firmenname und Rechtsform</Placeholder>
+              )}
             </strong>
           </p>
           <p>SnackPoint Kaufbeuren</p>

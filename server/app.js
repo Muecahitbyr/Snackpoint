@@ -16,7 +16,8 @@ import { HttpError } from './lib/errors.js';
 import { auth } from './routes/auth.js';
 import { mediaApi, publicApi } from './routes/public.js';
 import { banners, categories, events, groups, products, promotions, reviews, services } from './routes/adminEntities.js';
-import { auditLog, content, dashboard, hours, mediaAdmin, settings } from './routes/adminSite.js';
+import { auditLog, backup, content, dashboard, hours, mediaAdmin, settings } from './routes/adminSite.js';
+import { users } from './routes/users.js';
 
 // Connection-level failures (network codes and Postgres "unavailable" classes).
 const DB_UNAVAILABLE = new Set([
@@ -72,6 +73,8 @@ export function createApp() {
   admin.route('/hours', hours);
   admin.route('/media', mediaAdmin);
   admin.route('/audit', auditLog);
+  admin.route('/users', users);
+  admin.route('/backup', backup);
   app.route('/admin', admin);
 
   app.notFound((c) => c.json({ error: 'Nicht gefunden.' }, 404));

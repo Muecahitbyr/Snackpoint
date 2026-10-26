@@ -149,4 +149,6 @@ export const SETTINGS_DEFAULTS = {
   rating: { value: 4.9, count: 48 },
   info: { paymentMethods: [], deliveryInfo: '', parkingInfo: '' },
   events: { autoArchive: true, showPast: false },
+  // Impressum / Datenschutzerklärung. Empty fields show a placeholder there.
+  legal: { operator: '', legalForm: '', representative: '', vatId: '', register: '', responsible: '' },
 };

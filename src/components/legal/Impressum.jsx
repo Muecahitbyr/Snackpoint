@@ -1,4 +1,5 @@
 import { ADDRESS, CONTACT } from '../../data/constants';
+import { useSite } from '../../site/SiteProvider';
 import LegalHeader from './LegalHeader';
 import Placeholder from './Placeholder';
 import Footer from '../Footer';
@@ -6,22 +7,30 @@ import CookieConsent from '../CookieConsent';
 import './Legal.css';
 
 export default function Impressum() {
+  // Entered in the admin panel under Einstellungen → Rechtliche Angaben.
+  const legal = useSite().settings.legal;
+
   return (
     <div className="legal-page">
       <LegalHeader />
       <main className="legal-content">
         <p className="eyebrow">Rechtliches</p>
         <h1>Impressum</h1>
-        <p className="legal-updated">Angaben gemäß § 5 TMG, § 18 Abs. 2 MStV</p>
+        <p className="legal-updated">Angaben gemäß § 5 DDG</p>
 
         <div className="legal-card">
           <p>
             <strong>
-              <Placeholder>Vor- und Nachname des Betreibers / Firmenname und Rechtsform</Placeholder>
+              {legal.operator ? (
+                [legal.operator, legal.legalForm].filter(Boolean).join(' ')
+              ) : (
+                <Placeholder>Vor- und Nachname des Betreibers / Firmenname und Rechtsform</Placeholder>
+              )}
             </strong>
           </p>
           <p>SnackPoint Kaufbeuren</p>
           <p>{ADDRESS}</p>
+          {legal.representative && <p>Vertreten durch: {legal.representative}</p>}
         </div>
 
         <h2>Kontakt</h2>
@@ -31,36 +40,39 @@ export default function Impressum() {
           E-Mail: {CONTACT.email || <Placeholder>[E-Mail-Adresse einfügen]</Placeholder>}
         </p>
 
-        <h2>Umsatzsteuer-ID</h2>
-        <p>
-          Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:{' '}
-          <Placeholder>[USt-IdNr. einfügen, falls vorhanden]</Placeholder>
-        </p>
+        {legal.register && (
+          <>
+            <h2>Registereintrag</h2>
+            <p>{legal.register}</p>
+          </>
+        )}
+
+        {legal.vatId && (
+          <>
+            <h2>Umsatzsteuer-ID</h2>
+            <p>Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz: {legal.vatId}</p>
+          </>
+        )}
 
         <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
         <p>
-          <Placeholder>[Vor- und Nachname, Anschrift wie oben]</Placeholder>
+          {legal.responsible || legal.operator || <Placeholder>[Vor- und Nachname, Anschrift wie oben]</Placeholder>}
+          {!legal.responsible && legal.operator && <>, {ADDRESS}</>}
         </p>
 
-        <h2>EU-Streitschlichtung</h2>
+        <h2>Verbraucherstreitbeilegung</h2>
         <p>
-          Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{' '}
-          <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener noreferrer">
-            https://ec.europa.eu/consumers/odr/
-          </a>
-          . Unsere E-Mail-Adresse finden Sie oben im Impressum.
-        </p>
-        <p>
-          Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer
+          Wir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer
           Verbraucherschlichtungsstelle teilzunehmen.
         </p>
 
         <h2>Haftung für Inhalte</h2>
         <p>
-          Als Diensteanbieter sind wir gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten nach den
-          allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch
-          nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach
-          Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
+          Als Diensteanbieter sind wir für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen
+          verantwortlich. Wir sind jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde
+          Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit
+          hinweisen. Sobald uns eine Rechtsverletzung bekannt wird, entfernen wir die betreffenden Inhalte
+          umgehend.
         </p>
 
         <h2>Haftung für Links</h2>
