@@ -4,18 +4,22 @@ import { getOpenStatus } from './chatbot/openingHours';
 import { useNow } from '../hooks/useNow';
 import './Header.css';
 
-// Live "open / closed" pill in the middle of the mobile bar (hidden on
-// desktop, where the nav links sit there). Same hours data as the chatbot
-// and the location section.
+// Live "open / closed" pill: on the right of the desktop bar, in the middle
+// of the mobile one. Same hours data as the chatbot and the location
+// section; clicking it jumps to the opening hours.
 function OpenStatus() {
   const status = getOpenStatus(useNow());
 
   return (
-    <span className={`nav-status ${status.open ? 'is-open' : 'is-closed'}`}>
+    <a
+      href="/#location"
+      className={`nav-status ${status.open ? 'is-open' : 'is-closed'}`}
+      title="Öffnungszeiten ansehen"
+    >
       <span className="nav-status-dot" aria-hidden="true" />
       {status.open ? 'Geöffnet' : 'Geschlossen'}
       {status.open && status.closesAt && <span className="nav-status-until"> · bis {status.closesAt}</span>}
-    </span>
+    </a>
   );
 }
 
@@ -67,15 +71,12 @@ export default function Header() {
           <img src="/logo.jpg" alt="SnackPoint Logo" className="brand-logo" />
           <span>SnackPoint</span>
         </a>
-        <OpenStatus />
         <nav className="nav-links">
           {LINKS.map((link) => (
             <a key={link.href} href={link.href}>{link.label}</a>
           ))}
         </nav>
-        <a className="nav-cta" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
-          Route planen
-        </a>
+        <OpenStatus />
         <button
           type="button"
           className={`nav-burger ${menuOpen ? 'is-open' : ''}`}
