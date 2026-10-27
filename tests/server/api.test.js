@@ -298,6 +298,28 @@ describe('products & categories', () => {
     assert.match(blocked.data.error, /enthält noch Produkte/);
   });
 
+  it('sets exactly the chosen homepage products (at most 4)', async () => {
+    const homepage = async () => (await site()).products.filter((p) => p.isHighlight).sort((a, b) => a.highlightOrder - b.highlightOrder);
+    const original = (await homepage()).map((p) => ({ id: p.id, badge: p.badge }));
+    const set = (items) => admin.send('/api/admin/products/highlights', { method: 'POST', body: { items } });
+
+    assert.equal((await set([{ id: productId, badge: 'NEU' }, original[0]])).status, 200);
+    const now = await homepage();
+    assert.deepEqual(now.map((p) => p.id), [productId, original[0].id]);
+    assert.equal(now[0].badge, 'NEU');
+
+    const five = [...original, { id: productId }];
+    assert.equal((await set(five)).status, 400);
+    assert.equal((await set([{ id: productId }, { id: productId }])).status, 400);
+    assert.equal((await set([{ id: '00000000-0000-4000-8000-000000000000' }])).status, 400);
+    // The product form can't sneak in a fifth one.
+    await admin.send(`/api/admin/products/${original[1].id}`, { method: 'PATCH', body: { isHighlight: true } });
+    assert.equal((await homepage()).length, 2);
+
+    assert.equal((await set(original)).status, 200);
+    assert.deepEqual((await homepage()).map((p) => p.id), original.map((p) => p.id));
+  });
+
   it('reorders and deletes', async () => {
     const other = await admin.send('/api/admin/products', { method: 'POST', body: { categoryId, name: 'Zweites Produkt' } });
     assert.equal((await admin.send('/api/admin/products/reorder', { method: 'POST', body: { ids: [other.data.item.id, productId] } })).status, 200);

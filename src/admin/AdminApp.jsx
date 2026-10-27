@@ -14,12 +14,14 @@ import Protocol from './pages/Protocol';
 import Password from './pages/Password';
 import Users from './pages/Users';
 import Wishes from './pages/Wishes';
+import Homepage from './pages/Homepage';
 import { Icon } from './icons';
 
 // `developer`: only for accounts with the developer role (also enforced by the API).
 const NAV = [
   { path: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
   { path: 'produkte', label: 'Produkte', icon: 'package' },
+  { path: 'startseite', label: 'Startseite', icon: 'star' },
   { path: 'kategorien', label: 'Kategorien', icon: 'folder' },
   { path: 'events', label: 'Events', icon: 'calendar' },
   { path: 'banner', label: 'Banner & Aktionen', icon: 'megaphone' },
@@ -55,6 +57,7 @@ function Page({ route, isDeveloper }) {
   switch (route.page) {
     case 'dashboard': return <Dashboard isDeveloper={isDeveloper} />;
     case 'produkte': return route.id ? <ProductForm id={route.id === 'neu' ? null : route.id} /> : <Products />;
+    case 'startseite': return <Homepage />;
     case 'kategorien': return <Categories />;
     case 'events': return route.id ? <EventForm id={route.id === 'neu' ? null : route.id} /> : <Events />;
     case 'banner': return <BannersPromotions />;

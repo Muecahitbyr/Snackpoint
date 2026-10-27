@@ -9,7 +9,7 @@ import { Icon } from '../icons';
 
 const EMPTY = {
   name: '', brand: '', categoryId: '', description: '', emoji: '', image: null, price: '', availability: 'available',
-  isActive: true, showInCatalog: true, isHighlight: false, highlightBadge: '', allergens: '', additionalInfo: '',
+  isActive: true, showInCatalog: true, allergens: '', additionalInfo: '',
   searchTerms: '', tags: '', inChat: true, chatCategory: '',
 };
 
@@ -78,7 +78,7 @@ export default function ProductForm({ id }) {
     const body = {
       name: form.name, brand: form.brand, categoryId: form.categoryId, description: form.description, emoji: form.emoji,
       imageMediaId: form.image?.id ?? null, priceCents, availability: form.availability, isActive: form.isActive,
-      showInCatalog: form.showInCatalog, isHighlight: form.isHighlight, highlightBadge: form.highlightBadge,
+      showInCatalog: form.showInCatalog,
       allergens: form.allergens, additionalInfo: form.additionalInfo, searchTerms: toList(form.searchTerms),
       tags: toList(form.tags), inChat: form.inChat, chatCategory: form.chatCategory || null,
     };
@@ -172,9 +172,11 @@ export default function ProductForm({ id }) {
           <Card title="Sichtbarkeit">
             <Toggle label="Aktiv" hint="Inaktive Produkte sind auf der Webseite unsichtbar." checked={form.isActive} onChange={set('isActive')} />
             <Toggle label="Auf der Produktseite anzeigen" checked={form.showInCatalog} onChange={set('showInCatalog')} />
-            <Toggle label="Auf der Startseite hervorheben" hint="Erscheint unter „Frisch im Regal“." checked={form.isHighlight} onChange={set('isHighlight')} />
-            {form.isHighlight && (
-              <TextField label="Highlight-Etikett" placeholder="z. B. NEU, TREND, BESTSELLER" value={form.highlightBadge} onChange={set('highlightBadge')} error={errors.highlightBadge} maxLength={30} />
+            {id && (
+              <p className="field-hint">
+                {form.isHighlight ? 'Steht auf der Startseite unter „Frisch im Regal“. ' : ''}
+                <a href="#/startseite">Startseite-Produkte auswählen</a>
+              </p>
             )}
           </Card>
           <Card title="Verfügbarkeit">

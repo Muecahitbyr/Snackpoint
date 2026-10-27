@@ -64,7 +64,7 @@ export default function Dashboard({ isDeveloper }) {
           {isDeveloper && <BackupReminder lastBackupAt={data.lastBackupAt} />}
           <div className="stats">
             <Stat label="Produkte" value={data.counts.products} href="#/produkte" hint={`${data.counts.categories} Kategorien`} />
-            <Stat label="Aktive Produkte" value={data.counts.active_products} href="#/produkte" hint={`${data.counts.highlights} Highlights`} />
+            <Stat label="Aktive Produkte" value={data.counts.active_products} href="#/produkte" hint={`${data.counts.highlights} von 4 auf der Startseite`} />
             <Stat label="Kommende Events" value={data.counts.upcoming_events} href="#/events" hint={data.counts.draft_events ? `${data.counts.draft_events} Entwürfe` : null} />
             <Stat label="Veröffentlichte Events" value={data.counts.published_events} href="#/events" />
             <Stat label="Banner live" value={data.counts.live_banners} href="#/banner" hint={`${data.counts.live_promotions} Aktionen aktiv`} />

@@ -31,7 +31,7 @@ export const products = crudRoutes({
   columns: {
     categoryId: 'category_id', name: 'name', brand: 'brand', description: 'description', emoji: 'emoji',
     imageMediaId: 'image_media_id', priceCents: 'price_cents', availability: 'availability', isActive: 'is_active',
-    showInCatalog: 'show_in_catalog', isHighlight: 'is_highlight', highlightBadge: 'highlight_badge', highlightOrder: 'highlight_order',
+    showInCatalog: 'show_in_catalog',
     sortOrder: 'sort_order',
     allergens: 'allergens', additionalInfo: 'additional_info', searchTerms: 'search_terms', tags: 'tags',
     inChat: 'in_chat', chatCategory: 'chat_category',
@@ -47,9 +47,6 @@ export const products = crudRoutes({
     availability: z.enum(['available', 'coming_soon', 'sold_out']).optional(),
     isActive: z.boolean().optional(),
     showInCatalog: z.boolean().optional(),
-    isHighlight: z.boolean().optional(),
-    highlightBadge: text(30).optional(),
-    highlightOrder: sortOrder.optional(),
     sortOrder: sortOrder.optional(),
     allergens: text(500).optional(),
     additionalInfo: text(1000).optional(),
@@ -305,14 +302,28 @@ export const promotions = crudRoutes({
   }),
 });
 
-// Order of the "Frisch im Regal" highlights, independent of the catalog order.
-products.post('/highlight-order', async (c) => {
-  const { ids } = parse(z.object({ ids: z.array(uuid).min(1).max(200) }), await readJson(c));
-  await transaction(async (db) => {
-    for (const [i, id] of ids.entries()) {
-      await db.query('UPDATE products SET highlight_order = $2 WHERE id = $1', [id, (i + 1) * 10]);
+// The "Frisch im Regal" tiles on the homepage: exactly the products chosen
+// here, in this order (at most HIGHLIGHT_SLOTS). Everything else is unmarked.
+export const HIGHLIGHT_SLOTS = 4;
+
+products.post('/highlights', async (c) => {
+  const { items } = parse(
+    z.object({ items: z.array(z.object({ id: uuid, badge: text(30).optional() })).max(HIGHLIGHT_SLOTS) }),
+    await readJson(c)
+  );
+  const ids = items.map((item) => item.id);
+  if (new Set(ids).size !== ids.length) throw badRequest('Ein Produkt kann nur einmal auf der Startseite stehen.');
+  const names = await transaction(async (db) => {
+    const { rows } = await db.query('SELECT id, name FROM products WHERE id = ANY($1)', [ids]);
+    if (rows.length !== ids.length) throw badRequest('Eines der Produkte gibt es nicht mehr. Lade die Seite neu.');
+    await db.query('UPDATE products SET is_highlight = false WHERE is_highlight AND NOT (id = ANY($1))', [ids]);
+    for (const [i, item] of items.entries()) {
+      await db.query('UPDATE products SET is_highlight = true, highlight_order = $2, highlight_badge = $3 WHERE id = $1', [
+        item.id, (i + 1) * 10, item.badge ?? '',
+      ]);
     }
+    return ids.map((id) => rows.find((row) => row.id === id).name);
   });
-  await audit(c, 'reorder', 'product', '', 'Highlights neu sortiert');
+  await audit(c, 'update', 'product', '', `Startseite: ${names.join(', ') || 'keine Produkte'}`);
   return c.json({ ok: true });
 });

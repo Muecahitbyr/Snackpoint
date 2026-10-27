@@ -18,7 +18,7 @@ const STATUS_FILTERS = [
   { id: 'inactive', label: 'Inaktiv' },
   { id: 'coming_soon', label: 'Bald verfügbar' },
   { id: 'sold_out', label: 'Ausverkauft' },
-  { id: 'highlight', label: 'Highlights (Startseite)' },
+  { id: 'highlight', label: 'Auf der Startseite' },
   { id: 'hidden', label: 'Nicht auf Produktseite' },
 ];
 
@@ -64,8 +64,8 @@ export default function Products() {
     return status === 'highlight' ? [...list].sort((a, b) => a.highlightOrder - b.highlightOrder) : list;
   }, [products, search, categoryId, status]);
 
-  // Reordering makes sense within one category (catalog order) or among highlights.
-  const reorderMode = !search && (status === 'highlight' ? 'highlight' : categoryId && !status ? 'category' : null);
+  // Reordering makes sense within one category (catalog order); the homepage has its own page.
+  const reorderMode = !search && categoryId && !status;
   const visibleIds = visible.map((product) => product.id);
 
   const replace = (item) => setData((prev) => ({ ...prev, items: prev.items.map((p) => (p.id === item.id ? item : p)) }));
@@ -89,8 +89,7 @@ export default function Products() {
   }
 
   async function move(order) {
-    const path = reorderMode === 'highlight' ? '/admin/products/highlight-order' : '/admin/products/reorder';
-    if (await run(() => api(path, { method: 'POST', body: { ids: order } }))) reload();
+    if (await run(() => api('/admin/products/reorder', { method: 'POST', body: { ids: order } }))) reload();
   }
 
   return (
@@ -115,11 +114,11 @@ export default function Products() {
       </div>
       {reorderMode && (
         <p className="hint-bar">
-          Mit den Pfeilen änderst du die Reihenfolge {reorderMode === 'highlight' ? 'der Highlights auf der Startseite' : 'in dieser Kategorie'}.
+          Mit den Pfeilen änderst du die Reihenfolge in dieser Kategorie.
         </p>
       )}
       {!reorderMode && !loading && (
-        <p className="hint-bar subtle">Tipp: Wähle eine Kategorie (oder den Filter „Highlights“), um die Reihenfolge zu ändern.</p>
+        <p className="hint-bar subtle">Tipp: Wähle eine Kategorie, um die Reihenfolge zu ändern. Die 4 Produkte der Startseite wählst du unter <a href="#/startseite">Startseite</a>.</p>
       )}
 
       {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : visible.length === 0 ? (
@@ -154,7 +153,7 @@ export default function Products() {
                   <td data-label="Status">
                     <span className="badges">
                       {product.availability !== 'available' && <Badge tone={AVAILABILITY[product.availability].tone}>{AVAILABILITY[product.availability].label}</Badge>}
-                      {product.isHighlight && <Badge tone="accent"><Icon name="star" size={11} filled /> Highlight</Badge>}
+                      {product.isHighlight && <Badge tone="accent"><Icon name="star" size={11} filled /> Startseite</Badge>}
                       {!product.showInCatalog && <Badge>Nicht auf Produktseite</Badge>}
                     </span>
                   </td>

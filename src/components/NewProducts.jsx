@@ -32,10 +32,11 @@ export default function NewProducts() {
   // The side tag drifts sideways as the section scrolls past.
   const tagTrack = useParallax(1.4, 'x');
   const content = useContent();
-  // Products marked "Auf der Startseite hervorheben" in the admin panel.
+  // The (up to) four products chosen under "Startseite" in the admin panel.
   const highlights = useSite()
     .products.filter((product) => product.isHighlight)
     .sort((a, b) => a.highlightOrder - b.highlightOrder)
+    .slice(0, 4)
     .map((product, i) => ({ ...product, gradient: GRADIENTS[i % GRADIENTS.length] }));
 
   return (
