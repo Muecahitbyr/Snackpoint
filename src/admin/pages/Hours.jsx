@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, useApi } from '../api';
-import { TimeField } from '../DateTimePicker';
+import { Calendar, TimeField } from '../DateTimePicker';
 import { Badge, Button, Card, EmptyState, ErrorBox, PageHeader, Spinner, TextField, Toggle, useConfirm, useToast } from '../ui';
 
 export default function Hours() {
@@ -74,29 +74,68 @@ export default function Hours() {
 }
 
 const DAY_LABEL = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+const SHORT_LABEL = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' });
 const dayLabel = (day) => DAY_LABEL.format(new Date(`${day}T00:00:00Z`));
+const shortLabel = (day) => SHORT_LABEL.format(new Date(`${day}T00:00:00Z`));
 const todayKey = () => new Date().toLocaleDateString('sv-SE');
-const EMPTY = { id: null, day: '', closed: true, open: '08:00', close: '14:00', note: '' };
+const EMPTY_FORM = { closed: true, open: '08:00', close: '14:00', note: '' };
 
-/** Holidays, closures and short days: they override the weekly plan on that date. */
+/**
+ * Holidays, closures and short days: pick one or several days in the
+ * calendar and give them other hours than the weekly plan.
+ */
 function SpecialDays() {
   const { data, error, loading, reload } = useApi('/admin/hours/special');
   const toast = useToast();
   const confirm = useConfirm();
-  const [form, setForm] = useState(EMPTY);
+  const [selected, setSelected] = useState(() => new Set());
+  const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const set = (key) => (value) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  async function save(e) {
-    e.preventDefault();
+  const items = data?.items ?? [];
+  const byDay = new Map(items.map((item) => [item.day, item]));
+  const marked = new Set(byDay.keys());
+  const days = [...selected].sort();
+  const withEntry = days.filter((day) => byDay.has(day));
+  const today = todayKey();
+
+  // A single day that already has an entry: start from its hours.
+  function fill(day) {
+    const item = byDay.get(day);
+    setForm(item ? { closed: item.closed, open: item.open ?? EMPTY_FORM.open, close: item.close ?? EMPTY_FORM.close, note: item.note } : EMPTY_FORM);
+  }
+
+  function toggle(day) {
+    const next = new Set(selected);
+    if (next.has(day)) next.delete(day);
+    else next.add(day);
+    setSelected(next);
+    setErrors({});
+    if (next.size === 1) fill([...next][0]);
+  }
+
+  function edit(item) {
+    setSelected(new Set([item.day]));
+    setErrors({});
+    fill(item.day);
+  }
+
+  const clear = () => {
+    setSelected(new Set());
+    setForm(EMPTY_FORM);
+    setErrors({});
+  };
+
+  async function save() {
     setBusy(true);
     setErrors({});
     try {
-      const body = { day: form.day, closed: form.closed, open: form.closed ? null : form.open, close: form.closed ? null : form.close, note: form.note };
-      await api(form.id ? `/admin/hours/special/${form.id}` : '/admin/hours/special', { method: form.id ? 'PUT' : 'POST', body });
-      toast.success(form.id ? 'Tag geändert.' : 'Tag eingetragen — die Webseite und der Chat-Assistent nutzen ihn sofort.');
-      setForm(EMPTY);
+      const body = { days, closed: form.closed, open: form.closed ? null : form.open, close: form.closed ? null : form.close, note: form.note };
+      await api('/admin/hours/special/days', { method: 'POST', body });
+      toast.success(`${days.length === 1 ? 'Tag' : `${days.length} Tage`} gespeichert. Die Webseite und der Chat-Assistent nutzen das sofort.`);
+      clear();
       reload();
     } catch (err) {
       setErrors(err.fields);
@@ -106,64 +145,86 @@ function SpecialDays() {
     }
   }
 
-  async function remove(item) {
-    const ok = await confirm({ title: 'Eintrag löschen?', message: `Am ${dayLabel(item.day)} gilt dann wieder der normale Wochenplan.`, confirmLabel: 'Löschen', danger: true });
+  async function reset(list) {
+    const ok = await confirm({
+      title: list.length === 1 ? 'Wieder normaler Wochenplan?' : `${list.length} Tage zurücksetzen?`,
+      message: `${list.map(shortLabel).join(', ')}: dann gelten wieder die normalen Öffnungszeiten.`,
+      confirmLabel: 'Zurücksetzen',
+      danger: true,
+    });
     if (!ok) return;
     try {
-      await api(`/admin/hours/special/${item.id}`, { method: 'DELETE' });
-      toast.success('Eintrag gelöscht.');
-      if (form.id === item.id) setForm(EMPTY);
+      await api('/admin/hours/special/days/remove', { method: 'POST', body: { days: list } });
+      toast.success('Wieder normaler Wochenplan.');
+      clear();
       reload();
     } catch (err) {
       toast.error(err.message);
     }
   }
 
-  const today = todayKey();
   return (
-    <Card title="Abweichende Tage" description="Feiertage, Urlaub oder kürzere Tage. An diesen Tagen gelten die Zeiten hier statt des Wochenplans, auch für den „Geöffnet“-Hinweis und den Chat-Assistenten.">
-      {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : data.items.length === 0 ? (
-        <EmptyState icon="calendar" title="Keine abweichenden Tage eingetragen" />
-      ) : (
-        <div className="hours-list">
-          {data.items.map((item) => (
-            <div key={item.id} className={`hours-row special-row ${item.day < today ? 'is-past' : ''}`}>
-              <strong className="hours-day">{dayLabel(item.day)}</strong>
-              <span className="special-info">
-                {item.closed ? <Badge tone="danger">Geschlossen</Badge> : <Badge tone="warning">{item.open} – {item.close} Uhr</Badge>}
-                {item.note && <span>{item.note}</span>}
-                {item.day < today && <small>vorbei</small>}
-              </span>
-              <span className="row-actions">
-                <Button variant="ghost" size="small" onClick={() => { setErrors({}); setForm({ ...EMPTY, ...item, open: item.open ?? EMPTY.open, close: item.close ?? EMPTY.close }); }}>Bearbeiten</Button>
-                <Button variant="ghost" size="small" onClick={() => remove(item)}>Löschen</Button>
-              </span>
+    <Card title="Abweichende Tage" description="Feiertage, Urlaub oder kürzere Tage. Tippe im Kalender einen oder mehrere Tage an und lege die Zeiten dafür fest. An diesen Tagen gelten sie statt des Wochenplans, auch für den „Geöffnet“-Hinweis und den Chat-Assistenten.">
+      {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : (
+        <>
+          <div className="special-layout">
+            <div className="special-calendar">
+              <Calendar selected={selected} min={today} marked={marked} onPick={toggle} autoFocus={false} />
+              <p className="special-legend"><span className="legend-marked" aria-hidden="true" /> schon eingetragen</p>
             </div>
-          ))}
-        </div>
-      )}
 
-      <form className="special-form" onSubmit={save}>
-        <h3>{form.id ? `${dayLabel(form.day)} bearbeiten` : 'Tag eintragen'}</h3>
-        <div className="field-row">
-          <TextField label="Datum" type="date" required min={form.id ? undefined : today} value={form.day} onChange={set('day')} error={errors.day} />
-          <TextField label="Hinweis" hint="Optional, z. B. „Heiligabend“ oder „Betriebsurlaub“" value={form.note} onChange={set('note')} error={errors.note} maxLength={80} />
-        </div>
-        <div className={`hours-row ${form.closed ? 'is-closed' : ''}`}>
-          <strong className="hours-day">Zeiten</strong>
-          <Toggle label={form.closed ? 'Geschlossen' : 'Geöffnet'} checked={!form.closed} onChange={(open) => set('closed')(!open)} />
-          <div className="hours-times">
-            <TimeField value={form.open} disabled={form.closed} onChange={set('open')} ariaLabel="Öffnet" />
-            <span>bis</span>
-            <TimeField value={form.close} disabled={form.closed} onChange={set('close')} ariaLabel="Schließt" />
+            <div className="special-editor">
+              {days.length === 0 ? (
+                <p className="special-empty">Wähle im Kalender die Tage aus, z. B. 24.12. für früheren Feierabend oder 31.12. bis 2.1. für mehrere geschlossene Tage.</p>
+              ) : (
+                <>
+                  <h3>{days.length === 1 ? dayLabel(days[0]) : `${days.length} Tage ausgewählt`}</h3>
+                  {days.length > 1 && <p className="special-chosen">{days.map(shortLabel).join(' · ')}</p>}
+                  {withEntry.length > 0 && days.length > 1 && (
+                    <p className="special-chosen subtle">{withEntry.length === 1 ? 'Ein Tag hat' : `${withEntry.length} Tage haben`} schon einen Eintrag, er wird überschrieben.</p>
+                  )}
+                  <div className={`hours-row special-times ${form.closed ? 'is-closed' : ''}`}>
+                    <Toggle label={form.closed ? 'Geschlossen' : 'Geöffnet'} checked={!form.closed} onChange={(open) => set('closed')(!open)} />
+                    <div className="hours-times">
+                      <TimeField value={form.open} disabled={form.closed} onChange={set('open')} ariaLabel="Öffnet" />
+                      <span>bis</span>
+                      <TimeField value={form.close} disabled={form.closed} onChange={set('close')} ariaLabel="Schließt" />
+                    </div>
+                    {(errors.open || errors.close) && <p className="field-error hours-error">{errors.open || errors.close}</p>}
+                  </div>
+                  <TextField label="Hinweis" hint="Optional, z. B. „Heiligabend“ oder „Betriebsurlaub“" value={form.note} onChange={set('note')} error={errors.note} maxLength={80} />
+                  <div className="special-actions">
+                    <Button busy={busy} onClick={save}>{days.length === 1 ? 'Speichern' : `Für ${days.length} Tage speichern`}</Button>
+                    {withEntry.length > 0 && <Button variant="ghost" onClick={() => reset(withEntry)}>Auf Wochenplan zurücksetzen</Button>}
+                    <Button variant="ghost" onClick={clear}>Auswahl leeren</Button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-          {(errors.open || errors.close) && <p className="field-error hours-error">{errors.open || errors.close}</p>}
-        </div>
-        <div className="card-foot">
-          {form.id && <Button variant="ghost" size="small" onClick={() => { setForm(EMPTY); setErrors({}); }}>Abbrechen</Button>}
-          <Button type="submit" busy={busy} disabled={!form.day}>{form.id ? 'Änderung speichern' : 'Eintragen'}</Button>
-        </div>
-      </form>
+
+          {items.length === 0 ? (
+            <EmptyState icon="calendar" title="Keine abweichenden Tage eingetragen" />
+          ) : (
+            <div className="hours-list special-list">
+              {items.map((item) => (
+                <div key={item.id} className={`hours-row special-row ${item.day < today ? 'is-past' : ''}`}>
+                  <strong className="hours-day">{dayLabel(item.day)}</strong>
+                  <span className="special-info">
+                    {item.closed ? <Badge tone="danger">Geschlossen</Badge> : <Badge tone="warning">{item.open} – {item.close} Uhr</Badge>}
+                    {item.note && <span>{item.note}</span>}
+                    {item.day < today && <small>vorbei</small>}
+                  </span>
+                  <span className="row-actions">
+                    {item.day >= today && <Button variant="ghost" size="small" onClick={() => edit(item)}>Bearbeiten</Button>}
+                    <Button variant="ghost" size="small" onClick={() => reset([item.day])}>Löschen</Button>
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </Card>
   );
 }

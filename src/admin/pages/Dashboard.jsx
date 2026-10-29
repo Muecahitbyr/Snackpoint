@@ -75,7 +75,6 @@ export default function Dashboard({ isDeveloper }) {
               href="#/wuensche"
               hint={data.counts.new_wishes ? 'warten auf Freigabe' : `${data.counts.open_wishes} auf der Webseite`}
             />
-            <Stat label="Bilder" value={data.counts.media} href="#/medien" />
           </div>
 
           <div className={`dashboard-grid ${isDeveloper ? '' : 'is-single'}`}>

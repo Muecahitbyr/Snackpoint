@@ -85,8 +85,8 @@ const SPECIAL_COLUMNS = `id, to_char(day, 'YYYY-MM-DD') AS day, is_closed, open_
 const specialJson = (row) => ({ id: row.id, day: row.day, closed: row.is_closed, open: row.open_time, close: row.close_time, note: row.note });
 const dayLabel = (day) => new Date(`${day}T00:00:00Z`).toLocaleDateString('de-DE', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' });
 
-function parseSpecial(data) {
-  const special = parse(specialSchema, data);
+function parseSpecial(data, schema = specialSchema) {
+  const special = parse(schema, data);
   if (!special.closed) {
     const errors = {};
     if (!special.open) errors.open = 'Öffnungszeit fehlt';
@@ -137,6 +137,45 @@ hours.put('/special/:id', async (c) => {
   const item = await writeSpecial(id, parseSpecial(await readJson(c)));
   await audit(c, 'update', 'special_hours', id, `Abweichender Tag ${dayLabel(item.day)}`);
   return c.json({ item });
+});
+
+// Several days at once (picked in the calendar): the same hours for all of
+// them. Days that already have an entry get the new hours.
+const daysSchema = specialSchema.omit({ day: true }).extend({ days: z.array(DAY).min(1).max(62) });
+const describeDays = (days) => {
+  const sorted = [...days].sort();
+  return sorted.length === 1 ? dayLabel(sorted[0]) : `${sorted.length} Tage, ${dayLabel(sorted[0])} bis ${dayLabel(sorted.at(-1))}`;
+};
+
+hours.post('/special/days', async (c) => {
+  const special = parseSpecial(await readJson(c), daysSchema);
+  const days = [...new Set(special.days)];
+  const items = await transaction(async (db) => {
+    const saved = [];
+    for (const day of days) {
+      const { rows } = await db.query(
+        `INSERT INTO special_hours (day, is_closed, open_time, close_time, note) VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (day) DO UPDATE SET is_closed = EXCLUDED.is_closed, open_time = EXCLUDED.open_time,
+           close_time = EXCLUDED.close_time, note = EXCLUDED.note
+         RETURNING ${SPECIAL_COLUMNS}`,
+        [day, special.closed, special.closed ? null : special.open, special.closed ? null : special.close, special.note ?? '']
+      );
+      saved.push(specialJson(rows[0]));
+    }
+    return saved;
+  }).catch((error) => {
+    throw mapDbError(error);
+  });
+  await audit(c, 'update', 'special_hours', '', `Abweichende Tage: ${describeDays(days)}`);
+  return c.json({ items });
+});
+
+// Back to the weekly plan for these days.
+hours.post('/special/days/remove', async (c) => {
+  const { days } = parse(z.object({ days: z.array(DAY).min(1).max(400) }), await readJson(c));
+  const { rowCount } = await query('DELETE FROM special_hours WHERE day = ANY($1::date[])', [[...new Set(days)]]);
+  if (rowCount) await audit(c, 'delete', 'special_hours', '', `Wieder normaler Wochenplan: ${describeDays(days)}`);
+  return c.json({ ok: true, removed: rowCount });
 });
 
 hours.delete('/special/:id', async (c) => {

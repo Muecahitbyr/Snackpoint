@@ -546,6 +546,24 @@ describe('banners, promotions, content, hours', () => {
 
     for (const item of [closed, short, past]) assert.equal((await admin.send(`/api/admin/hours/special/${item.data.item.id}`, { method: 'DELETE' })).status, 200);
     assert.deepEqual((await site()).specialHours, []);
+
+    // Several days picked in the calendar at once; an existing day is overwritten.
+    const days = (body) => admin.send('/api/admin/hours/special/days', { method: 'POST', body });
+    assert.equal((await special({ day: day(11), closed: false, open: '08:00', close: '12:00' })).status, 201);
+    const many = await days({ days: [day(10), day(11), day(12), day(11)], closed: true, note: 'Neujahr' });
+    assert.equal(many.status, 200);
+    assert.equal(many.data.items.length, 3);
+    const live2 = (await site()).specialHours;
+    assert.deepEqual(live2.map((d) => [d.date, d.closed, d.note]), [[day(10), true, 'Neujahr'], [day(11), true, 'Neujahr'], [day(12), true, 'Neujahr']]);
+    const shorter = await days({ days: [day(10)], closed: false, open: '08:00', close: '14:00' });
+    assert.equal(shorter.status, 200);
+    assert.deepEqual([shorter.data.items[0].closed, shorter.data.items[0].close, shorter.data.items[0].note], [false, '14:00', '']);
+    for (const body of [{ days: [], closed: true }, { days: [day(1)], closed: false }, { days: ['2026-13-01'], closed: true }, { days: Array.from({ length: 63 }, (_, i) => day(i)), closed: true }]) {
+      assert.equal((await days(body)).status, 400, JSON.stringify(body).slice(0, 60));
+    }
+    const removed = await admin.send('/api/admin/hours/special/days/remove', { method: 'POST', body: { days: [day(10), day(11), day(12), day(30)] } });
+    assert.deepEqual([removed.status, removed.data.removed], [200, 3]);
+    assert.deepEqual((await site()).specialHours, []);
   });
 
   it('rejects files that are not images', async () => {

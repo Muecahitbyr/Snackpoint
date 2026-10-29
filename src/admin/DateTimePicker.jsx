@@ -137,11 +137,21 @@ function TimeColumns({ value, onChange }) {
   );
 }
 
-function Calendar({ selected, min, onPick }) {
-  const initial = selected ? parseKey(selected) : min ? parseKey(min) : new Date();
+/**
+ * Month calendar. `selected`: one "YYYY-MM-DD" key, or a Set of keys for
+ * picking several days; `marked`: optional Set of keys shown with a ring
+ * (e.g. days that already have an entry). `autoFocus`: focus the day when it
+ * appears (in a popover); on a page the focus stays where it is until used.
+ */
+export function Calendar({ selected, min, onPick, marked, autoFocus = true }) {
+  const several = selected instanceof Set;
+  const isSelected = (key) => (several ? selected.has(key) : key === selected);
+  const first = several ? [...selected].sort()[0] : selected;
+  const initial = first ? parseKey(first) : min ? parseKey(min) : new Date();
   const [view, setView] = useState({ year: initial.getFullYear(), month: initial.getMonth() });
-  const [focus, setFocus] = useState(selected || (min && min > toKey(new Date()) ? min : toKey(new Date())));
+  const [focus, setFocus] = useState(first || (min && min > toKey(new Date()) ? min : toKey(new Date())));
   const gridRef = useRef(null);
+  const focused = useRef(autoFocus);
   const today = toKey(new Date());
   const days = monthGrid(view.year, view.month);
 
@@ -170,6 +180,10 @@ function Calendar({ selected, min, onPick }) {
   }
 
   useEffect(() => {
+    if (!focused.current) {
+      focused.current = true;
+      return;
+    }
     gridRef.current?.querySelector(`[data-day="${focus}"]`)?.focus({ preventScroll: true });
   }, [focus]);
 
@@ -191,7 +205,8 @@ function Calendar({ selected, min, onPick }) {
             'picker-day',
             date.getMonth() !== view.month && 'is-outside',
             key === today && 'is-today',
-            key === selected && 'is-selected',
+            isSelected(key) && 'is-selected',
+            marked?.has(key) && 'is-marked',
             (date.getDay() === 0 || date.getDay() === 6) && 'is-weekend',
           ].filter(Boolean).join(' ');
           return (
@@ -202,7 +217,7 @@ function Calendar({ selected, min, onPick }) {
               className={classes}
               disabled={disabled}
               tabIndex={key === focus ? 0 : -1}
-              aria-pressed={key === selected}
+              aria-pressed={isSelected(key)}
               aria-label={LABEL.format(date)}
               onClick={() => onPick(key)}
             >
