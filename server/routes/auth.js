@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { query } from '../db/pool.js';
 import { burnVerifyTime, hashPassword, passwordProblem, verifyPassword } from '../auth/password.js';
-import { assertLoginAllowed, recordLoginAttempt } from '../auth/rateLimit.js';
+import { discardLoginAttempt, loginSucceeded, startLoginAttempt } from '../auth/rateLimit.js';
 import {
   assertSameOrigin, createSession, destroyOtherSessions, destroySession, loadSession, requireAdmin, requireDeveloper,
 } from '../auth/session.js';
@@ -67,16 +67,17 @@ async function login(c) {
   assertSameOrigin(c);
   const { email, password, turnstileToken } = parse(loginSchema, await readJson(c));
   const ip = clientIp(c);
-  await assertLoginAllowed(ip, email);
+  const attempt = await startLoginAttempt(ip, email);
   if (!(await verifyTurnstile(turnstileToken, ip))) {
+    await discardLoginAttempt(attempt);
     throw new HttpError(400, 'Die Sicherheitsprüfung ist fehlgeschlagen. Bitte lade die Seite neu und versuche es erneut.');
   }
 
   const { rows } = await query('SELECT id, email, display_name, role, password_hash FROM admin_users WHERE lower(email) = $1', [email]);
   const user = rows[0];
   const valid = user ? await verifyPassword(user.password_hash, password) : (await burnVerifyTime(password), false);
-  await recordLoginAttempt(ip, email, valid);
   if (!valid) throw new HttpError(401, 'E-Mail oder Passwort ist falsch.');
+  await loginSucceeded(attempt);
 
   const { csrfToken } = await createSession(c, user.id);
   await query('UPDATE admin_users SET last_login_at = now() WHERE id = $1', [user.id]);
@@ -103,12 +104,11 @@ auth.post('/password', requireAdmin, requireDeveloper, async (c) => {
   const session = c.get('session');
   const { currentPassword, newPassword } = parse(passwordSchema, await readJson(c));
   const { rows } = await query('SELECT password_hash FROM admin_users WHERE id = $1', [session.user.id]);
-  const ip = clientIp(c);
-  await assertLoginAllowed(ip, session.user.email);
+  const attempt = await startLoginAttempt(clientIp(c), session.user.email);
   if (!(await verifyPassword(rows[0].password_hash, currentPassword))) {
-    await recordLoginAttempt(ip, session.user.email, false);
     throw badRequest('Das aktuelle Passwort ist falsch.', { fields: { currentPassword: 'Falsches Passwort' } });
   }
+  await discardLoginAttempt(attempt);
   const problem = passwordProblem(newPassword);
   if (problem) throw badRequest(problem, { fields: { newPassword: problem } });
   await query('UPDATE admin_users SET password_hash = $2, password_changed_at = now() WHERE id = $1', [

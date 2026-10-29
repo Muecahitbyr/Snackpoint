@@ -93,6 +93,7 @@ for (const loc of locs) {
   check(['og:title', 'og:description', 'og:image'].every((name) => html.includes(`property="${name}"`)) && html.includes('name="twitter:card"'), `${label} Open Graph und Twitter Card`);
   check(/<html lang="de">/.test(html), `${label} lang="de"`);
   check(!/noindex/i.test(html) && !/noindex/i.test(headers.get('x-robots-tag') ?? ''), `${label} indexierbar`);
+  check(/script-src 'self'/.test(headers.get('content-security-policy') ?? ''), `${label} Content-Security-Policy`);
   check((html.match(/<h1[\s>]/g) ?? []).length === 1, `${label} genau eine <h1> im HTML`);
   check(!/Jetzt geöffnet|Geschlossen ·|In \d+ Tagen|>Morgen<|>Heute<|Läuft gerade/.test(html), `${label} keine zeitabhängigen Zustände im HTML`);
   titles.add(title[0]);
@@ -130,6 +131,8 @@ for (const [from, to] of [['/index.html', '/'], ['/produkte.html', '/produkte'],
 }
 const admin = await get('/admin');
 check(/noindex/.test(admin.headers.get('x-robots-tag') ?? '') && /<meta name="robots" content="noindex/.test(admin.text), '/admin: noindex (Header und Meta-Tag)');
+// Doubled headers arrive joined ("DENY, SAMEORIGIN"): each must be there exactly once.
+check(admin.headers.get('x-frame-options') === 'DENY' && admin.headers.get('referrer-policy') === 'same-origin', '/admin: X-Frame-Options DENY und Referrer-Policy same-origin, je einmal');
 const api = await get('/api/admin/products');
 check(api.status === 401 || api.status === 403, `/api/admin/products ohne Login: ${api.status}`);
 check(/noindex/.test(api.headers.get('x-robots-tag') ?? ''), '/api: X-Robots-Tag noindex');

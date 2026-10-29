@@ -6,7 +6,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { query } from '../db/pool.js';
 import { hashPassword, passwordProblem, verifyPassword } from '../auth/password.js';
-import { assertLoginAllowed, recordLoginAttempt } from '../auth/rateLimit.js';
+import { discardLoginAttempt, startLoginAttempt } from '../auth/rateLimit.js';
 import { audit } from '../lib/audit.js';
 import { badRequest, conflict, mapDbError, notFound } from '../lib/errors.js';
 import { clientIp } from '../lib/request.js';
@@ -30,13 +30,12 @@ const userJson = (row, selfId) => ({
 /** Step-up check: the acting admin re-enters their password (rate limited like the login). */
 async function confirmActor(c, password) {
   const { user } = c.get('session');
-  const ip = clientIp(c);
-  await assertLoginAllowed(ip, user.email);
+  const attempt = await startLoginAttempt(clientIp(c), user.email);
   const { rows } = await query('SELECT password_hash FROM admin_users WHERE id = $1', [user.id]);
   if (!(await verifyPassword(rows[0].password_hash, password))) {
-    await recordLoginAttempt(ip, user.email, false);
     throw badRequest('Dein Passwort ist falsch.', { fields: { currentPassword: 'Falsches Passwort' } });
   }
+  await discardLoginAttempt(attempt);
 }
 
 function assertStrong(password) {

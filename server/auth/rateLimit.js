@@ -8,13 +8,18 @@
 //   per IP address
 //    20 failures within 15 min  → blocked until 15 min after the first of them
 //    60 failures within 24 h    → blocked for 24 h after the last one
+//
+// Every attempt is recorded as failed *before* the check (startLoginAttempt),
+// so parallel requests see each other: a burst can't get more password
+// guesses past the limits than the same requests one after another.
 import { query } from '../db/pool.js';
 import { HttpError } from '../lib/errors.js';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 
-export async function assertLoginAllowed(ip, identifier) {
+/** Throws 429 while locked; ignores the attempt `ownId` (the one being checked). */
+async function assertLoginAllowed(ip, identifier, ownId) {
   const { rows } = await query(
     `WITH last_success AS (
        SELECT coalesce(max(created_at), '-infinity') AS at FROM login_attempts WHERE identifier = $2 AND success
@@ -22,9 +27,11 @@ export async function assertLoginAllowed(ip, identifier) {
      account AS (
        SELECT created_at FROM login_attempts, last_success
         WHERE identifier = $2 AND NOT success AND created_at > now() - interval '24 hours' AND created_at > last_success.at
+          AND id <> $3
      ),
      address AS (
-       SELECT created_at FROM login_attempts WHERE ip = $1 AND NOT success AND created_at > now() - interval '24 hours'
+       SELECT created_at FROM login_attempts
+        WHERE ip = $1 AND NOT success AND created_at > now() - interval '24 hours' AND id <> $3
      )
      SELECT
        (SELECT count(*)::int FROM account WHERE created_at > now() - interval '15 minutes') AS account_15m,
@@ -35,7 +42,7 @@ export async function assertLoginAllowed(ip, identifier) {
        (SELECT min(created_at) FROM address WHERE created_at > now() - interval '15 minutes') AS ip_15m_first,
        (SELECT count(*)::int FROM address) AS ip_24h,
        (SELECT max(created_at) FROM address) AS ip_last`,
-    [ip, identifier]
+    [ip, identifier, ownId]
   );
   const r = rows[0];
   const at = (value, offset) => (value ? new Date(value).getTime() + offset : 0);
@@ -55,7 +62,30 @@ export async function assertLoginAllowed(ip, identifier) {
   }
 }
 
-export async function recordLoginAttempt(ip, identifier, success) {
-  await query('INSERT INTO login_attempts (ip, identifier, success) VALUES ($1, $2, $3)', [ip, identifier, success]);
+/**
+ * Records a password check as failed, then throws 429 if the limits are
+ * reached (the attempt is dropped again then: a blocked request is no
+ * guess). Returns the attempt's id: the caller leaves it as a failure,
+ * or calls loginSucceeded() / discardLoginAttempt().
+ */
+export async function startLoginAttempt(ip, identifier) {
+  const { rows } = await query('INSERT INTO login_attempts (ip, identifier, success) VALUES ($1, $2, false) RETURNING id', [ip, identifier]);
+  const id = rows[0].id;
+  try {
+    await assertLoginAllowed(ip, identifier, id);
+  } catch (error) {
+    await discardLoginAttempt(id);
+    throw error;
+  }
   await query(`DELETE FROM login_attempts WHERE created_at < now() - interval '7 days'`);
+  return id;
+}
+
+export async function loginSucceeded(id) {
+  await query('UPDATE login_attempts SET success = true WHERE id = $1', [id]);
+}
+
+/** Forgets an attempt that wasn't a password guess (blocked, bot check failed, step-up passed). */
+export async function discardLoginAttempt(id) {
+  await query('DELETE FROM login_attempts WHERE id = $1', [id]);
 }

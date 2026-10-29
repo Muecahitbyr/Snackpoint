@@ -85,17 +85,18 @@ publicWishes.post('/', async (c) => {
   if (normalized.length < 2) throw badRequest('Bitte gib einen Produktnamen ein.', { fields: { name: 'Produktname fehlt' } });
 
   const voter = visitorKey(c);
-  const { rows: limits } = await query(
-    `SELECT count(*) FILTER (WHERE created_at > now() - interval '1 hour')::int AS hour,
-            count(*)::int AS day
-       FROM wish_submissions WHERE voter_hash = $1 AND created_at > now() - interval '24 hours'`,
-    [voter]
-  );
-  if (limits[0].hour >= 5 || limits[0].day >= 15) {
-    throw tooMany('Du hast gerade schon einige Wünsche geschickt. Versuch es später noch einmal.');
-  }
-
   const wish = await transaction(async (db) => {
+    // One submission per visitor at a time, so parallel requests can't all pass the limit.
+    await db.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`wish:${voter}`]);
+    const { rows: limits } = await db.query(
+      `SELECT count(*) FILTER (WHERE created_at > now() - interval '1 hour')::int AS hour,
+              count(*)::int AS day
+         FROM wish_submissions WHERE voter_hash = $1 AND created_at > now() - interval '24 hours'`,
+      [voter]
+    );
+    if (limits[0].hour >= 5 || limits[0].day >= 15) {
+      throw tooMany('Du hast gerade schon einige Wünsche geschickt. Versuch es später noch einmal.');
+    }
     const { rows } = await db.query(
       `INSERT INTO product_wishes (name, normalized_name, note) VALUES ($1, $2, $3)
        ON CONFLICT (normalized_name) DO UPDATE SET mentions = product_wishes.mentions + 1

@@ -56,6 +56,37 @@ const PAGE_HEADERS = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
 };
 
+// What the public pages may load: own files, Google Fonts and, after consent,
+// the Google Maps embed (maps.google.com redirects to www.google.com). Inline
+// scripts only by hash (scriptHashes); the JSON blocks aren't executed.
+// data: and blob: only cover URLs the page creates itself (e.g. textures of
+// the 3D character, if it's switched on again).
+const contentSecurityPolicy = (scriptHashes) =>
+  [
+    "default-src 'self'",
+    `script-src 'self' ${scriptHashes.map((hash) => `'sha256-${hash}'`).join(' ')}`.trim(),
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    'font-src https://fonts.gstatic.com',
+    "img-src 'self' data: blob:",
+    "connect-src 'self' data: blob:",
+    "worker-src 'self' blob:",
+    'frame-src https://maps.google.com https://www.google.com',
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+  ].join('; ');
+
+async function scriptHashes(html) {
+  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
+  return Promise.all(
+    scripts.map(async (script) => {
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(script));
+      return btoa(String.fromCharCode(...new Uint8Array(digest)));
+    })
+  );
+}
+
 const unescapeHtml = (text) => text.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
 // Compile React and the components now, while the isolate starts, instead of
@@ -135,13 +166,15 @@ async function template(page, request, env) {
   const asset = await env.ASSETS.fetch(new Request(new URL(page.path, request.url)));
   if (!asset.ok) return null;
   const html = await asset.text();
+  const csp = contentSecurityPolicy(await scriptHashes(html));
   const start = html.indexOf(REGION_START);
   const end = html.indexOf(REGION_END);
-  if (start < 0 || end < start) return { html };
+  if (start < 0 || end < start) return { html, csp };
   const regionEnd = end + REGION_END.length;
   const head = html.slice(0, start);
   const parts = {
     html,
+    csp,
     // The browser gets the data inside the page, a preload would load it twice.
     head: head.replace(/[ \t]*<link rel="preload" href="\/api\/public\/site"[^>]*>\n?/, ''),
     built: html.slice(start, regionEnd),
@@ -174,6 +207,7 @@ async function renderPage(page, request, env, ctx, { preview, host }) {
   const parts = await template(page, request, env);
   if (!parts) return env.ASSETS.fetch(request);
   const headers = new Headers(PAGE_HEADERS);
+  headers.set('Content-Security-Policy', parts.csp);
   if (preview) headers.set('X-Robots-Tag', 'noindex');
   if (!parts.head || !env.API_ORIGIN || !env.PROXY_SECRET) return new Response(parts.html, { headers });
 

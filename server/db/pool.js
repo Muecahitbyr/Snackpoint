@@ -29,16 +29,25 @@ export function query(text, params = []) {
 /** Runs `fn(client)` in a transaction; rolls back if it throws. */
 export async function transaction(fn) {
   const client = await getPool().connect();
+  // A checked-out client has no error listener of the pool: if the connection
+  // drops (database restart), its "error" event would end the whole process.
+  const onError = (error) => console.error('[db] connection lost during a transaction:', error.message);
+  client.on('error', onError);
+  let broken = null;
   try {
     await client.query('BEGIN');
     const result = await fn(client);
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    await client.query('ROLLBACK').catch(() => {});
+    await client.query('ROLLBACK').catch((rollbackError) => {
+      broken = rollbackError;
+    });
     throw error;
   } finally {
-    client.release();
+    client.off('error', onError);
+    // A connection that couldn't even roll back is discarded, not reused.
+    client.release(broken ?? undefined);
   }
 }
 

@@ -210,6 +210,18 @@ describe('authentication & access control', () => {
     assert.ok(Number(blocked.headers.get('retry-after')) > 0);
   });
 
+  it('counts parallel login attempts against the same limit', async () => {
+    const email = 'parallel@test.local';
+    const results = await Promise.all(
+      Array.from({ length: 20 }, (_, i) =>
+        client().send('/api/auth/login', { method: 'POST', body: { email, password: `wrong-${i}` }, headers: { 'X-Client-IP': '203.0.113.20' } })
+      )
+    );
+    const checked = results.filter((r) => r.status === 401).length;
+    assert.ok(checked <= 5, `${checked} passwords checked in one burst`);
+    assert.equal(results.filter((r) => r.status === 429).length, 20 - checked);
+  });
+
   it('never exposes password hashes or session tokens', async () => {
     const me = await admin.send('/api/auth/me');
     assert.ok(!JSON.stringify(me.data).includes('argon2'));
@@ -320,6 +332,18 @@ describe('products & categories', () => {
     assert.deepEqual((await homepage()).map((p) => p.id), original.map((p) => p.id));
   });
 
+  it('keeps at most 4 homepage products when two saves overlap', async () => {
+    const original = (await site()).products.filter((p) => p.isHighlight).sort((a, b) => a.highlightOrder - b.highlightOrder).map((p) => ({ id: p.id, badge: p.badge }));
+    const ids = (await admin.send('/api/admin/products')).data.items.map((p) => p.id);
+    for (let round = 0; round < 5; round += 1) {
+      const sets = Array.from({ length: 6 }, (_, i) => ids.slice(i * 4 + round, i * 4 + round + 4).map((id) => ({ id })));
+      await Promise.all(sets.map((items) => admin.send('/api/admin/products/highlights', { method: 'POST', body: { items } })));
+      const { rows } = await query('SELECT count(*)::int AS n FROM products WHERE is_highlight');
+      assert.ok(rows[0].n <= 4, `${rows[0].n} homepage products`);
+    }
+    await admin.send('/api/admin/products/highlights', { method: 'POST', body: { items: original } });
+  });
+
   it('reorders and deletes', async () => {
     const other = await admin.send('/api/admin/products', { method: 'POST', body: { categoryId, name: 'Zweites Produkt' } });
     assert.equal((await admin.send('/api/admin/products/reorder', { method: 'POST', body: { ids: [other.data.item.id, productId] } })).status, 200);
@@ -395,6 +419,13 @@ describe('events', () => {
     assert.ok(result.data.fields.endsAt);
   });
 
+  it('rejects dates the database cannot store with a 400', async () => {
+    for (const startsAt of ['0000-01-01T00:00:00Z', '+275760-09-13T00:00:00Z']) {
+      const result = await admin.send('/api/admin/events', { method: 'POST', body: { title: 'X', startsAt } });
+      assert.equal(result.status, 400, startsAt);
+    }
+  });
+
   it('stores a gallery in order', async () => {
     const ids = [];
     for (const color of [{ r: 1, g: 2, b: 3 }, { r: 200, g: 100, b: 0 }]) {
@@ -458,6 +489,9 @@ describe('banners, promotions, content, hours', () => {
   it('records changes in the audit log', async () => {
     const log = await admin.send('/api/admin/audit');
     assert.ok(log.data.items.some((entry) => entry.entityType === 'banner' && entry.action === 'create'));
+    for (const params of ['limit=1.5&offset=2.5', 'limit=1e400&offset=1e30', 'limit=abc&offset=-3']) {
+      assert.equal((await admin.send(`/api/admin/audit?${params}`)).status, 200, params);
+    }
   });
 });
 
@@ -665,6 +699,12 @@ describe('product wishes', () => {
     assert.equal(last.status, 429);
   });
 
+  it('holds the submission limit for parallel requests', async () => {
+    const results = await Promise.all(Array.from({ length: 20 }, (_, i) => wish({ name: `Parallel ${i}` }, '198.51.100.20')));
+    assert.equal(results.filter((r) => r.status === 201).length, 5);
+    assert.equal(results.filter((r) => r.status === 429).length, 15);
+  });
+
   it('cannot vote on hidden wishes, and only the team manages them', async () => {
     const hidden = (await admin.send('/api/admin/wishes')).data.items.find((w) => w.status === 'new');
     assert.equal((await vote(hidden.id, '198.51.100.4')).status, 404);
@@ -681,5 +721,36 @@ describe('product wishes', () => {
     assert.equal(merged.status, 200);
     assert.equal(merged.data.item.mentions, 3);
     assert.equal((await admin.send('/api/admin/wishes')).data.items.some((w) => w.id === source.id), false);
+  });
+});
+
+describe('database outages', () => {
+  it('rolls back and keeps running when the connection drops mid-transaction', async () => {
+    const { transaction } = await import('../../server/db/pool.js');
+    const count = async () => (await query(`SELECT count(*)::int AS n FROM events WHERE title = 'Abgebrochen'`)).rows[0].n;
+    const killer = new pg.Client({ connectionString: OWNER_URL });
+    await killer.connect();
+    // In production an unhandled error here ends the Node process.
+    const crashes = [];
+    const onCrash = (error) => crashes.push(error.message);
+    process.prependListener('uncaughtException', onCrash);
+    try {
+      await assert.rejects(
+        transaction(async (db) => {
+          await db.query(`INSERT INTO events (title, starts_at) VALUES ('Abgebrochen', now())`);
+          const { rows } = await db.query('SELECT pg_backend_pid() AS pid');
+          setTimeout(() => killer.query('SELECT pg_terminate_backend($1)', [rows[0].pid]).catch(() => {}), 100);
+          await db.query('SELECT pg_sleep(5)');
+        })
+      );
+      // The dropped connection reports its end a moment later; that must not crash the process.
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    } finally {
+      process.off('uncaughtException', onCrash);
+      await killer.end();
+    }
+    assert.deepEqual(crashes, [], 'no uncaught error');
+    assert.equal(await count(), 0, 'nothing half-written');
+    assert.equal((await request('/api/public/site')).status, 200, 'the pool recovers');
   });
 });

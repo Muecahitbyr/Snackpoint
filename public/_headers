@@ -1,15 +1,7 @@
 # Cloudflare Static Assets: response headers.
-
-/admin*
-  X-Frame-Options: DENY
-  X-Robots-Tag: noindex, nofollow
-  Referrer-Policy: same-origin
-  Cache-Control: no-store
-  Cross-Origin-Opener-Policy: same-origin
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
-
-/assets/*
-  Cache-Control: public, max-age=31536000, immutable
+# Every matching rule adds its headers, so "/*" also applies to /admin. The
+# admin rule therefore comes last and first removes ("! Name") the two
+# headers it sets differently; otherwise both values would be sent.
 
 /*
   X-Content-Type-Options: nosniff
@@ -17,3 +9,16 @@
   X-Frame-Options: SAMEORIGIN
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/admin*
+  ! X-Frame-Options
+  ! Referrer-Policy
+  X-Frame-Options: DENY
+  X-Robots-Tag: noindex, nofollow
+  Referrer-Policy: same-origin
+  Cache-Control: no-store
+  Cross-Origin-Opener-Policy: same-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'

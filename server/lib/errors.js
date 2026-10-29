@@ -29,6 +29,9 @@ export function mapDbError(error, { inUseMessage } = {}) {
     case '23514':
     case '22P02':
     case '22007':
+    case '22008': // date/time out of range, e.g. year 0
+    case '22009': // time zone offset out of range
+    case '22003': // number out of range
       return badRequest('Ungültige Eingabe.');
     default:
       return error;

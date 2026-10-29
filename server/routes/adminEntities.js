@@ -314,6 +314,8 @@ products.post('/highlights', async (c) => {
   const ids = items.map((item) => item.id);
   if (new Set(ids).size !== ids.length) throw badRequest('Ein Produkt kann nur einmal auf der Startseite stehen.');
   const names = await transaction(async (db) => {
+    // One save at a time: two overlapping ones would otherwise both keep their picks.
+    await db.query(`SELECT pg_advisory_xact_lock(hashtext('product_highlights'))`);
     const { rows } = await db.query('SELECT id, name FROM products WHERE id = ANY($1)', [ids]);
     if (rows.length !== ids.length) throw badRequest('Eines der Produkte gibt es nicht mehr. Lade die Seite neu.');
     await db.query('UPDATE products SET is_highlight = false WHERE is_highlight AND NOT (id = ANY($1))', [ids]);

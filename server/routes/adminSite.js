@@ -256,8 +256,9 @@ dashboard.get('/', async (c) => {
 export const auditLog = new Hono();
 
 auditLog.get('/', async (c) => {
-  const limit = Math.min(Math.max(Number(c.req.query('limit')) || 50, 1), 200);
-  const offset = Math.max(Number(c.req.query('offset')) || 0, 0);
+  // Whole numbers in a sane range: "1.5" or "1e30" would make Postgres fail.
+  const limit = Math.min(Math.max(Math.trunc(Number(c.req.query('limit'))) || 50, 1), 200);
+  const offset = Math.min(Math.max(Math.trunc(Number(c.req.query('offset'))) || 0, 0), 1_000_000);
   const { rows } = await query(
     `SELECT a.*, u.email FROM audit_log a LEFT JOIN admin_users u ON u.id = a.admin_user_id
       ORDER BY a.created_at DESC LIMIT $1 OFFSET $2`,
