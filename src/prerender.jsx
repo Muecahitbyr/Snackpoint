@@ -28,6 +28,36 @@ export const REGION_START = '<!--ssr-->';
 export const REGION_END = '<!--/ssr-->';
 export const EMPTY_SITE = { groups: [], products: [], events: { current: [], past: [] }, hours: [], banners: [], promotions: [] };
 
+// Made-up data that walks every code path once (product with picture, price and
+// label, sold-out product, event, banner, promotion). Only for warmUp(), never sent.
+const WARMUP_SITE = {
+  groups: [{ id: 'g', name: 'Gruppe', emoji: '🍫', notice: 'Hinweis', ageRestricted: true, categories: ['Kategorie'] }],
+  products: [
+    { id: 'p1', group: 'g', category: 'Kategorie', title: 'Produkt', brand: 'Marke', text: 'Text', emoji: '🍬', image: '/logo.jpg', price: 199, availability: 'available', showInCatalog: true, isHighlight: true, badge: 'NEU', highlightOrder: 10, allergens: 'Nüsse', info: 'Info', searchTerms: ['a'], tags: ['suess'], chatCategory: 'snacks' },
+    { id: 'p2', group: 'g', category: 'Kategorie', title: 'Produkt 2', text: 'Text', emoji: '🥤', image: null, price: null, availability: 'sold_out', showInCatalog: true, isHighlight: true, badge: '', highlightOrder: 20, searchTerms: [], tags: [], chatCategory: null },
+  ],
+  events: {
+    current: [
+      { id: 'e1', title: 'Event', description: 'Text', location: 'Ort', startsAt: '2030-01-05T17:00:00.000Z', endsAt: '2030-01-05T20:00:00.000Z', price: 0, priceNote: '', featured: true, isPast: false, image: '/logo.jpg', gallery: [] },
+      { id: 'e2', title: 'Event 2', description: '', location: '', startsAt: '2030-01-06T17:00:00.000Z', endsAt: null, price: 500, priceNote: 'Hinweis', featured: false, isPast: false, image: null, gallery: [] },
+    ],
+    past: [],
+  },
+  hours: [{ day: 'Montag', jsDay: 1, open: '08:00', close: '20:00', closed: false }, { day: 'Sonntag', jsDay: 0, open: null, close: null, closed: true }],
+  banners: [{ id: 'b1', text: 'Hinweis', linkUrl: '/produkte', linkLabel: 'Mehr', variant: 'info', version: '2030-01-01T00:00:00.000Z', endsAt: null }],
+  promotions: [{ id: 'a1', title: 'Aktion', text: 'Text', badge: 'TOP', priceText: '1 €', emoji: '🔥', image: '/logo.jpg', endsAt: '2030-01-01T00:00:00.000Z' }],
+};
+
+/**
+ * Renders every page once. The Worker calls this while its isolate starts,
+ * so React and the components are compiled before the first request instead
+ * of during it: CPU time of a request is limited (10 ms on the free plan),
+ * startup has its own, larger allowance.
+ */
+export function warmUp(siteUrl) {
+  for (const page of PUBLIC_PAGES) renderRegion(page.name, WARMUP_SITE, { siteUrl, title: '', description: '' });
+}
+
 // Inside <script> nothing may look like "</script>" or "<!--".
 const scriptJson = (value) => JSON.stringify(value).replace(/</g, '\\u003c');
 

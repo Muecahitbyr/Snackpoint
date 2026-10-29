@@ -441,6 +441,86 @@ ohne Wartezeit. Im Normalfall ändert sich nichts.
   JavaScript sehen sie nach dem Laden der Skripte, wie vor der SEO-Arbeit. Gegenüber damals entfällt der
   separate Datenabruf.
 
+## CPU-Optimierung für den Free-Tarif (Nachtrag)
+
+**Ausgangslage live** (Version `c75c80e3`, `wrangler tail`): Seiten mit Rendering brauchten im Median
+9 ms CPU (p90 15 ms, max 32 ms). Das Limit des Free-Tarifs liegt bei 10 ms. Anfragen ohne Rendering
+(robots.txt, API-Proxy) brauchten 0–3 ms. Abgebrochen wurde keine Anfrage.
+
+**Analyse:**
+- **Profil des ersten Aufrufs** (frischer Prozess, ohne Optimierungscompiler wie in einem kalten Isolat):
+  rund zwei Drittel der Zeit entfallen auf React selbst. Die größte einzelne App-Komponente kostet 0,3 ms.
+  JSON-Parsen (0,06 ms) und Kodieren (0,08 ms) sind unerheblich.
+- **Ursache:** V8 kompiliert React und die Komponenten erst beim ersten Aufruf. Eine wenig besuchte Seite
+  trifft bei Cloudflare oft auf ein frisches Isolat, deshalb zahlt fast jede Anfrage diesen Preis. Ein
+  einzelner Engpass im Code existiert nicht.
+- **Geprüft und verworfen** (kein messbarer Gewinn): `renderToStaticMarkup` statt `renderToString`,
+  mehrfaches Aufwärmen.
+
+**Umgesetzt** (`worker/index.js`, `src/prerender.jsx`):
+1. **Aufwärmen beim Start des Isolats:** `warmUp()` rendert jede Seite einmal mit erfundenen
+   Beispieldaten, die nie ausgeliefert werden. Das Kompilieren fällt damit unter das Startlimit von 1 s,
+   nicht unter die 10 ms pro Anfrage. Lokal profiliert (`wrangler check startup`, workerd auf diesem
+   Rechner): Das Aufwärmen braucht 16,5 ms von 124,5 ms Startzeit im Profil (inklusive Profiler-Aufschlag).
+2. **Speicher im Isolat, 5 s TTL:** Die API-Daten und die daraus gerenderten Seiten werden wiederverwendet.
+   Gleichzeitige Seitenaufrufe teilen sich einen API-Abruf. Die gebaute Seite wird pro Isolat nur einmal
+   gelesen und zerlegt.
+3. **Leeren nach Admin-Änderungen:** Leitet der Worker eine erfolgreiche schreibende Admin-Anfrage weiter
+   (`POST`/`PUT`/`PATCH`/`DELETE` unter `/api/admin/`, 2xx), verwirft er den Speicher sofort. Login,
+   Session und CSRF prüft weiterhin der Server. Es gibt **keinen neuen Endpunkt**: Anfragen ohne Login
+   (401) und reine Lesezugriffe lösen nichts aus. Ein Abruf, der vor der Änderung gestartet ist, wird
+   danach nicht mehr gespeichert (Zähler `invalidations`, mit Test nachgewiesen).
+
+**Messung** (Node, frischer Prozess pro Lauf, je 15 Läufe, Median und Maximum, gleicher Testaufbau für
+alt und neu):
+
+| | bisher | neu |
+| --- | --- | --- |
+| erste Anfrage im frischen Isolat (MISS) | 6,3–6,7 ms (max 7,9) | 3,1–3,3 ms (max 3,7) |
+| weitere Seite mit gespeicherten Daten | 2,9–3,0 ms | 2,1–2,2 ms |
+| Wiederholung innerhalb von 5 s (HIT) | 2,3–2,5 ms | 0,4–0,7 ms |
+| API-Abrufe für 3 Seitenaufrufe | 3 | 1 |
+| Start des Isolats (eigenes Limit) | 31–32 ms | 38–39 ms |
+
+- **React-Anteil des MISS:** Startseite 1,7–1,9 ms, Sortiment 1,2–1,5 ms. Der Rest der rund 3 ms ist
+  Nodes JavaScript-Nachbildung von Request und Streams, die bei Cloudflare nativ ist.
+- **Live vorher:** 9 ms Median. Die Live-Werte lagen etwa beim 1,5- bis 3-Fachen der Node-Werte.
+- **Erwartung live:** MISS etwa 3–6 ms, HIT etwa 1–2 ms. Das ist eine Hochrechnung, belastbar erst nach
+  dem Deployment per `wrangler tail`.
+
+**Workers Cache (Cloudflare, seit 07/2026) bewusst nicht aktiviert.** Wrangler 4.153 kennt die Option
+`"cache": { "enabled": true }`. Dagegen spricht laut offizieller Dokumentation:
+- **Statische Dateien zählen ins Kontingent:** Mit aktiviertem Cache werden sie wie Worker-Anfragen
+  abgerechnet und zählen damit im Free-Tarif in die 100.000 Anfragen pro Tag. Ein Seitenaufruf mit
+  Skripten, Styles und Bildern wäre dann ein Vielfaches. Bei Überschreitung ist die Seite nicht erreichbar
+  (Fehler 1027).
+- **Host nicht im Schlüssel:** Der Hostname ist nicht Teil des Cache-Schlüssels. Preview-`robots.txt`
+  (`Disallow: /`), `noindex`-Antworten und Domain-Umleitungen könnten unter der echten Domain ausgeliefert
+  werden, wenn nicht jede hostabhängige Antwort ausdrücklich vom Cache ausgenommen wird.
+- **Kaum Nutzen bei 5 s:** Bei einer TTL von höchstens 5 s und den Besucherzahlen eines Kiosks wären
+  Treffer selten. Entscheidend ist der MISS, und den senkt das Aufwärmen.
+- **Free-Tarif unklar:** Die Verfügbarkeit im Free-Tarif nennt die Dokumentation nicht ausdrücklich.
+- **Später einsetzbar:** Bei viel mehr Besuchern wäre er eine Option. `ctx.cache.purge()` könnte dann an
+  derselben Stelle wie das heutige Leeren aufgerufen werden.
+
+**Sicherheit und SEO unverändert:**
+- **HTTP-Cache-Header:** Die öffentlichen Seiten gehen weiterhin mit `max-age=0, must-revalidate` raus,
+  der Admin mit `no-store`. Die API setzt ihre Header selbst. Weder Cloudflare noch der Browser speichern
+  HTML.
+- **Inhalt unabhängig von Host und Query:** Gerenderter Inhalt hängt weder vom Host noch von
+  Query-Parametern ab. Getestet: Eine Preview-Anfrage mit Query und Skript-Versuch füllt den Speicher, der
+  normale Host bekommt danach identisches HTML ohne `noindex`, mit korrektem Canonical, ohne Query-Reste.
+  Den Header `noindex` setzt der Worker pro Anfrage.
+- **Getestet in workerd** (`wrangler dev`, Mock-API mit Zähler):
+  - MISS, HIT, andere Seite, Ablauf nach 5 s
+  - Admin speichert, Admin ohne Login, Admin liest
+  - 8 parallele Aufrufe mit 1 API-Abruf
+  - API aus bei frischem und bei abgelaufenem Speicher (Build-Stand, 200), API wieder da
+- **Regression:**
+  - Prüfskript 84 von 84, Browser-Test 16 von 16, kein Aufblitzen.
+  - Admin-Ablauf mit echter API und DB: Änderung sofort im HTML.
+  - Testsuiten 85 und 46 bestanden, TypeScript ohne Fehler.
+
 ## Übersicht A / B / C
 
 ### A: Technisch im Code vollständig umgesetzt

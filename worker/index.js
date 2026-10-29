@@ -11,6 +11,8 @@
 //             what the admin panel shows right now, not the state of the last
 //             deployment. If the API doesn't answer in time, the page goes out
 //             as built (dist/, prerendered by scripts/prerender.mjs).
+//             Data and rendered pages are kept for 5 s in the isolate's memory
+//             and dropped right after a successful change in the admin panel.
 //   /index.html, /produkte.html, /produkte/, …   301 to the clean URL.
 //   /robots.txt, /sitemap.xml        for preview URLs and old domains.
 //
@@ -19,7 +21,7 @@
 //   PROXY_SECRET    secret  same value as on Railway (wrangler secret put PROXY_SECRET)
 //   REDIRECT_HOSTS  var     optional, after moving to an own domain: old host
 //                           names (comma-separated) whose pages 301 to SETTINGS.siteUrl
-import { EMPTY_SITE, PUBLIC_PAGES, REGION_END, REGION_START, SETTINGS, renderRegion } from '../build/ssr/prerender.js';
+import { EMPTY_SITE, PUBLIC_PAGES, REGION_END, REGION_START, SETTINGS, renderRegion, warmUp } from '../build/ssr/prerender.js';
 
 const SITE = new URL(SETTINGS.siteUrl);
 const PAGE_BY_PATH = new Map(PUBLIC_PAGES.map((page) => [page.path, page]));
@@ -31,10 +33,14 @@ const CLEAN_URLS = new Map(
 // visitors see a blank page, so keep it short: the API answers in about 150 ms
 // (measured live: median 148 ms, max 318 ms).
 const API_TIMEOUT_MS = 1500;
-// Rendering time grows with the catalog (measured: under 1 ms with 65 products,
-// about 9 ms for /produkte with 1000). Larger payloads would risk the 10 ms CPU
-// limit of the free Workers plan, so the page then goes out as built.
+// Rendering time grows with the catalog (about 6 times as long for /produkte
+// with 1000 products as with today's 65). Larger payloads would risk the 10 ms
+// CPU limit of the free Workers plan, so the page then goes out as built.
 const MAX_LIVE_BYTES = 200_000;
+// How long this isolate reuses the API data and the pages rendered from it.
+// Nothing is cached in Cloudflare or the browser: the pages still go out with
+// "max-age=0, must-revalidate".
+const CACHE_TTL_MS = 5000;
 // name in wrangler.jsonc: preview URLs look like <version>-snackpoint.<account>.workers.dev
 const WORKER_NAME = 'snackpoint';
 
@@ -51,6 +57,14 @@ const PAGE_HEADERS = {
 };
 
 const unescapeHtml = (text) => text.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+
+// Compile React and the components now, while the isolate starts, instead of
+// in the first request (that alone took most of its CPU time).
+try {
+  warmUp(SITE.origin);
+} catch (error) {
+  console.error('Aufwärmen fehlgeschlagen', error);
+}
 
 /** Version previews and the like: never indexed. */
 const isPreviewHost = (host) => host.endsWith('.workers.dev') && host.split('.')[0].endsWith(`-${WORKER_NAME}`);
@@ -81,6 +95,64 @@ export default {
   },
 };
 
+// Per isolate: the built pages split at the <!--ssr--> markers (they only
+// change with a deployment), the current API data and the regions rendered
+// from it. Nothing here depends on host name or query string, so one visitor
+// can't plant content for another.
+const templates = new Map();
+let current = null; // { expires, site, regions: Map<page name, region> }
+let loading = null; // one API request at a time, shared by concurrent page views
+let invalidations = 0;
+
+/** Drops the cached data, e.g. after a change in the admin panel. */
+function invalidate() {
+  invalidations++;
+  current = null;
+  loading = null;
+}
+
+function siteData(env, host) {
+  if (current && current.expires > Date.now()) return current;
+  if (!loading) {
+    const generation = invalidations;
+    const promise = loadSite(env, host)
+      .then((site) => {
+        const entry = { expires: Date.now() + CACHE_TTL_MS, site: { ...EMPTY_SITE, ...site }, regions: new Map() };
+        // Started before a change in the admin panel: good for this request, not for the next ones.
+        if (generation === invalidations) current = entry;
+        return entry;
+      })
+      .finally(() => {
+        if (loading === promise) loading = null;
+      });
+    loading = promise;
+  }
+  return loading;
+}
+
+async function template(page, request, env) {
+  if (templates.has(page.name)) return templates.get(page.name);
+  const asset = await env.ASSETS.fetch(new Request(new URL(page.path, request.url)));
+  if (!asset.ok) return null;
+  const html = await asset.text();
+  const start = html.indexOf(REGION_START);
+  const end = html.indexOf(REGION_END);
+  if (start < 0 || end < start) return { html };
+  const regionEnd = end + REGION_END.length;
+  const head = html.slice(0, start);
+  const parts = {
+    html,
+    // The browser gets the data inside the page, a preload would load it twice.
+    head: head.replace(/[ \t]*<link rel="preload" href="\/api\/public\/site"[^>]*>\n?/, ''),
+    built: html.slice(start, regionEnd),
+    tail: html.slice(regionEnd),
+    title: unescapeHtml(head.match(/<title>([^<]*)<\/title>/)?.[1] ?? ''),
+    description: unescapeHtml(head.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? ''),
+  };
+  templates.set(page.name, parts);
+  return parts;
+}
+
 async function loadSite(env, host) {
   const response = await fetch(new URL('/api/public/site', env.API_ORIGIN), {
     headers: { Accept: 'application/json', 'X-Proxy-Secret': env.PROXY_SECRET, 'X-Original-Host': host },
@@ -99,23 +171,11 @@ async function loadSite(env, host) {
  * its way.
  */
 async function renderPage(page, request, env, ctx, { preview, host }) {
-  const asset = await env.ASSETS.fetch(new Request(new URL(page.path, request.url)));
-  if (!asset.ok) return asset;
-  const html = await asset.text();
+  const parts = await template(page, request, env);
+  if (!parts) return env.ASSETS.fetch(request);
   const headers = new Headers(PAGE_HEADERS);
   if (preview) headers.set('X-Robots-Tag', 'noindex');
-
-  const start = html.indexOf(REGION_START);
-  const end = html.indexOf(REGION_END);
-  if (start < 0 || end < start || !env.API_ORIGIN || !env.PROXY_SECRET) return new Response(html, { headers });
-
-  const regionEnd = end + REGION_END.length;
-  // The browser gets the data inside the page, a preload would load it twice.
-  const head = html.slice(0, start).replace(/[ \t]*<link rel="preload" href="\/api\/public\/site"[^>]*>\n?/, '');
-  const built = html.slice(start, regionEnd);
-  const tail = html.slice(regionEnd);
-  const title = unescapeHtml(head.match(/<title>([^<]*)<\/title>/)?.[1] ?? '');
-  const description = unescapeHtml(head.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? '');
+  if (!parts.head || !env.API_ORIGIN || !env.PROXY_SECRET) return new Response(parts.html, { headers });
 
   const { readable, writable } = new TransformStream();
   ctx.waitUntil(
@@ -123,16 +183,20 @@ async function renderPage(page, request, env, ctx, { preview, host }) {
       const writer = writable.getWriter();
       const encoder = new TextEncoder();
       try {
-        await writer.write(encoder.encode(head));
+        await writer.write(encoder.encode(parts.head));
         let region;
         try {
-          const site = { ...EMPTY_SITE, ...(await loadSite(env, host)) };
-          region = renderRegion(page.name, site, { siteUrl: SITE.origin, title, description, inlineData: true });
+          const data = await siteData(env, host);
+          region = data.regions.get(page.name);
+          if (!region) {
+            region = renderRegion(page.name, data.site, { siteUrl: SITE.origin, title: parts.title, description: parts.description, inlineData: true });
+            data.regions.set(page.name, region);
+          }
         } catch (error) {
           console.error(`${page.path}: Stand vom Build ausgeliefert`, error);
-          region = built;
+          region = parts.built;
         }
-        await writer.write(encoder.encode(region + tail));
+        await writer.write(encoder.encode(region + parts.tail));
         await writer.close();
       } catch (error) {
         await writer.abort(error).catch(() => {});
@@ -170,5 +234,9 @@ async function proxyApi(request, env, ctx, url) {
     return Response.json({ error: 'Der Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.' }, { status: 502 });
   }
   if (cacheable && response.status === 200) ctx.waitUntil(cache.put(request, response.clone()));
+  // A change saved in the admin panel (the API checked login and CSRF): show
+  // it on the next page view instead of after CACHE_TTL_MS. Other isolates
+  // catch up within CACHE_TTL_MS.
+  if (response.ok && request.method !== 'GET' && request.method !== 'HEAD' && url.pathname.startsWith('/api/admin/')) invalidate();
   return response;
 }

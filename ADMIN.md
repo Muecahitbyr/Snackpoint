@@ -22,7 +22,8 @@ Die Railway-Adresse der API antwortet nur auf Anfragen, die das gemeinsame `PROX
 Die öffentlichen Seiten kommen als fertiges HTML mit den aktuellen Produkten, Events und Öffnungszeiten
 beim Besucher an (auch bei Suchmaschinen und KI-Crawlern ohne JavaScript): Der Worker holt dafür bei
 jedem Aufruf `/api/public/site` und rendert die Seite (`src/prerender.jsx`). Antwortet die API nicht
-innerhalb von 1,5 Sekunden, geht die Seite im Stand des letzten Builds raus. Details:
+innerhalb von 1,5 Sekunden, geht die Seite im Stand des letzten Builds raus. Daten und gerenderte Seiten
+bleiben 5 Sekunden im Speicher des Workers. Speichern im Adminpanel leert diesen Speicher sofort. Details:
 `docs/seo-geo-final-audit.md`.
 
 | Ordner / Datei | Inhalt |
