@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { api, formatEuro, useApi } from '../api';
+import { api, formatEuro, parseEuro, useApi } from '../api';
 import { navigate } from '../router';
 import {
-  Badge, Button, EmptyState, ErrorBox, MoveButtons, PageHeader, SearchInput, Spinner, SwitchButton, useAction, useConfirm,
+  Badge, Button, EmptyState, ErrorBox, Modal, MoveButtons, PageHeader, SearchInput, SelectField, Spinner, SwitchButton, TextField,
+  useAction, useConfirm, useToast,
 } from '../ui';
 import { Icon } from '../icons';
 
@@ -34,6 +35,82 @@ function matchesStatus(product, status) {
   }
 }
 
+/** The same change for several products at once ("" = leave as it is). */
+function BulkEditModal({ ids, categories, onClose, onDone }) {
+  const toast = useToast();
+  const [form, setForm] = useState({ availability: '', isActive: '', showInCatalog: '', categoryId: '', price: '' });
+  const [errors, setErrors] = useState({});
+  const [busy, setBusy] = useState(false);
+  const set = (key) => (value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  async function save(e) {
+    e.preventDefault();
+    const changes = {};
+    if (form.availability) changes.availability = form.availability;
+    if (form.isActive) changes.isActive = form.isActive === 'yes';
+    if (form.showInCatalog) changes.showInCatalog = form.showInCatalog === 'yes';
+    if (form.categoryId) changes.categoryId = form.categoryId;
+    if (form.price.trim()) {
+      const priceCents = parseEuro(form.price);
+      if (Number.isNaN(priceCents)) {
+        setErrors({ price: 'Bitte als Betrag eingeben, z. B. 1,50' });
+        return;
+      }
+      changes.priceCents = priceCents;
+    }
+    if (!Object.keys(changes).length) {
+      toast.error('Bitte wähle mindestens eine Änderung aus.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await api('/admin/products/bulk', { method: 'POST', body: { ids, changes } });
+      toast.success(`${result.updated} ${result.updated === 1 ? 'Produkt' : 'Produkte'} geändert.`);
+      onDone();
+    } catch (error) {
+      setErrors(error.fields);
+      toast.error(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal title={`${ids.length} ${ids.length === 1 ? 'Produkt' : 'Produkte'} bearbeiten`} onClose={onClose}>
+      <form onSubmit={save}>
+        <p className="modal-intro">Nur was du hier auswählst, wird bei allen gewählten Produkten geändert. Alles andere bleibt, wie es ist.</p>
+        <div className="field-row">
+          <SelectField label="Verfügbarkeit" value={form.availability} onChange={set('availability')}>
+            <option value="">Unverändert</option>
+            {Object.entries(AVAILABILITY).map(([id, { label }]) => <option key={id} value={id}>{label}</option>)}
+          </SelectField>
+          <SelectField label="Sichtbar auf der Webseite" value={form.isActive} onChange={set('isActive')}>
+            <option value="">Unverändert</option>
+            <option value="yes">Aktiv</option>
+            <option value="no">Inaktiv (ausgeblendet)</option>
+          </SelectField>
+        </div>
+        <div className="field-row">
+          <SelectField label="Auf der Produktseite" value={form.showInCatalog} onChange={set('showInCatalog')}>
+            <option value="">Unverändert</option>
+            <option value="yes">Anzeigen</option>
+            <option value="no">Nicht anzeigen</option>
+          </SelectField>
+          <SelectField label="Kategorie" value={form.categoryId} onChange={set('categoryId')} error={errors.categoryId}>
+            <option value="">Unverändert</option>
+            {categories.map((category) => <option key={category.id} value={category.id}>{category.groupName} › {category.name}</option>)}
+          </SelectField>
+        </div>
+        <TextField label="Neuer Preis (€)" hint="Leer lassen, damit jedes Produkt seinen Preis behält." inputMode="decimal" placeholder="z. B. 1,50" value={form.price} onChange={set('price')} error={errors.price || errors['changes.priceCents']} />
+        <div className="modal-actions">
+          <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
+          <Button type="submit" busy={busy}>Übernehmen</Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
 export default function Products() {
   const { data, error, loading, reload, setData } = useApi('/admin/products');
   const categories = useApi('/admin/categories');
@@ -51,6 +128,8 @@ export default function Products() {
     }
   });
   const [status, setStatus] = useState('');
+  const [selected, setSelected] = useState(() => new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const products = data?.items ?? [];
   const visible = useMemo(() => {
@@ -67,6 +146,24 @@ export default function Products() {
   // Reordering makes sense within one category (catalog order); the homepage has its own page.
   const reorderMode = !search && categoryId && !status;
   const visibleIds = visible.map((product) => product.id);
+
+  // Only products that still exist count (one might have been deleted meanwhile).
+  const selectedIds = products.filter((product) => selected.has(product.id)).map((product) => product.id);
+  const allVisibleSelected = visible.length > 0 && visible.every((product) => selected.has(product.id));
+  const toggle = (id) => setSelected((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  });
+  const toggleVisible = () => setSelected((prev) => {
+    const next = new Set(prev);
+    for (const product of visible) {
+      if (allVisibleSelected) next.delete(product.id);
+      else next.add(product.id);
+    }
+    return next;
+  });
 
   const replace = (item) => setData((prev) => ({ ...prev, items: prev.items.map((p) => (p.id === item.id ? item : p)) }));
 
@@ -121,6 +218,16 @@ export default function Products() {
         <p className="hint-bar subtle">Tipp: Wähle eine Kategorie, um die Reihenfolge zu ändern. Die 4 Produkte der Startseite wählst du unter <a href="#/startseite">Startseite</a>.</p>
       )}
 
+      {selectedIds.length > 0 && (
+        <div className="hint-bar bulk-bar">
+          <span><strong>{selectedIds.length}</strong> {selectedIds.length === 1 ? 'Produkt' : 'Produkte'} ausgewählt</span>
+          <span className="row-actions">
+            <Button size="small" onClick={() => setBulkOpen(true)}>Gemeinsam bearbeiten</Button>
+            <Button variant="ghost" size="small" onClick={() => setSelected(new Set())}>Auswahl aufheben</Button>
+          </span>
+        </div>
+      )}
+
       {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : visible.length === 0 ? (
         <EmptyState icon="search" title="Keine Produkte gefunden">Passe Suche oder Filter an.</EmptyState>
       ) : (
@@ -128,6 +235,9 @@ export default function Products() {
           <table className="table">
             <thead>
               <tr>
+                <th className="select-cell">
+                  <input type="checkbox" checked={allVisibleSelected} onChange={toggleVisible} aria-label="Alle angezeigten Produkte auswählen" />
+                </th>
                 <th>Produkt</th>
                 <th>Kategorie</th>
                 <th>Preis</th>
@@ -138,7 +248,10 @@ export default function Products() {
             </thead>
             <tbody>
               {visible.map((product) => (
-                <tr key={product.id} className={product.isActive ? '' : 'is-muted'}>
+                <tr key={product.id} className={`${product.isActive ? '' : 'is-muted'} ${selected.has(product.id) ? 'is-selected' : ''}`.trim()}>
+                  <td className="select-cell" data-label="Auswählen">
+                    <input type="checkbox" checked={selected.has(product.id)} onChange={() => toggle(product.id)} aria-label={`${product.name} auswählen`} />
+                  </td>
                   <td data-label="Produkt">
                     <a className="row-title" href={`#/produkte/${product.id}`}>
                       <span className="thumb">{product.image ? <img src={product.image.thumbUrl} alt="" /> : product.emoji || <Icon name="package" />}</span>
@@ -151,8 +264,16 @@ export default function Products() {
                   <td data-label="Kategorie">{product.categoryName}</td>
                   <td data-label="Preis">{formatEuro(product.priceCents)}</td>
                   <td data-label="Status">
+                    <select
+                      className={`filter filter-inline ${product.availability !== 'available' ? `is-${AVAILABILITY[product.availability].tone}` : ''}`}
+                      value={product.availability}
+                      disabled={busy}
+                      onChange={(e) => patch(product, { availability: e.target.value }, `„${product.name}“: ${AVAILABILITY[e.target.value].label}.`)}
+                      aria-label={`Verfügbarkeit von ${product.name}`}
+                    >
+                      {Object.entries(AVAILABILITY).map(([id, { label }]) => <option key={id} value={id}>{label}</option>)}
+                    </select>
                     <span className="badges">
-                      {product.availability !== 'available' && <Badge tone={AVAILABILITY[product.availability].tone}>{AVAILABILITY[product.availability].label}</Badge>}
                       {product.isHighlight && <Badge tone="accent"><Icon name="star" size={11} filled /> Startseite</Badge>}
                       {!product.showInCatalog && <Badge>Nicht auf Produktseite</Badge>}
                     </span>
@@ -179,6 +300,18 @@ export default function Products() {
         </div>
       )}
       {data && <p className="table-foot">{visible.length} von {products.length} Produkten</p>}
+      {bulkOpen && (
+        <BulkEditModal
+          ids={selectedIds}
+          categories={categories.data?.items ?? []}
+          onClose={() => setBulkOpen(false)}
+          onDone={() => {
+            setBulkOpen(false);
+            setSelected(new Set());
+            reload();
+          }}
+        />
+      )}
     </>
   );
 }

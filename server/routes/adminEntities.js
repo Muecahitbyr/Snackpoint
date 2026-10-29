@@ -5,7 +5,7 @@ import { transaction } from '../db/pool.js';
 import { audit } from '../lib/audit.js';
 import { crudRoutes } from './crud.js';
 import { CHAT_CATEGORY_IDS } from '../lib/chatCategories.js';
-import { badRequest } from '../lib/errors.js';
+import { badRequest, mapDbError } from '../lib/errors.js';
 import { mediaUrl } from '../lib/media.js';
 import { uniqueSlug } from '../lib/slug.js';
 import { cents, isoDate, link, parse, readJson, requiredText, sortOrder, text, uuid } from '../lib/validation.js';
@@ -328,4 +328,39 @@ products.post('/highlights', async (c) => {
   });
   await audit(c, 'update', 'product', '', `Startseite: ${names.join(', ') || 'keine Produkte'}`);
   return c.json({ ok: true });
+});
+
+// Several products at once: the same availability, visibility, category or
+// price for all of them, in one transaction.
+const BULK_COLUMNS = { availability: 'availability', isActive: 'is_active', showInCatalog: 'show_in_catalog', categoryId: 'category_id', priceCents: 'price_cents' };
+const BULK_LABELS = { availability: 'Verfügbarkeit', isActive: 'Sichtbarkeit', showInCatalog: 'Produktseite', categoryId: 'Kategorie', priceCents: 'Preis' };
+
+products.post('/bulk', async (c) => {
+  const { ids, changes } = parse(
+    z.object({
+      ids: z.array(uuid).min(1).max(1000),
+      changes: z.object({
+        availability: z.enum(['available', 'coming_soon', 'sold_out']).optional(),
+        isActive: z.boolean().optional(),
+        showInCatalog: z.boolean().optional(),
+        categoryId: uuid.optional(),
+        priceCents: cents.optional(),
+      }),
+    }),
+    await readJson(c)
+  );
+  const fields = Object.keys(changes).filter((field) => changes[field] !== undefined);
+  if (!fields.length) throw badRequest('Bitte wähle mindestens eine Änderung aus.');
+  const sets = fields.map((field, i) => `${BULK_COLUMNS[field]} = $${i + 2}`).join(', ');
+  let updated;
+  try {
+    updated = await transaction(async (db) => {
+      const { rowCount } = await db.query(`UPDATE products SET ${sets} WHERE id = ANY($1)`, [[...new Set(ids)], ...fields.map((field) => changes[field])]);
+      return rowCount;
+    });
+  } catch (error) {
+    throw mapDbError(error);
+  }
+  await audit(c, 'update', 'product', '', `Sammelbearbeitung: ${updated} Produkte (${fields.map((field) => BULK_LABELS[field]).join(', ')})`);
+  return c.json({ ok: true, updated });
 });

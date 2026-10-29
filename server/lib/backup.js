@@ -12,7 +12,7 @@ export const VERSION = 1;
 // Parents before children, so a restore can insert in this order.
 export const TABLES = [
   'admin_users', 'media', 'product_groups', 'product_categories', 'products', 'events', 'event_images',
-  'banners', 'promotions', 'services', 'reviews', 'opening_hours', 'site_content', 'settings',
+  'banners', 'promotions', 'services', 'reviews', 'opening_hours', 'special_hours', 'site_content', 'settings',
   'product_wishes', 'wish_votes', 'audit_log',
 ];
 const BATCHED = new Set(['media']); // large rows: read a few at a time

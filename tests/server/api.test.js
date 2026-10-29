@@ -222,6 +222,19 @@ describe('authentication & access control', () => {
     assert.equal(results.filter((r) => r.status === 429).length, 20 - checked);
   });
 
+  it('shows current locks and lets the developer lift them', async () => {
+    const email = 'bruteforce@test.local';
+    const lock = (await admin.send('/api/admin/audit/logins')).data.locks.find((l) => l.type === 'account' && l.value === email);
+    assert.ok(lock && new Date(lock.until) > new Date(), 'locked account listed');
+    assert.equal((await client().send('/api/admin/audit/logins/unlock', { method: 'POST', body: { type: 'account', value: email } })).status, 401);
+    assert.equal((await admin.send('/api/admin/audit/logins/unlock', { method: 'POST', body: { type: 'mailbox', value: email } })).status, 400);
+    const unlocked = await admin.send('/api/admin/audit/logins/unlock', { method: 'POST', body: { type: 'account', value: email } });
+    assert.equal(unlocked.status, 200);
+    assert.equal(unlocked.data.cleared, 5);
+    assert.ok(!(await admin.send('/api/admin/audit/logins')).data.locks.some((l) => l.value === email));
+    assert.equal((await client().login(email, 'wrong-after-unlock')).status, 401, 'can try again');
+  });
+
   it('never exposes password hashes or session tokens', async () => {
     const me = await admin.send('/api/auth/me');
     assert.ok(!JSON.stringify(me.data).includes('argon2'));
@@ -342,6 +355,28 @@ describe('products & categories', () => {
       assert.ok(rows[0].n <= 4, `${rows[0].n} homepage products`);
     }
     await admin.send('/api/admin/products/highlights', { method: 'POST', body: { items: original } });
+  });
+
+  it('changes several products at once', async () => {
+    const items = (await admin.send('/api/admin/products')).data.items.slice(0, 3);
+    const ids = items.map((p) => p.id);
+    const target = (await admin.send('/api/admin/categories')).data.items.at(-1).id;
+    const bulk = (body) => admin.send('/api/admin/products/bulk', { method: 'POST', body });
+    const result = await bulk({ ids, changes: { availability: 'sold_out', priceCents: 249, categoryId: target, name: 'Ignoriert' } });
+    assert.equal(result.status, 200);
+    assert.equal(result.data.updated, 3);
+    const after = (await admin.send('/api/admin/products')).data.items.filter((p) => ids.includes(p.id));
+    for (const product of after) {
+      assert.deepEqual([product.availability, product.priceCents, product.categoryId], ['sold_out', 249, target]);
+      assert.equal(product.name, items.find((p) => p.id === product.id).name, 'other fields untouched');
+    }
+    for (const body of [{ ids, changes: {} }, { ids: [], changes: { isActive: true } }, { ids, changes: { availability: 'gratis' } }, { ids: ['x'], changes: { isActive: true } }]) {
+      assert.equal((await bulk(body)).status, 400, JSON.stringify(body));
+    }
+    assert.equal((await bulk({ ids, changes: { categoryId: '00000000-0000-4000-8000-000000000000' } })).status, 400, 'unknown category');
+    for (const p of items) {
+      await admin.send(`/api/admin/products/${p.id}`, { method: 'PATCH', body: { availability: p.availability, priceCents: p.priceCents, categoryId: p.categoryId } });
+    }
   });
 
   it('reorders and deletes', async () => {
@@ -479,6 +514,39 @@ describe('banners, promotions, content, hours', () => {
     assert.equal((await admin.send('/api/admin/hours', { method: 'PUT', body: { days } })).status, 400);
   });
 
+  it('manages days that differ from the weekly plan', async () => {
+    const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' });
+    const day = (offset) => {
+      const date = new Date(`${today}T00:00:00Z`);
+      date.setUTCDate(date.getUTCDate() + offset);
+      return date.toISOString().slice(0, 10);
+    };
+    const special = (body, id) => admin.send(`/api/admin/hours/special${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body });
+    const closed = await special({ day: day(3), closed: true, note: 'Betriebsurlaub' });
+    assert.equal(closed.status, 201);
+    const short = await special({ day: day(5), closed: false, open: '10:00', close: '14:00' });
+    assert.equal(short.status, 201);
+    const past = await special({ day: day(-2), closed: true });
+    assert.equal(past.status, 201);
+    assert.equal((await special({ day: day(3), closed: false, open: '08:00', close: '12:00' })).status, 409, 'one entry per day');
+    for (const body of [{ day: '2026-02-30', closed: true }, { day: 'morgen', closed: true }, { day: day(6), closed: false }, { day: day(6), closed: false, open: '14:00', close: '10:00' }, { day: day(6), closed: true, note: 'x'.repeat(81) }]) {
+      assert.equal((await special(body)).status, 400, JSON.stringify(body));
+    }
+
+    const live = (await site()).specialHours;
+    assert.deepEqual(live.map((d) => d.date), [day(3), day(5)], 'only upcoming days are public');
+    assert.deepEqual([live[0].closed, live[0].note], [true, 'Betriebsurlaub']);
+    assert.deepEqual([live[1].closed, live[1].open, live[1].close], [false, '10:00', '14:00']);
+
+    const edited = await special({ day: day(5), closed: false, open: '09:00', close: '13:00', note: 'Kurzer Tag' }, short.data.item.id);
+    assert.equal(edited.status, 200);
+    assert.equal((await site()).specialHours[1].open, '09:00');
+    assert.ok((await admin.send('/api/admin/hours/special')).data.items.some((d) => d.day === day(-2)), 'the admin still sees last week');
+
+    for (const item of [closed, short, past]) assert.equal((await admin.send(`/api/admin/hours/special/${item.data.item.id}`, { method: 'DELETE' })).status, 200);
+    assert.deepEqual((await site()).specialHours, []);
+  });
+
   it('rejects files that are not images', async () => {
     const form = new FormData();
     form.append('file', new File(['<svg onload=alert(1)>'], 'evil.svg', { type: 'image/svg+xml' }));
@@ -606,6 +674,9 @@ describe('roles', () => {
       assert.equal((await owner.send(path)).status, 403, path);
     }
     assert.equal((await owner.send('/api/admin/users', { method: 'POST', body: {} })).status, 403);
+    assert.equal((await owner.send('/api/admin/audit/logins')).status, 403);
+    assert.equal((await owner.send('/api/admin/audit/logins/unlock', { method: 'POST', body: { type: 'ip', value: '1.2.3.4' } })).status, 403);
+    assert.equal((await owner.send('/api/admin/hours/special')).status, 200, 'owners manage special days');
     assert.equal((await owner.send('/api/auth/password', { method: 'POST', body: { currentPassword: 'x', newPassword: 'y' } })).status, 403);
     const ownerDashboard = (await owner.send('/api/admin/dashboard')).data;
     assert.equal(ownerDashboard.lastBackupAt, undefined, 'no backup info for owners');

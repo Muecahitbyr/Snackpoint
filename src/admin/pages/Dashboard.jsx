@@ -8,6 +8,7 @@ const ENTITY_LABELS = {
   promotion: 'Aktion', service: 'Leistung', review: 'Bewertung', content: 'Webseiteninhalt', settings: 'Einstellungen',
   opening_hours: 'Öffnungszeiten', media: 'Bild', password: 'Passwort', session: 'Sitzung',
   admin_user: 'Benutzerkonto', backup: 'Datensicherung', wish: 'Produktwunsch',
+  special_hours: 'Abweichender Tag', login_lock: 'Anmeldesperre',
 };
 const ACTION_LABELS = { create: 'erstellt', update: 'geändert', delete: 'gelöscht', reorder: 'sortiert' };
 const BACKUP_DUE_DAYS = 14;

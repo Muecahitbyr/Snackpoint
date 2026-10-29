@@ -18,8 +18,8 @@ import { HttpError } from '../lib/errors.js';
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 
-/** Throws 429 while locked; ignores the attempt `ownId` (the one being checked). */
-async function assertLoginAllowed(ip, identifier, ownId) {
+/** Until when (ms timestamp, 0 = not locked) the account and/or IP is locked; ignores the attempt `ownId`. */
+async function lockedUntil(ip, identifier, ownId = 0) {
   const { rows } = await query(
     `WITH last_success AS (
        SELECT coalesce(max(created_at), '-infinity') AS at FROM login_attempts WHERE identifier = $2 AND success
@@ -46,13 +46,17 @@ async function assertLoginAllowed(ip, identifier, ownId) {
   );
   const r = rows[0];
   const at = (value, offset) => (value ? new Date(value).getTime() + offset : 0);
-  const lockedUntil = Math.max(
+  return Math.max(
     r.account_15m >= 5 ? at(r.account_15m_first, 15 * MINUTE) : 0,
     r.account_24h >= 30 ? at(r.account_last, 24 * HOUR) : r.account_24h >= 15 ? at(r.account_last, HOUR) : 0,
     r.ip_15m >= 20 ? at(r.ip_15m_first, 15 * MINUTE) : 0,
     r.ip_24h >= 60 ? at(r.ip_last, 24 * HOUR) : 0
   );
-  const remaining = lockedUntil - Date.now();
+}
+
+/** Throws 429 while locked; ignores the attempt `ownId` (the one being checked). */
+async function assertLoginAllowed(ip, identifier, ownId) {
+  const remaining = (await lockedUntil(ip, identifier, ownId)) - Date.now();
   if (remaining > 0) {
     const minutes = Math.ceil(remaining / MINUTE);
     const wait = minutes > 90 ? `${Math.ceil(minutes / 60)} Stunden` : `${minutes} Minuten`;
@@ -88,4 +92,33 @@ export async function loginSucceeded(id) {
 /** Forgets an attempt that wasn't a password guess (blocked, bot check failed, step-up passed). */
 export async function discardLoginAttempt(id) {
   await query('DELETE FROM login_attempts WHERE id = $1', [id]);
+}
+
+/**
+ * Accounts and IP addresses locked right now, for the change log
+ * ({ type: 'account' | 'ip', value, until }). Login names are never empty
+ * (min. 3 characters), so '' checks only the other side.
+ */
+export async function currentLocks() {
+  const { rows } = await query(
+    `SELECT 'account' AS type, identifier AS value FROM login_attempts
+       WHERE NOT success AND created_at > now() - interval '24 hours' GROUP BY identifier
+     UNION ALL
+     SELECT 'ip', ip FROM login_attempts
+       WHERE NOT success AND created_at > now() - interval '24 hours' GROUP BY ip
+     LIMIT 400`
+  );
+  const locks = [];
+  for (const { type, value } of rows) {
+    const until = type === 'account' ? await lockedUntil('', value) : await lockedUntil(value, '');
+    if (until > Date.now()) locks.push({ type, value, until: new Date(until).toISOString() });
+  }
+  return locks;
+}
+
+/** Lifts a lock: forgets the failed attempts of that account or IP address. */
+export async function clearFailedAttempts(type, value) {
+  const column = type === 'account' ? 'identifier' : 'ip';
+  const { rowCount } = await query(`DELETE FROM login_attempts WHERE NOT success AND ${column} = $1`, [value]);
+  return rowCount;
 }

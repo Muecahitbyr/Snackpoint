@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { formatDateTime, useApi } from '../api';
-import { Badge, Button, Card, EmptyState, ErrorBox, PageHeader, Spinner, Tabs } from '../ui';
+import { api, formatDateTime, useApi } from '../api';
+import { Badge, Button, Card, EmptyState, ErrorBox, PageHeader, Spinner, Tabs, useAction, useConfirm } from '../ui';
 import { describeChange } from './Dashboard';
 
 const PAGE = 50;
@@ -8,11 +8,41 @@ const PAGE = 50;
 /** Recent login attempts — failed ones in red, to spot password guessing. */
 function Logins() {
   const { data, error, loading, reload } = useApi('/admin/audit/logins');
+  const confirm = useConfirm();
+  const [run, busy] = useAction();
   if (loading && !data) return <Spinner />;
   if (error) return <ErrorBox error={error} onRetry={reload} />;
-  const { summary, items } = data;
+  const { summary, items, locks } = data;
+
+  async function unlock(lock) {
+    const what = lock.type === 'account' ? `das Konto „${lock.value}“` : `die Adresse ${lock.value}`;
+    const ok = await confirm({
+      title: 'Sperre aufheben?',
+      message: `Die Fehlversuche für ${what} werden gelöscht, eine Anmeldung ist sofort wieder möglich. Nur aufheben, wenn du weißt, dass es kein Angriff ist.`,
+      confirmLabel: 'Sperre aufheben',
+    });
+    if (ok && (await run(() => api('/admin/audit/logins/unlock', { method: 'POST', body: { type: lock.type, value: lock.value } }), 'Sperre aufgehoben.'))) reload();
+  }
+
   return (
     <>
+      {locks.length > 0 && (
+        <Card title="Gerade gesperrt" description="Nach zu vielen Fehlversuchen sperrt die Anmeldung automatisch. Die Sperre endet von selbst, du kannst sie hier aber auch früher aufheben.">
+          <ul className="activity">
+            {locks.map((lock) => (
+              <li key={`${lock.type}:${lock.value}`}>
+                <div>
+                  <strong>{lock.value}</strong>
+                  <span className="activity-summary">{lock.type === 'account' ? 'Konto' : 'IP-Adresse'} · gesperrt bis {formatDateTime(lock.until)}</span>
+                </div>
+                <span className="activity-side">
+                  <Button variant="ghost" size="small" busy={busy} onClick={() => unlock(lock)}>Sperre aufheben</Button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
       <div className="stats">
         <div className="stat"><span className="stat-value">{summary.failed_24h}</span><span className="stat-label">Fehlgeschlagen (24 h)</span><span className="stat-hint">von {summary.failed_ips_24h} Adressen</span></div>
         <div className="stat"><span className="stat-value">{summary.success_24h}</span><span className="stat-label">Erfolgreich (24 h)</span></div>

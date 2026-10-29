@@ -8,7 +8,7 @@
 // intents.ts + one entry in HANDLERS.
 import { nextContext, type AnswerMemory } from './conversationContext';
 import { detectIntent } from './intents';
-import { getDayFact, getOpenStatus, getWeekFact } from './openingHours';
+import { getDayFact, getOpenStatus, getSpecialDaysFact, getWeekFact } from './openingHours';
 import {
   addressReply,
   buildProductAnswer,
@@ -49,7 +49,7 @@ const hours =
     const status = getOpenStatus(now);
     let reply: BotReply;
     if (intent === 'open_now') reply = openNowReply(status, false, rng);
-    else if (entities.weekly || !entities.day) reply = weekReply(getWeekFact(), rng);
+    else if (entities.weekly || !entities.day) reply = weekReply(getWeekFact(), rng, getSpecialDaysFact(now));
     else if (entities.remaining) reply = openNowReply(status, true, rng);
     else if (entities.again) reply = reopeningReply(status);
     else reply = dayReply(getDayFact(entities.day, now), entities.focus ?? 'both', entities.question ?? 'plain', rng);

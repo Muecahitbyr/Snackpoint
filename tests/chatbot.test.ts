@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { after, before, describe, it } from 'node:test';
 import { respond } from '../src/components/chatbot/chatbotEngine';
 import { tokenSimilarity } from '../src/components/chatbot/fuzzySearch';
 import { PRODUCTS, getProductName } from '../src/data/products';
 import type { ChatContext, Intent } from '../src/components/chatbot/types';
 import { loadSeedSiteData } from './fixtures/siteData';
+import { OPENING_HOURS, setOpeningHours } from '../src/data/hours';
 
 // The chat reads products, hours and the address from the database at page
 // load; here they come from the original seed content instead.
@@ -183,6 +184,34 @@ describe('new products need no chat rules', () => {
         assert.ok(answer.text.includes(name), `"${phrase}" should find ${name}, got:\n${answer.text}`);
       }
     }
+  });
+});
+
+describe('days that differ from the weekly plan', () => {
+  // Saturday 26.09. closed (holiday), Sunday 27.09. only 10–14.
+  const weekly = [...OPENING_HOURS];
+  before(() => setOpeningHours(weekly, [
+    { date: '2026-09-26', closed: true, note: 'Betriebsurlaub' },
+    { date: '2026-09-27', closed: false, open: '10:00', close: '14:00' },
+  ]));
+  after(() => setOpeningHours(weekly, []));
+
+  it('is closed on a closed special day, and names the next opening', () => {
+    const answer = ask('Ist gerade offen?');
+    assert.equal(answer.intent, 'open_now');
+    assert.ok(/Morgen.*10:00 Uhr/.test(answer.text), answer.text);
+  });
+  it('mentions the reason when asked about that day', () => {
+    const answer = ask('Habt ihr heute offen?');
+    assert.ok(answer.text.includes('Betriebsurlaub'), answer.text);
+  });
+  it('uses the special hours of another day', () => {
+    expectIntent('Wann öffnet ihr morgen?', 'opening_time', '10:00 Uhr');
+    expectIntent('Wie lange habt ihr morgen offen?', 'closing_time', '14:00 Uhr');
+  });
+  it('lists the coming special days with the week', () => {
+    const answer = expectIntent('Wie sind eure Öffnungszeiten?', 'opening_hours', 'täglich', 'Abweichend', 'Betriebsurlaub', '10:00 – 14:00 Uhr');
+    assert.ok(/Sa\., 26\.09\.: geschlossen/.test(answer.text), answer.text);
   });
 });
 

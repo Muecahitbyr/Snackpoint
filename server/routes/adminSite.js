@@ -6,6 +6,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import { config } from '../config.js';
 import { query, transaction } from '../db/pool.js';
+import { clearFailedAttempts, currentLocks } from '../auth/rateLimit.js';
 import { audit } from '../lib/audit.js';
 import { createBackupStream, lastBackupAt, markBackupDone } from '../lib/backup.js';
 import { CHAT_CATEGORIES } from '../lib/chatCategories.js';
@@ -64,6 +65,86 @@ hours.put('/', async (c) => {
   await audit(c, 'update', 'opening_hours', '', 'Öffnungszeiten');
   const { rows } = await query('SELECT * FROM opening_hours ORDER BY position');
   return c.json({ days: rows.map(hoursJson) });
+});
+
+// Days that differ from the weekly plan (holidays, holiday closures, short days).
+
+const DAY = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format JJJJ-MM-TT')
+  .refine((value) => !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) && new Date(`${value}T00:00:00Z`).toISOString().startsWith(value), 'Ungültiges Datum');
+const specialSchema = z.object({
+  day: DAY,
+  closed: z.boolean(),
+  open: TIME.nullable().optional(),
+  close: TIME.nullable().optional(),
+  note: text(80).optional(),
+});
+
+const SPECIAL_COLUMNS = `id, to_char(day, 'YYYY-MM-DD') AS day, is_closed, open_time, close_time, note`;
+const specialJson = (row) => ({ id: row.id, day: row.day, closed: row.is_closed, open: row.open_time, close: row.close_time, note: row.note });
+const dayLabel = (day) => new Date(`${day}T00:00:00Z`).toLocaleDateString('de-DE', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' });
+
+function parseSpecial(data) {
+  const special = parse(specialSchema, data);
+  if (!special.closed) {
+    const errors = {};
+    if (!special.open) errors.open = 'Öffnungszeit fehlt';
+    if (!special.close) errors.close = 'Schließzeit fehlt';
+    else if (special.open && special.close <= special.open) errors.close = 'Schließzeit muss nach der Öffnungszeit liegen';
+    if (Object.keys(errors).length) throw badRequest('Bitte überprüfe die Zeiten.', { fields: errors });
+  }
+  return special;
+}
+
+async function writeSpecial(id, special) {
+  const params = [special.day, special.closed, special.closed ? null : special.open, special.closed ? null : special.close, special.note ?? ''];
+  try {
+    const { rows } = id
+      ? await query(
+          `UPDATE special_hours SET day = $2, is_closed = $3, open_time = $4, close_time = $5, note = $6 WHERE id = $1 RETURNING ${SPECIAL_COLUMNS}`,
+          [id, ...params]
+        )
+      : await query(
+          `INSERT INTO special_hours (day, is_closed, open_time, close_time, note) VALUES ($1, $2, $3, $4, $5) RETURNING ${SPECIAL_COLUMNS}`,
+          params
+        );
+    if (!rows[0]) throw notFound();
+    return specialJson(rows[0]);
+  } catch (error) {
+    if (error.code === '23505') throw conflict('Für diesen Tag gibt es schon einen Eintrag. Bearbeite ihn stattdessen.');
+    throw mapDbError(error);
+  }
+}
+
+// Upcoming days plus the last week (so a just-passed entry doesn't vanish unnoticed).
+hours.get('/special', async (c) => {
+  const { rows } = await query(
+    `SELECT ${SPECIAL_COLUMNS} FROM special_hours
+      WHERE day >= (now() AT TIME ZONE 'Europe/Berlin')::date - 7 ORDER BY day LIMIT 200`
+  );
+  return c.json({ items: rows.map(specialJson) });
+});
+
+hours.post('/special', async (c) => {
+  const item = await writeSpecial(null, parseSpecial(await readJson(c)));
+  await audit(c, 'create', 'special_hours', item.id, `Abweichender Tag ${dayLabel(item.day)}`);
+  return c.json({ item }, 201);
+});
+
+hours.put('/special/:id', async (c) => {
+  const id = parseId(c.req.param('id'));
+  const item = await writeSpecial(id, parseSpecial(await readJson(c)));
+  await audit(c, 'update', 'special_hours', id, `Abweichender Tag ${dayLabel(item.day)}`);
+  return c.json({ item });
+});
+
+hours.delete('/special/:id', async (c) => {
+  const id = parseId(c.req.param('id'));
+  const { rows } = await query(`DELETE FROM special_hours WHERE id = $1 RETURNING to_char(day, 'YYYY-MM-DD') AS day`, [id]);
+  if (!rows[0]) throw notFound();
+  await audit(c, 'delete', 'special_hours', id, `Abweichender Tag ${dayLabel(rows[0].day)}`);
+  return c.json({ ok: true });
 });
 
 // ── Media library ──────────────────────────────────────────────────────────
@@ -284,16 +365,26 @@ backup.get('/', async (c) => {
 // Login attempts of the last 7 days (developer only, via /audit/*): spot
 // password guessing early. Passwords are never stored.
 auditLog.get('/logins', async (c) => {
-  const [{ rows }, { rows: summary }] = await Promise.all([
+  const [{ rows }, { rows: summary }, locks] = await Promise.all([
     query('SELECT identifier, ip, success, created_at FROM login_attempts ORDER BY created_at DESC LIMIT 200'),
     query(`SELECT
       count(*) FILTER (WHERE NOT success AND created_at > now() - interval '24 hours')::int AS failed_24h,
       count(*) FILTER (WHERE success AND created_at > now() - interval '24 hours')::int AS success_24h,
       count(DISTINCT ip) FILTER (WHERE NOT success AND created_at > now() - interval '24 hours')::int AS failed_ips_24h
       FROM login_attempts`),
+    currentLocks(),
   ]);
   return c.json({
     summary: summary[0],
+    locks,
     items: rows.map((row) => ({ identifier: row.identifier, ip: row.ip, success: row.success, createdAt: iso(row.created_at) })),
   });
+});
+
+// Lifts a lock early, e.g. when someone locked the shop's account on purpose.
+auditLog.post('/logins/unlock', async (c) => {
+  const { type, value } = parse(z.object({ type: z.enum(['account', 'ip']), value: z.string().trim().min(1).max(254) }), await readJson(c));
+  const cleared = await clearFailedAttempts(type, value);
+  await audit(c, 'update', 'login_lock', '', `Sperre aufgehoben: ${type === 'account' ? 'Konto' : 'IP'} ${value}`);
+  return c.json({ ok: true, cleared });
 });

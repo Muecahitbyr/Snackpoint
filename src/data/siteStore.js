@@ -13,6 +13,6 @@ export function getSite() {
 export function applySiteData(data) {
   site = data;
   setSiteSettings(data.settings);
-  setOpeningHours(data.hours);
+  setOpeningHours(data.hours, data.specialHours ?? []);
   setChatProducts(data.products);
 }

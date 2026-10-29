@@ -104,6 +104,25 @@
 .hours-day.is-today .hours-day-time { color: #fff; }
 .reveal:not(.is-visible) .hours-day { opacity: 0; transform: translateY(14px) scale(0.85); }
 
+/* Days that differ from the weekly plan (holidays, closures). */
+.hours-special {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 0.88rem;
+}
+.hours-special li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--bg-alt);
+}
+.hours-special strong { font-weight: 700; }
+.hours-special span { color: var(--text-dim); }
+
 .hours-timeline { margin-top: 26px; }
 .hours-timeline-track {
   position: relative;

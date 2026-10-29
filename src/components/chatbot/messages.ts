@@ -326,6 +326,9 @@ const de = {
     ],
     weekHeader: ['Unsere Öffnungszeiten:', 'So haben wir offen:'],
     weekClosed: 'Wir haben aktuell zu.',
+    // Days that differ from the weekly plan (holidays, closures).
+    specialDay: (note?: string) => (note ? `Achtung, das weicht vom Wochenplan ab: ${note}.` : 'Achtung, das weicht vom Wochenplan ab.'),
+    specialHeader: 'Abweichend in den nächsten Tagen:',
   },
 };
 

@@ -26,7 +26,7 @@ const COMPONENTS = { index: App, produkte: ProduktePage, impressum: Impressum, d
 // rendered per request, the data itself for the browser.
 export const REGION_START = '<!--ssr-->';
 export const REGION_END = '<!--/ssr-->';
-export const EMPTY_SITE = { groups: [], products: [], events: { current: [], past: [] }, hours: [], banners: [], promotions: [] };
+export const EMPTY_SITE = { groups: [], products: [], events: { current: [], past: [] }, hours: [], specialHours: [], banners: [], promotions: [] };
 
 // Made-up data that walks every code path once (product with picture, price and
 // label, sold-out product, event, banner, promotion). Only for warmUp(), never sent.
@@ -44,6 +44,7 @@ const WARMUP_SITE = {
     past: [],
   },
   hours: [{ day: 'Montag', jsDay: 1, open: '08:00', close: '20:00', closed: false }, { day: 'Sonntag', jsDay: 0, open: null, close: null, closed: true }],
+  specialHours: [{ date: '2030-12-24', closed: false, open: '08:00', close: '14:00', note: 'Heiligabend' }, { date: '2030-12-25', closed: true }],
   banners: [{ id: 'b1', text: 'Hinweis', linkUrl: '/produkte', linkLabel: 'Mehr', variant: 'info', version: '2030-01-01T00:00:00.000Z', endsAt: null }],
   promotions: [{ id: 'a1', title: 'Aktion', text: 'Text', badge: 'TOP', priceText: '1 €', emoji: '🔥', image: '/logo.jpg', endsAt: '2030-01-01T00:00:00.000Z' }],
 };

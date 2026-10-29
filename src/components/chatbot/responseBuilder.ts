@@ -7,7 +7,7 @@ import { ADDRESS, CONTACT, DELIVERY_INFO, MAPS_URL, PARKING_INFO, PAYMENT_METHOD
 import { CATEGORIES, PRODUCTS, getProductId, getProductName, type Product } from '../../data/products';
 import type { ProductQuery } from './entities';
 import { M, pick, say, type Flavor, type Rng, type Tones } from './messages';
-import type { DayFact, HoursFocus, HoursQuestion, NextOpening, OpenStatus, WeekGroup } from './openingHours';
+import type { DayFact, HoursFocus, HoursQuestion, NextOpening, OpenStatus, SpecialDayFact, WeekGroup } from './openingHours';
 import { CONFIDENT, categoryProducts, getProductsByIds, hasTag, isAvailable, rootCategory, type SegmentResult } from './productSearch';
 import type { BotReply, ChatContext, Entities, Intent, QuickReply } from './types';
 
@@ -293,15 +293,16 @@ export function dayReply(fact: DayFact, focus: HoursFocus, question: HoursQuesti
   const label = day.label; // "Heute", "Morgen", "Samstag" …
   const inSentence = ['Heute', 'Morgen', 'Übermorgen'].includes(label) ? label.toLowerCase() : label;
 
+  const special = fact.special ? `\n${M.hours.specialDay(fact.note)}` : '';
   if (fact.closed) {
     const base = say(M.hours.closedDay, rng)(label);
     const lead = question === 'yesNo' ? pick(M.hours.no, rng) : question === 'closed' ? 'Ja, ' : '';
     const next = day.offset === 0 ? ` ${nextSentence(fact.status.next)}` : '';
-    return { text: `${lead}${base}${next}`.trim(), cta: HOURS_CTA };
+    return { text: `${lead}${base}${next}`.trim() + special, cta: HOURS_CTA };
   }
 
   const { open, close } = fact as { open: string; close: string };
-  if (fact.over) return { text: M.hours.over(close, nextSentence(fact.status.next)), cta: HOURS_CTA };
+  if (fact.over) return { text: M.hours.over(close, nextSentence(fact.status.next)) + special, cta: HOURS_CTA };
 
   let text: string;
   if (focus === 'close') {
@@ -317,20 +318,33 @@ export function dayReply(fact: DayFact, focus: HoursFocus, question: HoursQuesti
   }
 
   const lead = question === 'yesNo' ? pick(M.hours.yes, rng) : question === 'closed' ? pick(M.hours.no, rng) : '';
-  return { text: `${lead}${text}`, cta: HOURS_CTA };
+  return { text: `${lead}${text}${special}`, cta: HOURS_CTA };
+}
+
+const DATE_LABEL = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' });
+
+/** "• Mi., 24.12.: 08:00 – 14:00 Uhr (Heiligabend)" lines for the coming special days. */
+function specialLines(days: SpecialDayFact[]): string {
+  if (!days.length) return '';
+  const lines = days.map((day) => {
+    const hours = day.closed ? 'geschlossen' : `${day.open} – ${day.close} Uhr`;
+    return `• ${DATE_LABEL.format(new Date(`${day.date}T00:00:00Z`))}: ${hours}${day.note ? ` (${day.note})` : ''}`;
+  });
+  return `\n\n${M.hours.specialHeader}\n${lines.join('\n')}`;
 }
 
 /** The whole week, identical consecutive days merged. */
-export function weekReply(groups: WeekGroup[], rng: Rng): BotReply {
+export function weekReply(groups: WeekGroup[], rng: Rng, specialDays: SpecialDayFact[] = []): BotReply {
+  const specials = specialLines(specialDays);
   if (groups.length === 1) {
     const [group] = groups;
-    return { text: group.closed ? M.hours.weekClosed : pick(M.hours.weekSingle, rng)(group.open, group.close), cta: HOURS_CTA };
+    return { text: (group.closed ? M.hours.weekClosed : pick(M.hours.weekSingle, rng)(group.open, group.close)) + specials, cta: HOURS_CTA };
   }
   const lines = groups.map((group) => {
     const days = group.count === 1 ? group.first : group.count === 2 ? `${group.first} & ${group.last}` : `${group.first} – ${group.last}`;
     return `• ${days}: ${group.closed ? 'geschlossen' : `${group.open} – ${group.close} Uhr`}`;
   });
-  return { text: `${pick(M.hours.weekHeader, rng)}\n${lines.join('\n')}`, cta: HOURS_CTA };
+  return { text: `${pick(M.hours.weekHeader, rng)}\n${lines.join('\n')}${specials}`, cta: HOURS_CTA };
 }
 
 // ---- Quick replies ----------------------------------------------------------

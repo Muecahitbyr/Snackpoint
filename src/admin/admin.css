@@ -198,6 +198,23 @@ select.filter.is-active {
 .password-tools { margin: -8px 0 14px; }
 .hint-bar.subtle { background: transparent; border-color: transparent; color: var(--a-dim); padding: 0; }
 
+/* Product list: selection, bulk bar, availability right in the row */
+.select-cell { width: 40px; }
+.select-cell input { width: 17px; height: 17px; accent-color: var(--a-accent); cursor: pointer; vertical-align: middle; }
+.table tr.is-selected td { background: #fff8f7; }
+.bulk-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+select.filter.filter-inline { min-height: 32px; padding: 0 34px 0 10px; font-size: 0.8rem; background-position: right 8px center; margin-right: 6px; vertical-align: middle; }
+select.filter.filter-inline.is-warning { border-color: #f1d08e; background-color: #fff3db; color: var(--a-warning); }
+select.filter.filter-inline.is-danger { border-color: #f3b9b9; background-color: #fdecec; color: var(--a-danger); }
+
+/* Opening hours: days that differ from the weekly plan */
+.special-row { grid-template-columns: 150px 1fr auto; }
+.special-row.is-past { opacity: 0.55; }
+.special-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.special-info small { color: var(--a-dim); }
+.special-form { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--a-border); }
+.special-form h3 { font-size: 0.95rem; margin-bottom: 10px; }
+
 /* ── Buttons ───────────────────────────────────────────────────────────── */
 .a-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -559,7 +576,7 @@ select.filter.is-active {
   .table td[data-label="Produkt"]::before, .table td[data-label="Event"]::before { display: none; }
   .table td.actions-cell { display: block; padding-top: 8px; border-top: 1px solid var(--a-border); margin-top: 6px; }
   .actions-cell .row-actions { flex-wrap: wrap; }
-  .table td:has(> .badges:empty) { display: none; }
+  .table td:has(> .badges:empty):not(:has(> select)) { display: none; }
   .table tr:hover td { background: transparent; }
 
   .list-row { flex-direction: column; align-items: stretch; }
@@ -568,7 +585,8 @@ select.filter.is-active {
   .picker-row { flex-direction: row; align-items: center; }
   .category-list li { flex-direction: column; align-items: stretch; }
   .card-head { flex-direction: column; }
-  .hours-row { grid-template-columns: 1fr auto; }
+  .hours-row, .special-row { grid-template-columns: 1fr auto; }
+  .special-info { grid-column: 1 / -1; grid-row: 2; }
   .hours-times { grid-column: 1 / -1; }
   .media-detail { grid-template-columns: 1fr; }
   .media-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }

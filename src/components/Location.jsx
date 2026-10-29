@@ -1,5 +1,5 @@
 import { ADDRESS, MAPS_URL, MAPS_EMBED_URL } from '../data/constants';
-import { OPENING_HOURS } from '../data/hours';
+import { OPENING_HOURS, SPECIAL_HOURS, hoursOn, upcomingSpecialHours } from '../data/hours';
 import { getOpenStatus } from './chatbot/openingHours';
 import { useCookieConsent } from '../hooks/useCookieConsent';
 import { useNow } from '../hooks/useNow';
@@ -16,6 +16,9 @@ const toMinutes = (time) => {
 };
 // "08:00" → "08", "08:30" stays "08:30" — for the compact day tiles.
 const shortTime = (time) => (time.endsWith(':00') ? time.slice(0, 2) : time);
+// "2026-12-24" → "Do., 24.12."
+const DAY_LABEL = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' });
+const dayLabel = (date) => DAY_LABEL.format(new Date(`${date}T00:00:00Z`));
 
 /** Today on a 0–24 h bar: the open stretch highlighted, a marker at "now". */
 function TodayTimeline({ open, close, now }) {
@@ -44,6 +47,10 @@ function OpeningHours() {
   const now = useNow();
   const status = getOpenStatus(now);
   const today = IS_PRERENDER ? null : OPENING_HOURS.find((entry) => entry.jsDay === now.getDay()) ?? null;
+  // Today's actual hours (a holiday or short day overrides the weekly plan).
+  const todayHours = IS_PRERENDER ? null : hoursOn(now);
+  // The API only sends upcoming days; the browser drops the ones that have passed since.
+  const specials = (IS_PRERENDER ? SPECIAL_HOURS : upcomingSpecialHours(now, 60)).slice(0, 5);
   const first = OPENING_HOURS[0];
   const sameEveryDay = OPENING_HOURS.length > 0 && OPENING_HOURS.every(
     (entry) => !entry.closed && entry.open === first.open && entry.close === first.close
@@ -87,7 +94,21 @@ function OpeningHours() {
         ))}
       </ul>
 
-      {today && !today.closed && <TodayTimeline open={today.open} close={today.close} now={now} />}
+      {specials.length > 0 && (
+        <ul className="hours-special" aria-label="Abweichende Öffnungszeiten">
+          {specials.map((entry) => (
+            <li key={entry.date}>
+              <strong>{dayLabel(entry.date)}</strong>
+              <span>
+                {entry.closed ? 'geschlossen' : `${shortTime(entry.open)}–${shortTime(entry.close)} Uhr`}
+                {entry.note ? ` · ${entry.note}` : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {todayHours && !todayHours.closed && <TodayTimeline open={todayHours.open} close={todayHours.close} now={now} />}
     </div>
   );
 }

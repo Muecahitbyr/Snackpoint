@@ -100,10 +100,16 @@ async function loadEvents() {
 }
 
 export async function buildPublicSite() {
-  const [catalog, events, hours, banners, promotions] = await Promise.all([
+  const [catalog, events, hours, specialHours, banners, promotions] = await Promise.all([
     loadCatalog(),
     loadEvents(),
     query('SELECT * FROM opening_hours ORDER BY position'),
+    // From today (shop time) up to a year ahead.
+    query(
+      `SELECT to_char(day, 'YYYY-MM-DD') AS day, is_closed, open_time, close_time, note FROM special_hours
+        WHERE day >= (now() AT TIME ZONE 'Europe/Berlin')::date AND day <= (now() AT TIME ZONE 'Europe/Berlin')::date + 366
+        ORDER BY day LIMIT 60`
+    ),
     query(`SELECT * FROM banners WHERE ${ACTIVE_WINDOW_SQL} ORDER BY sort_order, created_at DESC`),
     query(
       `SELECT p.*, m.checksum FROM promotions p LEFT JOIN media m ON m.id = p.image_media_id
@@ -122,6 +128,13 @@ export async function buildPublicSite() {
       open: row.open_time,
       close: row.close_time,
       closed: row.is_closed,
+    })),
+    specialHours: specialHours.rows.map((row) => ({
+      date: row.day,
+      open: row.open_time,
+      close: row.close_time,
+      closed: row.is_closed,
+      note: row.note || undefined,
     })),
     banners: banners.rows.map((row) => ({
       id: row.id,

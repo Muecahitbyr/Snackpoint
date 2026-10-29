@@ -1,9 +1,10 @@
 // Opening-hours FACTS: is the shop open right now, until when, when does it
-// open next, what are the hours on a given day. Reads the same OPENING_HOURS
-// the website's location section uses, so hours are maintained in one place
-// (data/hours.js). No wording here — responseBuilder.ts turns these facts into
-// sentences.
-import { OPENING_HOURS } from '../../data/hours';
+// open next, what are the hours on a given day. Reads the same hours the
+// website's location section uses, so hours are maintained in one place
+// (data/hours.js), including days that differ from the weekly plan
+// (holidays, closures). No wording here — responseBuilder.ts turns these
+// facts into sentences.
+import { OPENING_HOURS, addDays, hoursOn, upcomingSpecialHours } from '../../data/hours';
 import { WEEKDAYS, type DayRef } from './entities';
 
 /** What the user wants to know: when we open, when we close, or both. */
@@ -19,6 +20,8 @@ interface HoursEntry {
   open: string;
   close: string;
   closed: boolean;
+  note?: string;
+  special?: boolean;
 }
 
 /** The next time we open: "heute" / "morgen" / "am Montag", plus the time. */
@@ -46,6 +49,18 @@ export interface DayFact {
   /** Today, and we've already opened. */
   alreadyOpen: boolean;
   status: OpenStatus;
+  /** Differs from the weekly plan (holiday, closure, short day). */
+  special?: boolean;
+  note?: string;
+}
+
+/** A coming day with other hours than usual ("24.12.: 08:00 – 14:00 Uhr (Heiligabend)"). */
+export interface SpecialDayFact {
+  date: string;
+  closed: boolean;
+  open?: string;
+  close?: string;
+  note?: string;
 }
 
 export interface WeekGroup {
@@ -58,8 +73,7 @@ export interface WeekGroup {
   close: string;
 }
 
-const hoursFor = (jsDay: number): HoursEntry | undefined =>
-  (OPENING_HOURS as HoursEntry[]).find((entry) => entry.jsDay === jsDay);
+const hoursFor = (date: Date): HoursEntry | undefined => (hoursOn(date) as HoursEntry | null) ?? undefined;
 
 const toMinutes = (time: string): number => {
   const [hours, minutes] = time.split(':').map(Number);
@@ -79,7 +93,7 @@ function nextOpening(now: Date): NextOpening | null {
   const minutes = minutesOf(now);
   for (let offset = 0; offset < 8; offset++) {
     const jsDay = (now.getDay() + offset) % 7;
-    const hours = hoursFor(jsDay);
+    const hours = hoursFor(addDays(now, offset));
     if (!hours || hours.closed) continue;
     if (offset === 0 && minutes >= toMinutes(hours.open)) continue;
     return { when: whenPhrase(offset, jsDay), time: hours.open };
@@ -91,7 +105,7 @@ function nextOpening(now: Date): NextOpening | null {
 export function getOpenStatus(now: Date): OpenStatus {
   const next = nextOpening(now);
   const minutes = minutesOf(now);
-  const today = hoursFor(now.getDay());
+  const today = hoursFor(now);
   if (today && !today.closed) {
     const opens = toMinutes(today.open);
     const closes = toMinutes(today.close);
@@ -99,7 +113,7 @@ export function getOpenStatus(now: Date): OpenStatus {
       return { open: true, closesAt: today.close, minutesLeft: (closes > minutes ? closes : closes + 1440) - minutes, next };
     }
   }
-  const yesterday = hoursFor((now.getDay() + 6) % 7);
+  const yesterday = hoursFor(addDays(now, -1));
   if (yesterday && !yesterday.closed && toMinutes(yesterday.close) <= toMinutes(yesterday.open) && minutes < toMinutes(yesterday.close)) {
     return { open: true, closesAt: yesterday.close, minutesLeft: toMinutes(yesterday.close) - minutes, next };
   }
@@ -108,9 +122,10 @@ export function getOpenStatus(now: Date): OpenStatus {
 
 /** Hours on the given day, and — for today — where we are in them. */
 export function getDayFact(day: DayRef, now: Date): DayFact {
-  const hours = hoursFor(day.jsDay);
+  const hours = hoursFor(addDays(now, day.offset));
   const status = getOpenStatus(now);
-  if (!hours || hours.closed) return { day, closed: true, over: false, alreadyOpen: false, status };
+  const extra = hours?.special ? { special: true, note: hours.note } : {};
+  if (!hours || hours.closed) return { day, closed: true, over: false, alreadyOpen: false, status, ...extra };
 
   const isToday = day.offset === 0;
   const overnight = toMinutes(hours.close) <= toMinutes(hours.open);
@@ -122,6 +137,7 @@ export function getDayFact(day: DayRef, now: Date): DayFact {
     over: isToday && !status.open && !overnight && minutesOf(now) >= toMinutes(hours.close),
     alreadyOpen: isToday && minutesOf(now) >= toMinutes(hours.open),
     status,
+    ...extra,
   };
 }
 
@@ -138,4 +154,9 @@ export function getWeekFact(): WeekGroup[] {
     }
   }
   return groups;
+}
+
+/** Special days in the coming `days` days (today included). */
+export function getSpecialDaysFact(now: Date, days = 14): SpecialDayFact[] {
+  return (upcomingSpecialHours(now, days) as SpecialDayFact[]).map(({ date, closed, open, close, note }) => ({ date, closed, open, close, note }));
 }

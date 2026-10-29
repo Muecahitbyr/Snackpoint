@@ -36,6 +36,18 @@ function openingHours(hours) {
   return groups.size ? [...groups.values()] : undefined;
 }
 
+/** Holidays, closures and short days; a closed day is 00:00–00:00 for schema.org. */
+function specialOpeningHours(days = []) {
+  const specs = days.map((day) => ({
+    '@type': 'OpeningHoursSpecification',
+    validFrom: day.date,
+    validThrough: day.date,
+    opens: day.closed ? '00:00' : day.open,
+    closes: day.closed ? '00:00' : day.close,
+  }));
+  return specs.length ? specs : undefined;
+}
+
 const absolute = (siteUrl, path) => (path && path.startsWith('/') ? `${siteUrl}${path}` : path || undefined);
 
 function business({ siteUrl, site }) {
@@ -56,6 +68,7 @@ function business({ siteUrl, site }) {
     email: settings.contact.email || undefined,
     paymentAccepted: settings.info.paymentMethods.length ? settings.info.paymentMethods.join(', ') : undefined,
     openingHoursSpecification: openingHours(site.hours),
+    specialOpeningHoursSpecification: specialOpeningHours(site.specialHours),
     // Only the services offered today (no "BALD VERFÜGBAR").
     hasOfferCatalog: {
       '@type': 'OfferCatalog',
