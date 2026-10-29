@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api, formatRelative, useApi } from '../api';
+import { api, formatRelative, setCsrfToken, useApi } from '../api';
 import { Badge, Button, EmptyState, ErrorBox, Modal, PageHeader, SelectField, Spinner, TextField, useToast } from '../ui';
 
 export const ROLES = {
@@ -73,6 +73,7 @@ function UserDialog({ mode, user, onClose, onDone }) {
     create: { title: 'Neues Konto', button: 'Konto anlegen', success: 'Konto angelegt.' },
     password: { title: `Passwort für ${user?.email} setzen`, button: 'Passwort setzen', success: 'Passwort gesetzt — die Person wurde überall abgemeldet.' },
     delete: { title: 'Konto löschen?', button: 'Endgültig löschen', success: 'Konto gelöscht.' },
+    impersonate: { title: `Als ${user?.displayName || user?.email} anmelden`, button: 'Als Inhaber anmelden', success: '' },
   }[mode];
 
   async function submit(e) {
@@ -84,6 +85,13 @@ function UserDialog({ mode, user, onClose, onDone }) {
         await api('/admin/users', { method: 'POST', body: form });
       } else if (mode === 'password') {
         await api(`/admin/users/${user.id}/password`, { method: 'POST', body: { password: form.password, currentPassword: form.currentPassword } });
+      } else if (mode === 'impersonate') {
+        const result = await api(`/admin/users/${user.id}/impersonate`, { method: 'POST', body: { currentPassword: form.currentPassword } });
+        setCsrfToken(result.csrfToken);
+        // A fresh start shows the panel exactly as this account sees it.
+        window.location.hash = '#/dashboard';
+        window.location.reload();
+        return;
       } else {
         await api(`/admin/users/${user.id}`, { method: 'DELETE', body: { currentPassword: form.currentPassword } });
       }
@@ -112,6 +120,13 @@ function UserDialog({ mode, user, onClose, onDone }) {
         )}
         {(mode === 'create' || mode === 'password') && (
           <PasswordWithGenerator label={mode === 'create' ? 'Passwort' : 'Neues Passwort'} value={form.password} onChange={set('password')} error={errors.password} />
+        )}
+        {mode === 'impersonate' && (
+          <p className="confirm-text">
+            Du siehst das Adminpanel dann genau so wie <strong>{user.displayName || user.email}</strong>. Was du in dieser Zeit
+            änderst, steht im Protokoll unter deinem Namen. Oben kommst du jederzeit zu deinem Konto zurück; nach spätestens
+            2 Stunden endet die Ansicht automatisch.
+          </p>
         )}
         {mode === 'delete' && (
           <p className="confirm-text">
@@ -218,6 +233,9 @@ export default function Users() {
                   <a className="a-btn a-btn-ghost a-btn-small" href="#/passwort">Mein Passwort ändern</a>
                 ) : (
                   <>
+                    {user.role === 'owner' && (
+                      <Button variant="ghost" size="small" onClick={() => setDialog({ mode: 'impersonate', user })}><Icon name="external" size={15} /> Als Inhaber anmelden</Button>
+                    )}
                     <Button variant="ghost" size="small" onClick={() => setDialog({ mode: 'password', user })}>Passwort setzen</Button>
                     <Button variant="icon" size="small" onClick={() => setDialog({ mode: 'delete', user })} title="Löschen" aria-label={`${user.email} löschen`}><Icon name="trash" size={16} /></Button>
                   </>

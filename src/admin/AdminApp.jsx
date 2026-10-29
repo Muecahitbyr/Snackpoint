@@ -158,6 +158,35 @@ function Login({ onLoggedIn }) {
   );
 }
 
+/** Shown while a developer looks at the panel as an owner account. */
+function ImpersonationBar({ user }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+
+  async function back() {
+    setBusy(true);
+    try {
+      const result = await api('/auth/impersonation/end', { method: 'POST' });
+      setCsrfToken(result.csrfToken);
+      window.location.hash = '#/benutzer';
+      window.location.reload();
+    } catch (error) {
+      toast.error(error.message);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="hint-bar impersonation-bar" role="status">
+      <span>
+        <Icon name="users" size={16} /> Du bist als <strong>{user.displayName || user.email}</strong> (Inhaber) angemeldet.
+        Änderungen werden unter deinem Namen protokolliert.
+      </span>
+      <Button size="small" busy={busy} onClick={back}>Zurück zu meinem Konto</Button>
+    </div>
+  );
+}
+
 function Shell({ user, onLogout }) {
   const route = useRoute();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -199,6 +228,7 @@ function Shell({ user, onLogout }) {
           <strong className="topbar-title"><Icon name={current.icon} /> {current.label}</strong>
         </header>
         <main className="content">
+          {user.impersonatedBy && <ImpersonationBar user={user} />}
           <Page route={route} isDeveloper={isDeveloper} />
         </main>
       </div>

@@ -8,9 +8,9 @@ const ENTITY_LABELS = {
   promotion: 'Aktion', service: 'Leistung', review: 'Bewertung', content: 'Webseiteninhalt', settings: 'Einstellungen',
   opening_hours: 'Öffnungszeiten', media: 'Bild', password: 'Passwort', session: 'Sitzung',
   admin_user: 'Benutzerkonto', backup: 'Datensicherung', wish: 'Produktwunsch',
-  special_hours: 'Abweichender Tag', login_lock: 'Anmeldesperre',
+  special_hours: 'Abweichender Tag', login_lock: 'Anmeldesperre', impersonation: 'Inhaber-Ansicht',
 };
-const ACTION_LABELS = { create: 'erstellt', update: 'geändert', delete: 'gelöscht', reorder: 'sortiert' };
+const ACTION_LABELS = { create: 'erstellt', update: 'geändert', delete: 'gelöscht', reorder: 'sortiert', start: 'gestartet', end: 'beendet' };
 const BACKUP_DUE_DAYS = 14;
 
 /** Nudges towards a fresh backup when the last download is old (or never happened). */

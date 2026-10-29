@@ -6,7 +6,7 @@ import { query } from '../db/pool.js';
 import { burnVerifyTime, hashPassword, passwordProblem, verifyPassword } from '../auth/password.js';
 import { discardLoginAttempt, loginSucceeded, startLoginAttempt } from '../auth/rateLimit.js';
 import {
-  assertSameOrigin, createSession, destroyOtherSessions, destroySession, loadSession, requireAdmin, requireDeveloper,
+  assertSameOrigin, createSession, destroyOtherSessions, destroySession, loadSession, requireAdmin, requireDeveloper, switchSession,
 } from '../auth/session.js';
 import { audit } from '../lib/audit.js';
 import { HttpError, badRequest } from '../lib/errors.js';
@@ -97,6 +97,17 @@ auth.post('/logout', requireAdmin, async (c) => {
   await audit(c, 'logout', 'session', '', 'Abmeldung');
   await destroySession(c);
   return c.json({ ok: true });
+});
+
+// Back from "Als Inhaber" (see routes/users.js) to the developer's own account.
+auth.post('/impersonation/end', requireAdmin, async (c) => {
+  const { user } = c.get('session');
+  if (!user.impersonatedBy) throw badRequest('Du bist nicht als Inhaber angemeldet.');
+  const { rows } = await query(`SELECT id, email, display_name, role FROM admin_users WHERE id = $1 AND role = 'developer'`, [user.impersonatedBy.id]);
+  if (!rows[0]) throw new HttpError(401, 'Bitte melde dich erneut an.');
+  await audit(c, 'end', 'impersonation', user.id, `Zurück von ${user.email}`);
+  const { csrfToken } = await switchSession(c, rows[0].id);
+  return c.json({ user: { id: rows[0].id, email: rows[0].email, displayName: rows[0].display_name, role: rows[0].role }, csrfToken });
 });
 
 // Owners can't change their password themselves — the developer sets it.

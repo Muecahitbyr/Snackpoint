@@ -193,7 +193,8 @@ select.filter.is-active {
 .hint-bar { background: #fff8e8; border: 1px solid #f6dfa6; color: #7a5208; padding: 9px 14px; border-radius: 10px; font-size: 0.86rem; margin-bottom: 14px; }
 .activity-user { display: block; text-align: right; font-size: 0.72rem; }
 .backup-card { margin-top: 18px; }
-.backup-reminder { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.backup-reminder, .impersonation-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.impersonation-bar { background: #eef4ff; border-color: #c7d8f7; color: #1e3a6e; }
 .confirm-own { margin-top: 8px; padding-top: 14px; border-top: 1px dashed var(--a-border); }
 .password-tools { margin: -8px 0 14px; }
 .hint-bar.subtle { background: transparent; border-color: transparent; color: var(--a-dim); padding: 0; }
@@ -544,6 +545,17 @@ select.filter.filter-inline.is-danger { border-color: #f3b9b9; background-color:
   .sidebar { transform: translateX(-100%); visibility: hidden; transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), visibility 0s linear 0.25s; }
   .menu-open .sidebar { transform: none; visibility: visible; box-shadow: 10px 0 40px rgba(0,0,0,0.3); transition: transform 0.25s cubic-bezier(0.16,1,0.3,1); }
   .menu-open .sidebar-backdrop { display: block; position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,0.4); }
+  /* Down to the very bottom of the screen, also behind Safari's bottom bar
+     (100lvh); the padding keeps "Abmelden" above that bar (100lvh - 100dvh)
+     and the home indicator. */
+  .sidebar {
+    bottom: auto;
+    height: 100vh; height: 100lvh;
+    padding-bottom: calc(18px + env(safe-area-inset-bottom));
+    padding-bottom: calc(18px + env(safe-area-inset-bottom) + 100lvh - 100dvh);
+    overscroll-behavior: contain;
+  }
+  .menu-open .sidebar-backdrop { bottom: auto; height: 100vh; height: 100lvh; }
   .main { margin-left: 0; }
   .topbar {
     display: flex; align-items: center; gap: 12px;

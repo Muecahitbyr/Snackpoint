@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { query } from '../db/pool.js';
 import { hashPassword, passwordProblem, verifyPassword } from '../auth/password.js';
 import { discardLoginAttempt, startLoginAttempt } from '../auth/rateLimit.js';
+import { switchSession } from '../auth/session.js';
 import { audit } from '../lib/audit.js';
 import { badRequest, conflict, mapDbError, notFound } from '../lib/errors.js';
 import { clientIp } from '../lib/request.js';
@@ -121,4 +122,26 @@ users.delete('/:id', async (c) => {
   await query('DELETE FROM admin_users WHERE id = $1', [id]);
   await audit(c, 'delete', 'admin_user', id, rows[0].email);
   return c.json({ ok: true });
+});
+
+// "Als Inhaber anmelden": the developer sees the panel exactly as an owner
+// account does, after confirming their own password. The session remembers
+// the developer (changes are logged under their name), ends after 2 hours at
+// the latest, and POST /api/auth/impersonation/end switches back.
+users.post('/:id/impersonate', async (c) => {
+  const id = parseId(c.req.param('id'));
+  const data = parse(z.object({ currentPassword }), await readJson(c));
+  const { user: actor } = c.get('session');
+  if (actor.impersonatedBy) throw badRequest('Du bist schon als Inhaber angemeldet.');
+  const { rows } = await query('SELECT id, email, display_name, role FROM admin_users WHERE id = $1', [id]);
+  const target = rows[0];
+  if (!target) throw notFound();
+  if (target.role !== 'owner') throw badRequest('Anmelden kannst du dich nur als Inhaber-Konto.');
+  await confirmActor(c, data.currentPassword);
+  await audit(c, 'start', 'impersonation', id, `Als ${target.email} angemeldet`);
+  const { csrfToken } = await switchSession(c, id, { impersonatedBy: actor.id });
+  return c.json({
+    user: { id: target.id, email: target.email, displayName: target.display_name, role: target.role, impersonatedBy: { id: actor.id, email: actor.email, displayName: actor.displayName } },
+    csrfToken,
+  });
 });

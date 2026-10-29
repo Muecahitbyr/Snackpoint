@@ -63,6 +63,7 @@ function client() {
       return result;
     },
     get cookie() { return cookie; },
+    setCsrf(token) { csrf = token; },
   };
 }
 
@@ -688,6 +689,50 @@ describe('roles', () => {
   it('nobody can change their own role', async () => {
     const me = (await admin.send('/api/admin/users')).data.items.find((u) => u.isSelf);
     assert.equal((await admin.send(`/api/admin/users/${me.id}`, { method: 'PATCH', body: { role: 'owner' } })).status, 400);
+  });
+
+  it('lets a developer sign in as an owner and back', async () => {
+    const dev = client();
+    assert.equal((await dev.login(EMAIL, OWN)).status, 200);
+    const accounts = (await dev.send('/api/admin/users')).data.items;
+    const owner = accounts.find((u) => u.email === 'laden@test.local');
+    const self = accounts.find((u) => u.isSelf);
+    const impersonate = (id, currentPassword = OWN) => dev.send(`/api/admin/users/${id}/impersonate`, { method: 'POST', body: { currentPassword } });
+
+    assert.equal((await impersonate(owner.id, 'falsches-passwort')).status, 400, 'own password required');
+    assert.equal((await impersonate(self.id)).status, 400, 'only owner accounts');
+    const devCookie = dev.cookie;
+    const started = await impersonate(owner.id);
+    assert.equal(started.status, 200);
+    dev.setCsrf(started.data.csrfToken);
+    assert.equal((await request('/api/admin/users', { headers: { Cookie: devCookie } })).status, 401, 'the developer session was replaced');
+
+    const me = (await dev.send('/api/auth/me')).data.user;
+    assert.deepEqual([me.email, me.role, me.impersonatedBy.email], ['laden@test.local', 'owner', EMAIL]);
+    assert.equal((await dev.send('/api/admin/users')).status, 403, 'sees exactly what the owner sees');
+    assert.equal((await dev.send('/api/admin/products')).status, 200);
+    assert.equal((await impersonate(owner.id)).status, 403, 'no impersonation from an owner session');
+
+    const banner = await dev.send('/api/admin/banners', { method: 'POST', body: { text: 'Als Inhaber angelegt' } });
+    assert.equal(banner.status, 201);
+    const { rows } = await query(`SELECT u.email FROM audit_log a JOIN admin_users u ON u.id = a.admin_user_id WHERE a.entity_id = $1`, [banner.data.item.id]);
+    assert.equal(rows[0].email, EMAIL, 'changes are logged under the developer');
+    await dev.send(`/api/admin/banners/${banner.data.item.id}`, { method: 'DELETE' });
+
+    const owners = client();
+    assert.equal((await owners.send('/api/auth/impersonation/end', { method: 'POST' })).status, 401);
+    const ended = await dev.send('/api/auth/impersonation/end', { method: 'POST' });
+    assert.equal(ended.status, 200);
+    dev.setCsrf(ended.data.csrfToken);
+    const back = (await dev.send('/api/auth/me')).data.user;
+    assert.deepEqual([back.email, back.role, back.impersonatedBy], [EMAIL, 'developer', undefined]);
+    assert.equal((await dev.send('/api/auth/impersonation/end', { method: 'POST' })).status, 400, 'nothing to end');
+    assert.equal((await dev.send('/api/admin/users')).status, 200);
+
+    // Ends on its own after 2 hours.
+    assert.equal((await impersonate(owner.id)).status, 200);
+    await query(`UPDATE admin_sessions SET created_at = now() - interval '2 hours 1 minute' WHERE impersonated_by IS NOT NULL`);
+    assert.equal((await dev.send('/api/auth/me')).data.user, null);
   });
 });
 

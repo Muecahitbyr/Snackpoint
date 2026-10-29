@@ -3,7 +3,9 @@
 import { query } from '../db/pool.js';
 
 export async function audit(c, action, entityType, entityId = '', summary = '') {
-  const userId = c.get('session')?.user.id ?? null;
+  // While a developer looks at the panel as an owner, the change is theirs.
+  const user = c.get('session')?.user;
+  const userId = user?.impersonatedBy?.id ?? user?.id ?? null;
   try {
     await query(
       'INSERT INTO audit_log (admin_user_id, action, entity_type, entity_id, summary) VALUES ($1, $2, $3, $4, $5)',
