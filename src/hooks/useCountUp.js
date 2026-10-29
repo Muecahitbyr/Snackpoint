@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useReveal } from './useReveal';
 import { prefersReducedMotion } from './motion';
+import { IS_PRERENDER } from '../site/env';
 
 export function useCountUp(target, { decimals = 0, duration = 1400 } = {}) {
   const { ref, visible } = useReveal({ threshold: 0.5 });
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(IS_PRERENDER ? target : 0);
 
   useEffect(() => {
     if (!visible) return;

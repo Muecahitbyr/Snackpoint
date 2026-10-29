@@ -4,6 +4,7 @@ import { getOpenStatus } from './chatbot/openingHours';
 import { useNow } from '../hooks/useNow';
 import { useContent, useSite } from '../site/SiteProvider';
 import AnnouncementBar from './AnnouncementBar';
+import { IS_PRERENDER } from '../site/env';
 import './Header.css';
 
 // Live "open / closed" pill: on the right of the desktop bar, in the middle
@@ -11,6 +12,7 @@ import './Header.css';
 // section; clicking it jumps to the opening hours.
 function OpenStatus() {
   const status = getOpenStatus(useNow());
+  if (IS_PRERENDER) return <a href="/#location" className="nav-status">Öffnungszeiten</a>;
 
   return (
     <a
@@ -26,8 +28,8 @@ function OpenStatus() {
 }
 
 // Absolute (/#services) rather than bare (#services) hashes so these links
-// also work correctly from standalone pages like /produkte.html or
-// /impressum.html, not just from the homepage itself.
+// also work correctly from standalone pages like /produkte or
+// /impressum, not just from the homepage itself.
 const LINKS = [
   { href: '/#services', label: 'Leistungen' },
   { href: '/#new', label: 'Neue Waren' },

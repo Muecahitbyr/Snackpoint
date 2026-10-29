@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useContent } from '../site/SiteProvider';
+import { IS_PRERENDER } from '../site/env';
 import Reveal from './Reveal';
 import SplitWords from './SplitWords';
 import './Wishes.css';
@@ -142,7 +143,7 @@ export default function Wishes() {
         <Reveal className="wishes-list-wrap" delay={0.1}>
           <h3 className="wishes-list-title">{content['wishes.listTitle']}</h3>
           {items === null ? (
-            <p className="wishes-empty">Lädt…</p>
+            !IS_PRERENDER && <p className="wishes-empty">Lädt…</p>
           ) : items.length === 0 ? (
             <p className="wishes-empty">{content['wishes.empty']}</p>
           ) : (

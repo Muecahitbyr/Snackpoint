@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useContent, useSite } from '../../site/SiteProvider';
+import { IS_PRERENDER } from '../../site/env';
 import Reveal from '../Reveal';
 import SplitWords from '../SplitWords';
 import EventDetail from './EventDetail';
@@ -13,7 +14,8 @@ const hashFor = (event) => `#event-${event.id}`;
 /** The next / featured event, big. */
 function FeaturedEvent({ event, onOpen }) {
   const badge = dateBadge(event.startsAt);
-  const countdown = eventCountdown(event);
+  // "Morgen" etc. would be outdated in stored HTML.
+  const countdown = IS_PRERENDER ? null : eventCountdown(event);
   const price = eventPrice(event);
 
   return (
@@ -55,7 +57,7 @@ function FeaturedEvent({ event, onOpen }) {
 
 function EventTile({ event, onOpen }) {
   const badge = dateBadge(event.startsAt);
-  const countdown = eventCountdown(event);
+  const countdown = IS_PRERENDER ? null : eventCountdown(event);
 
   return (
     <button type="button" id={`event-${event.id}`} className="ev-tile" onClick={() => onOpen(event)}>

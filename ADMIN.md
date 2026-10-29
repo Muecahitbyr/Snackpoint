@@ -9,7 +9,8 @@ pushen – Cloudflare deployt automatisch.
 
 ```
 Browser ──► Cloudflare (Worker + Static Assets, eine Domain)
-              ├─ Seiten, /admin, Bilder-Cache   ← dist/ (Vite-Build)
+              ├─ /admin, Skripte, Bilder        ← dist/ (Vite-Build)
+              ├─ /, /produkte, /impressum, /datenschutz  ← dist/, im Worker mit aktuellen Daten gerendert
               └─ /api/*  ──(PROXY_SECRET)──►  Railway: API-Dienst (server/node.js, Hono)
                                                         └──► Railway: PostgreSQL (Inhalte + Bilder)
 ```
@@ -17,6 +18,12 @@ Browser ──► Cloudflare (Worker + Static Assets, eine Domain)
 Für den Browser liegt alles auf derselben Domain – Login-Cookie und CSRF-Schutz funktionieren ohne CORS.
 Die Railway-Adresse der API antwortet nur auf Anfragen, die das gemeinsame `PROXY_SECRET` mitschicken
 (also nur über den Worker).
+
+Die öffentlichen Seiten kommen als fertiges HTML mit den aktuellen Produkten, Events und Öffnungszeiten
+beim Besucher an (auch bei Suchmaschinen und KI-Crawlern ohne JavaScript): Der Worker holt dafür bei
+jedem Aufruf `/api/public/site` und rendert die Seite (`src/prerender.jsx`). Antwortet die API nicht
+innerhalb von 1,5 Sekunden, geht die Seite im Stand des letzten Builds raus. Details:
+`docs/seo-geo-final-audit.md`.
 
 | Ordner / Datei | Inhalt |
 | --- | --- |
@@ -28,6 +35,7 @@ Die Railway-Adresse der API antwortet nur auf Anfragen, die das gemeinsame `PROX
 | `src/data/siteContent.js` | Texte, Kontakt, Rechtliches, Leistungen, Bewertungen der Webseite (im Code gepflegt) |
 | `src/admin/` | Das Adminpanel |
 | `src/site/SiteProvider.jsx` | Lädt die Inhalte für die Webseite |
+| `src/prerender.jsx`, `src/seo/structuredData.js`, `scripts/prerender.mjs` | Fertiges HTML, JSON-LD, `sitemap.xml`, `robots.txt` (Suchmaschinen und KI-Crawler) |
 | `worker/index.js`, `wrangler.jsonc`, `public/_headers` | Cloudflare (Worker, Seiten, Header) |
 | `.railway/railway.ts` | Railway-Konfiguration als Code (Build, Migration beim Deploy, Start, Health-Check); Änderungen mit `npx railway config plan` / `apply` |
 
@@ -50,7 +58,7 @@ npm run dev                   # Webseite + Adminpanel + API: http://localhost:51
 - `npm run dev` startet Webseite, Adminpanel **und** Backend zusammen (die API läuft im Vite-Server mit).
   Änderungen am Server-Code gelten ab der nächsten Anfrage.
 - Produktions-Build lokal testen: `npm run build && npm start` → <http://localhost:3000>
-- Cloudflare lokal nachstellen: `cp .dev.vars.example .dev.vars`, dann
+- Cloudflare lokal nachstellen: `cp .dev.vars.example .dev.vars`, `npm run build`, dann
   `PROXY_SECRET=local-dev-secret npm run start:api` und in einem zweiten Terminal
   `npx wrangler dev --var API_ORIGIN:http://localhost:3000` → <http://localhost:8787>
 
@@ -58,8 +66,11 @@ npm run dev                   # Webseite + Adminpanel + API: http://localhost:51
 
 ```bash
 npm test               # Chat-Assistent (85 Tests, ohne Datenbank)
-npm run test:server    # API-Tests (32 Tests) gegen die Test-Datenbank aus TEST_DATABASE_URL
+npm run test:server    # API-Tests (46 Tests) gegen die Test-Datenbank aus TEST_DATABASE_URL
 npm run test:all       # beides
+npm run test:seo       # robots.txt, Sitemap, Meta-Tags, JSON-LD, Statuscodes, Links (nur lesend)
+                       # gegen den laufenden Worker (wrangler dev, Port 8787); andere Adresse:
+                       # node scripts/check-seo.mjs https://snackpoint.mucahitbayar.workers.dev
 ```
 
 `test:server` **löscht** die Datenbank in `TEST_DATABASE_URL` vor jedem Lauf vollständig und verweigert den Start,
@@ -91,6 +102,7 @@ wenn deren Name nicht „test“ enthält. Niemals auf eine echte Datenbank zeig
 | --- | --- | --- |
 | `API_ORIGIN` | Variable | Öffentliche URL des Railway-API-Dienstes, z. B. `https://snackpoint-api-production.up.railway.app` |
 | `PROXY_SECRET` | **Secret** | Derselbe Wert wie auf Railway (`npx wrangler secret put PROXY_SECRET`) |
+| `REDIRECT_HOSTS` | Variable, optional | Erst nach dem Umzug auf eine eigene Domain: alte Hostnamen (kommagetrennt, z. B. `snackpoint.mucahitbayar.workers.dev`), deren Seiten per 301 auf `SETTINGS.siteUrl` umleiten |
 
 **Lokal** (`.env`, siehe `.env.example`): `DATABASE_URL`, `TEST_DATABASE_URL`.
 
@@ -201,6 +213,10 @@ Webseite aus und reicht `/api/*` an Railway weiter. Beide deployen automatisch b
 3. Worker → *Settings → Variables and Secrets* → **Secret** `PROXY_SECRET` (derselbe Wert wie auf Railway).
 4. Eigene Domain: Worker → *Settings → Domains & Routes* → **Custom Domain** (Domain muss in Cloudflare
    verwaltet werden). Ohne eigene Domain läuft die Seite unter `snackpoint.<konto>.workers.dev`.
+   Danach `SETTINGS.siteUrl` in `src/data/siteContent.js` auf die neue Domain setzen: daraus entstehen
+   Canonical-Links, `sitemap.xml`, `robots.txt`, strukturierte Daten und Link-Vorschauen. Nach dem
+   Deploy die Variable `REDIRECT_HOSTS` mit der alten `workers.dev`-Adresse setzen, damit sie per 301
+   auf die neue Domain zeigt (siehe `docs/seo-geo-final-audit.md`).
 
 Alternativ per Kommandozeile: `npx wrangler login`, `npx wrangler secret put PROXY_SECRET`, `npm run deploy`.
 
@@ -211,8 +227,8 @@ Alternativ per Kommandozeile: `npx wrangler login`, `npx wrangler secret put PRO
   Backend ausliefern.
 
 **Kosten (zur Orientierung, bitte aktuelle Preise prüfen):** Cloudflare: Auslieferung der Seite und der
-Worker im kostenlosen Tarif (Worker-Aufrufe nur für `/api/*`, Tageskontingent reicht für eine Kiosk-Seite
-bei Weitem). Railway: nutzungsbasiert im bestehenden Railway-Tarif (API-Dienst + Postgres, beide klein).
+Worker im kostenlosen Tarif (Worker-Aufrufe für `/api/*` und die vier öffentlichen Seiten, das
+Tageskontingent von 100.000 Aufrufen reicht für eine Kiosk-Seite bei Weitem). Railway: nutzungsbasiert im bestehenden Railway-Tarif (API-Dienst + Postgres, beide klein).
 
 ### Backups (kostenlos)
 

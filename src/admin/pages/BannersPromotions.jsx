@@ -54,7 +54,7 @@ function BannerForm({ item, errors, busy, onSave, onCancel }) {
     >
       <TextField label="Text" required placeholder="z. B. Heute Sonderaktion: 2 Energy Drinks für 4 €!" value={form.text} onChange={set('text')} error={errors.text} maxLength={200} />
       <div className="field-row">
-        <TextField label="Link" hint="Optional, z. B. /produkte.html oder https://…" value={form.linkUrl} onChange={set('linkUrl')} error={errors.linkUrl} />
+        <TextField label="Link" hint="Optional, z. B. /produkte oder https://…" value={form.linkUrl} onChange={set('linkUrl')} error={errors.linkUrl} />
         <TextField label="Link-Text" placeholder="Mehr erfahren" value={form.linkLabel} onChange={set('linkLabel')} error={errors.linkLabel} maxLength={40} />
       </div>
       <SelectField label="Farbe" value={form.variant} onChange={set('variant')}>

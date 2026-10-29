@@ -40,7 +40,7 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
     ],
     getResponse: () =>
       'Bei uns gibt’s alles unter einem Dach 😎 Süßigkeiten, Snacks, Getränke, Zeitschriften, Tabakwaren, Lotto und einen DHL Paketshop. Frag mich einfach nach einem bestimmten Produkt!',
-    cta: { label: 'Alle Produkte ansehen', href: '/produkte.html' },
+    cta: { label: 'Alle Produkte ansehen', href: '/produkte' },
   },
   {
     id: 'dhl',

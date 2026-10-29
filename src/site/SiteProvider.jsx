@@ -1,24 +1,50 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { CONTENT, REVIEWS, SERVICES, SETTINGS } from '../data/siteContent';
 import { applySiteData } from '../data/siteStore';
 import './SiteProvider.css';
 
 const SiteContext = createContext(null);
 
-// The HTML pages preload this URL (<link rel="preload">), so the request is
-// usually done by the time React starts. The API delivers what the admin
-// panel manages (products, events, banners, promotions, opening hours);
-// texts, contact details, services and reviews come from src/data/siteContent.js.
-async function fetchSite() {
-  const response = await fetch('/api/public/site', { headers: { Accept: 'application/json' } });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const data = await response.json();
+// The API delivers what the admin panel manages (products, events, banners,
+// promotions, opening hours); texts, contact details, services and reviews
+// come from src/data/siteContent.js. Pages rendered by the Cloudflare Worker
+// carry the current payload in <script id="site-data"> (worker/index.js), so
+// no request is needed; otherwise the build-time HTML preloads the URL
+// (<link rel="preload">) and the request is usually done when React starts.
+/** The API payload plus everything that lives in code. */
+export function withCodeContent(data) {
   return { ...data, content: CONTENT, settings: SETTINGS, services: SERVICES, reviews: REVIEWS };
+}
+
+function inlineSite() {
+  try {
+    const element = document.getElementById('site-data');
+    return element ? withCodeContent(JSON.parse(element.textContent)) : null;
+  } catch {
+    return null;
+  }
+}
+
+// A hanging API would otherwise keep the loading screen up indefinitely;
+// after this the error screen offers "Erneut versuchen".
+const FETCH_TIMEOUT_MS = 10000;
+
+async function fetchSite() {
+  const signal = typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(FETCH_TIMEOUT_MS) : undefined;
+  const response = await fetch('/api/public/site', { headers: { Accept: 'application/json' }, signal });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return withCodeContent(await response.json());
 }
 
 /** Loads the website's content from the API, then renders the page. */
 export function SiteProvider({ children }) {
-  const [state, setState] = useState({ status: 'loading', data: null });
+  const [state, setState] = useState(() => {
+    const data = inlineSite();
+    if (!data) return { status: 'loading', data: null };
+    applySiteData(data);
+    return { status: 'ready', data };
+  });
+  const hasData = useRef(state.status === 'ready');
 
   const load = useCallback(() => {
     setState({ status: 'loading', data: null });
@@ -30,7 +56,9 @@ export function SiteProvider({ children }) {
       .catch(() => setState({ status: 'error', data: null }));
   }, []);
 
-  useEffect(load, [load]);
+  useEffect(() => {
+    if (!hasData.current) load();
+  }, [load]);
 
   if (state.status === 'loading') {
     return (
@@ -53,6 +81,11 @@ export function SiteProvider({ children }) {
   }
 
   return <SiteContext.Provider value={state.data}>{children}</SiteContext.Provider>;
+}
+
+/** Build-time prerendering (scripts/prerender.mjs): the data is already there. */
+export function StaticSiteProvider({ data, children }) {
+  return <SiteContext.Provider value={data}>{children}</SiteContext.Provider>;
 }
 
 export function useSite() {

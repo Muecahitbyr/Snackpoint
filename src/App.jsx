@@ -22,7 +22,7 @@ import SnackBotWidget from './components/chatbot/SnackBotWidget';
 // bundle.
 
 export default function App() {
-  // A link like /produkte.html's "/#services" lands here via a full page
+  // A link like /produkte's "/#services" lands here via a full page
   // load, so the browser's native scroll-to-hash fires before React has
   // mounted the sections and finds nothing — do it again once they exist.
   useEffect(() => {

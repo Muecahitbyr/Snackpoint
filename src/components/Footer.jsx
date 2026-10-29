@@ -30,9 +30,11 @@ export default function Footer() {
           </nav>
         )}
         <nav className="footer-legal">
-          <a href="/impressum.html">Impressum</a>
+          <a href="/produkte">Sortiment</a>
           <span className="footer-legal-dot">·</span>
-          <a href="/datenschutz.html">Datenschutz</a>
+          <a href="/impressum">Impressum</a>
+          <span className="footer-legal-dot">·</span>
+          <a href="/datenschutz">Datenschutz</a>
           <span className="footer-legal-dot">·</span>
           <button type="button" className="footer-legal-btn" onClick={reset}>
             Cookie-Einstellungen

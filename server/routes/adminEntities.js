@@ -107,7 +107,7 @@ export const groups = crudRoutes({
     ageRestricted: z.boolean().optional(),
     sortOrder: sortOrder.optional(),
   }),
-  // The slug is the page anchor (/produkte.html#lotto): set once, kept on rename.
+  // The slug is the page anchor (/produkte#lotto): set once, kept on rename.
   extraColumns: async (data, { db, existing }) => (existing ? {} : { slug: await uniqueSlug(db, 'product_groups', data.name) }),
   select: `SELECT t.*, (SELECT count(*)::int FROM product_categories c WHERE c.group_id = t.id) AS category_count
              FROM product_groups t`,

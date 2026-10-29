@@ -12,9 +12,9 @@ import './Produkte.css';
 
 const ALL = 'Alle';
 
-// /produkte.html#lotto opens straight on that group.
+// /produkte#lotto opens straight on that group (prerendering: all groups).
 function groupFromHash(groupById) {
-  const id = window.location.hash.slice(1);
+  const id = typeof window === 'undefined' ? '' : window.location.hash.slice(1);
   return groupById.has(id) ? id : ALL;
 }
 

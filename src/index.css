@@ -153,6 +153,11 @@ section { position: relative; scroll-margin-top: calc(90px + var(--announce-h, 0
   transform: translateY(0.6em) rotate(6deg);
 }
 
+/* Static HTML (scripts/prerender.mjs, worker/index.js) for crawlers and
+   browsers without JavaScript; its reveal sections are already "is-visible".
+   With JavaScript, React renders the page itself exactly as before. */
+.js [data-prerendered] { display: none; }
+
 /* Expanding ring behind a "live" status dot (nav pill, opening hours). */
 @keyframes status-ping {
   0% { transform: scale(1); opacity: 0.6; }

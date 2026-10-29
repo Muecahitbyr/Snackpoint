@@ -57,7 +57,7 @@ export default function NewProducts() {
       </div>
 
       <Reveal className="products-more" delay={highlights.length * 0.1}>
-        <a href="/produkte.html" className="products-more-link">
+        <a href="/produkte" className="products-more-link">
           {content['new.moreLink']}
         </a>
       </Reveal>

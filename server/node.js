@@ -24,6 +24,10 @@ if (!apiOnly && existsSync('dist')) {
   });
   server.get('/admin', serveStatic({ path: './dist/admin.html' }));
   server.get('/admin/', serveStatic({ path: './dist/admin.html' }));
+  // Clean URLs like on Cloudflare (/produkte → produkte.html).
+  for (const page of ['produkte', 'impressum', 'datenschutz']) {
+    server.get(`/${page}`, serveStatic({ path: `./dist/${page}.html` }));
+  }
   server.get('/events', (c) => c.redirect('/#events', 301));
   server.use('/assets/*', async (c, next) => {
     await next();

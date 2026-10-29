@@ -10,7 +10,15 @@
     "binding": "ASSETS",
     // /admin → admin.html
     "html_handling": "auto-trailing-slash",
-    "run_worker_first": ["/api/*"]
+    // Everything else comes straight from dist/ without the Worker.
+    // Keep the page list in sync with PUBLIC_PAGES (src/seo/structuredData.js).
+    "run_worker_first": [
+      "/api/*",
+      "/", "/produkte", "/impressum", "/datenschutz",
+      "/index.html", "/produkte.html", "/impressum.html", "/datenschutz.html",
+      "/produkte/", "/impressum/", "/datenschutz/",
+      "/robots.txt", "/sitemap.xml"
+    ]
   },
   "vars": {
     // Public URL of the Railway API service (Settings → Networking).

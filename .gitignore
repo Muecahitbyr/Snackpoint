@@ -11,3 +11,4 @@ review-v2.1/
 public/models/character-v1-backup.glb
 .dev.vars
 .wrangler/
+build/

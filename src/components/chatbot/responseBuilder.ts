@@ -16,7 +16,7 @@ export type { Rng } from './messages';
 
 const MAX_LIST = 8;
 const MAX_FOLLOWUP_LIST = 12;
-const PRODUCTS_CTA = { label: 'Alle Produkte ansehen', href: '/produkte.html' };
+const PRODUCTS_CTA = { label: 'Alle Produkte ansehen', href: '/produkte' };
 // Unknown product: offer to put it on the wish list (pre-filled).
 const wishCta = (name: string) => ({ label: 'Als Wunsch eintragen', href: `/?wunsch=${encodeURIComponent(name)}#wunschliste` });
 const ROUTE_CTA = { label: 'Route öffnen', href: MAPS_URL, external: true };

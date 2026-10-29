@@ -19,7 +19,7 @@ export const CONTENT = {
   // Über uns
   'about.eyebrow': 'Über uns',
   'about.title': 'Mehr als nur ein Kiosk.',
-  'about.text': 'Bei SnackPoint Kaufbeuren erwartet dich ein herzlicher Empfang, frische Ware und ein Service, der weit über den klassischen Kiosk hinausgeht. Ob schneller Snack zwischendurch, Paket abholen oder Lottoschein abgeben hier bist du in besten Händen.',
+  'about.text': 'Bei SnackPoint Kaufbeuren erwartet dich ein herzlicher Empfang, frische Ware und ein Service, der weit über den klassischen Kiosk hinausgeht. Ob schneller Snack zwischendurch, Paket abholen oder Lottoschein abgeben: Hier bist du in besten Händen.',
   'about.image': '/logo.jpg',
   // Leistungen
   'services.eyebrow': 'Leistungen',
@@ -34,7 +34,7 @@ export const CONTENT = {
   // Neu eingetroffen
   'new.eyebrow': 'Neu eingetroffen',
   'new.title': 'Frisch im Regal.',
-  'new.text': 'Jede Woche neue Süßigkeiten-Trends aus aller Welt von internationalen Klassikern bis zu den heißesten Newcomern.',
+  'new.text': 'Jede Woche neue Süßigkeiten-Trends aus aller Welt, von internationalen Klassikern bis zu den heißesten Newcomern.',
   'new.tag': 'Snacks',
   'new.moreLink': 'Hier klicken, um alle Produkte zu sehen →',
   // Wunschliste (product wishes)
@@ -62,6 +62,11 @@ export const CONTENT = {
 
 // Address, contact, links and legal details (Impressum / Datenschutz).
 export const SETTINGS = {
+  // Public address of the website: canonical links, sitemap.xml, robots.txt,
+  // link previews and structured data are built from it (scripts/prerender.mjs,
+  // worker/index.js). Change it once the own domain is live. A local test
+  // build can override it: VITE_SITE_URL=http://localhost:8790 npm run build
+  siteUrl: (import.meta.env?.VITE_SITE_URL || 'https://snackpoint.mucahitbayar.workers.dev').replace(/\/$/, ''),
   contact: {
     address: 'Neugablonzer Str. 25, 87600 Kaufbeuren',
     phone: '',

@@ -5,7 +5,13 @@ import { getRequestListener } from '@hono/node-server';
 
 // Pretty URLs for the extra pages — Cloudflare (wrangler.jsonc) and server/node.js do the
 // same in production.
-const PAGE_REWRITES = { '/admin': '/admin.html', '/admin/': '/admin.html' };
+const PAGE_REWRITES = {
+  '/admin': '/admin.html',
+  '/admin/': '/admin.html',
+  '/produkte': '/produkte.html',
+  '/impressum': '/impressum.html',
+  '/datenschutz': '/datenschutz.html',
+};
 
 function rewritePages(req, _res, next) {
   const [path, query] = req.url.split('?');
@@ -36,9 +42,12 @@ function apiServer() {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [react(), apiServer()],
-  build: {
+  // `vite build --ssr src/prerender.jsx` (part of npm run build): the server
+  // renderer for scripts/prerender.mjs and worker/index.js. Not a website file,
+  // so it lives outside dist/ and without a copy of public/.
+  build: isSsrBuild ? { outDir: 'build/ssr', copyPublicDir: false } : {
     rolldownOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
@@ -49,4 +58,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

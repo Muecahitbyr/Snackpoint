@@ -7,6 +7,7 @@ import { useMagnetic } from '../hooks/useMagnetic';
 import Reveal from './Reveal';
 import SplitWords from './SplitWords';
 import { useContent, useSite } from '../site/SiteProvider';
+import { IS_PRERENDER } from '../site/env';
 import './Location.css';
 
 const toMinutes = (time) => {
@@ -42,9 +43,9 @@ function TodayTimeline({ open, close, now }) {
 function OpeningHours() {
   const now = useNow();
   const status = getOpenStatus(now);
-  const today = OPENING_HOURS.find((entry) => entry.jsDay === now.getDay()) ?? null;
+  const today = IS_PRERENDER ? null : OPENING_HOURS.find((entry) => entry.jsDay === now.getDay()) ?? null;
   const first = OPENING_HOURS[0];
-  const sameEveryDay = OPENING_HOURS.every(
+  const sameEveryDay = OPENING_HOURS.length > 0 && OPENING_HOURS.every(
     (entry) => !entry.closed && entry.open === first.open && entry.close === first.close
   );
 
@@ -55,10 +56,12 @@ function OpeningHours() {
 
   return (
     <div className="hours" data-character-target="hours">
-      <p className={`hours-status ${status.open ? 'is-open' : 'is-closed'}`}>
-        <span className="hours-status-dot" aria-hidden="true" />
-        {statusText}
-      </p>
+      {!IS_PRERENDER && (
+        <p className={`hours-status ${status.open ? 'is-open' : 'is-closed'}`}>
+          <span className="hours-status-dot" aria-hidden="true" />
+          {statusText}
+        </p>
+      )}
 
       {sameEveryDay && (
         <p className="hours-summary">
