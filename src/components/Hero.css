@@ -81,6 +81,7 @@
 .hero-logo {
   width: 96px; height: 96px;
   border-radius: 26px;
+  object-fit: cover;
   margin: 0 auto 28px;
   box-shadow: var(--shadow-glow);
   will-change: transform;
