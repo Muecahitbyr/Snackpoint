@@ -603,6 +603,9 @@ select.filter.filter-inline.is-danger { border-color: #f3b9b9; background-color:
   .table td.actions-cell { display: block; padding-top: 8px; border-top: 1px solid var(--a-border); margin-top: 6px; }
   .actions-cell .row-actions { flex-wrap: wrap; }
   .table td:has(> .badges:empty):not(:has(> select)) { display: none; }
+  /* Status: the availability choice, and the hints wrap below it instead of running off the card. */
+  .table td:has(> select) { flex-wrap: wrap; }
+  .table td:has(> select) > .badges { flex-basis: 100%; justify-content: flex-end; }
   .table tr:hover td { background: transparent; }
 
   .list-row { flex-direction: column; align-items: stretch; }

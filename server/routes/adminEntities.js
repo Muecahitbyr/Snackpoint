@@ -333,7 +333,7 @@ products.post('/highlights', async (c) => {
 // Several products at once: the same availability, visibility, category or
 // price for all of them, in one transaction.
 const BULK_COLUMNS = { availability: 'availability', isActive: 'is_active', showInCatalog: 'show_in_catalog', categoryId: 'category_id', priceCents: 'price_cents' };
-const BULK_LABELS = { availability: 'Verfügbarkeit', isActive: 'Sichtbarkeit', showInCatalog: 'Produktseite', categoryId: 'Kategorie', priceCents: 'Preis' };
+const BULK_LABELS = { availability: 'Verfügbarkeit', isActive: 'Sichtbarkeit', showInCatalog: 'Produktkatalog', categoryId: 'Kategorie', priceCents: 'Preis' };
 
 products.post('/bulk', async (c) => {
   const { ids, changes } = parse(

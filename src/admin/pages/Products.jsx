@@ -19,8 +19,8 @@ const STATUS_FILTERS = [
   { id: 'inactive', label: 'Inaktiv' },
   { id: 'coming_soon', label: 'Bald verfügbar' },
   { id: 'sold_out', label: 'Ausverkauft' },
-  { id: 'highlight', label: 'Auf der Startseite' },
-  { id: 'hidden', label: 'Nicht auf Produktseite' },
+  { id: 'highlight', label: 'Frisch im Regal' },
+  { id: 'hidden', label: 'Nicht im Katalog' },
 ];
 
 function matchesStatus(product, status) {
@@ -91,7 +91,7 @@ function BulkEditModal({ ids, categories, onClose, onDone }) {
           </SelectField>
         </div>
         <div className="field-row">
-          <SelectField label="Auf der Produktseite" value={form.showInCatalog} onChange={set('showInCatalog')}>
+          <SelectField label="Im Produktkatalog" value={form.showInCatalog} onChange={set('showInCatalog')}>
             <option value="">Unverändert</option>
             <option value="yes">Anzeigen</option>
             <option value="no">Nicht anzeigen</option>
@@ -193,7 +193,7 @@ export default function Products() {
     <>
       <PageHeader
         title="Produkte"
-        description="Alles, was auf der Produktseite und unter „Frisch im Regal“ erscheint."
+        description="Alle Produkte der Webseite: im Produktkatalog (die Seite „Produkte“) und in „Frisch im Regal“ auf der Startseite."
         actions={<Button onClick={() => navigate('produkte/neu')}><Icon name="plus" size={16} /> Neues Produkt</Button>}
       />
 
@@ -215,7 +215,7 @@ export default function Products() {
         </p>
       )}
       {!reorderMode && !loading && (
-        <p className="hint-bar subtle">Tipp: Wähle eine Kategorie, um die Reihenfolge zu ändern. Die 4 Produkte der Startseite wählst du unter <a href="#/startseite">Startseite</a>.</p>
+        <p className="hint-bar subtle">Tipp: Wähle eine Kategorie, um die Reihenfolge zu ändern. Die 4 Produkte für „Frisch im Regal“ auf der Startseite wählst du unter <a href="#/startseite">Startseite</a>.</p>
       )}
 
       {selectedIds.length > 0 && (
@@ -274,8 +274,8 @@ export default function Products() {
                       {Object.entries(AVAILABILITY).map(([id, { label }]) => <option key={id} value={id}>{label}</option>)}
                     </select>
                     <span className="badges">
-                      {product.isHighlight && <Badge tone="accent"><Icon name="star" size={11} filled /> Startseite</Badge>}
-                      {!product.showInCatalog && <Badge>Nicht auf Produktseite</Badge>}
+                      {product.isHighlight && <Badge tone="accent"><Icon name="star" size={11} filled /> Frisch im Regal</Badge>}
+                      {!product.showInCatalog && <Badge>Nicht im Produktkatalog</Badge>}
                     </span>
                   </td>
                   <td data-label="Aktiv">

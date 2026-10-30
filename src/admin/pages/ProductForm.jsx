@@ -171,7 +171,7 @@ export default function ProductForm({ id }) {
         <div className="form-side">
           <Card title="Sichtbarkeit">
             <Toggle label="Aktiv" hint="Inaktive Produkte sind auf der Webseite unsichtbar." checked={form.isActive} onChange={set('isActive')} />
-            <Toggle label="Auf der Produktseite anzeigen" checked={form.showInCatalog} onChange={set('showInCatalog')} />
+            <Toggle label="Im Produktkatalog anzeigen" hint="Die Seite „Produkte“ der Webseite, mit Bereichen und Suche. Unabhängig davon, ob es in „Frisch im Regal“ steht." checked={form.showInCatalog} onChange={set('showInCatalog')} />
             {id && (
               <p className="field-hint">
                 {form.isHighlight ? 'Steht auf der Startseite unter „Frisch im Regal“. ' : ''}

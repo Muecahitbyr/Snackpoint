@@ -133,7 +133,7 @@ export const HIGHLIGHT_PRODUCTS = [
 
 // Brand products the chat assistant knew about (marked as example data in
 // the old src/data/products.ts — please check range and prices). Not shown
-// on /produkte until "Auf Produktseite anzeigen" is switched on.
+// on /produkte until "Im Produktkatalog anzeigen" is switched on.
 export const CHAT_PRODUCTS = [
   { brand: 'Marlboro', name: 'Marlboro Red', category: 'Zigaretten', chatCategory: 'zigaretten' },
   { brand: 'Marlboro', name: 'Marlboro Gold', category: 'Zigaretten', chatCategory: 'zigaretten' },

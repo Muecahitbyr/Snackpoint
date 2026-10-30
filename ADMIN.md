@@ -160,9 +160,9 @@ Anmelden unter `/admin`. Das Panel funktioniert auch auf dem Smartphone (Menü o
 | Bereich | Was du dort machst |
 | --- | --- |
 | **Dashboard** | Zahlen auf einen Blick, nächste Events, letzte Änderungen, Schnellaktionen |
-| **Produkte** | Anlegen, bearbeiten, löschen; Preis, Bild, Beschreibung, Allergene; Schalter *Aktiv*; *Bald verfügbar* / *Ausverkauft*; *Auf der Produktseite anzeigen*. Reihenfolge: Kategorie wählen, dann ↑/↓. |
+| **Produkte** | Anlegen, bearbeiten, löschen; Preis, Bild, Beschreibung, Allergene; Schalter *Aktiv*; *Bald verfügbar* / *Ausverkauft*; *Im Produktkatalog anzeigen* (die Seite „Produkte“; unabhängig von „Frisch im Regal“ auf der Startseite). Reihenfolge: Kategorie wählen, dann ↑/↓. |
 | **Startseite** | Die **4 Produkte** unter „Frisch im Regal“ auswählen: Platz für Platz *Produkt wählen* oder *Ersetzen*, Etikett (NEU, TREND …), Reihenfolge mit ↑/↓, dann **Speichern**. Mehr als 4 geht nicht. |
-| **Kategorien** | Bereiche (Reiter auf der Produktseite, z. B. „Getränke“, mit Hinweistext und 18+) und Kategorien (Filter darunter): anlegen, umbenennen, sortieren, löschen. Löschen geht erst, wenn nichts mehr darin ist – so geht nichts versehentlich verloren. |
+| **Kategorien** | Bereiche (Reiter im Produktkatalog, z. B. „Getränke“, mit Hinweistext und 18+) und Kategorien (Filter darunter): anlegen, umbenennen, sortieren, löschen. Löschen geht erst, wenn nichts mehr darin ist – so geht nichts versehentlich verloren. |
 | **Events** | Anlegen mit Titel, Beschreibung, Ort, Beginn/Ende, Eintritt (frei / Preis / Hinweis), Titelbild und Galerie. **Als Entwurf speichern** = unsichtbar, **Veröffentlichen** = sofort online. Aktiv-Schalter, Hervorheben, Duplizieren (praktisch für wiederkehrende Events). |
 | **Banner & Aktionen** | *Banner*: Hinweisleiste ganz oben („Heute Sonderaktion!“), mit Link, Farbe und optionalem Zeitraum – schaltet sich automatisch ein/aus. *Aktionen*: Angebotskarten mit Bild, Preis und Etikett; erscheinen als eigener Bereich auf der Startseite. |
 | **Produktwünsche** | Was Kunden sich auf der Webseite (Bereich „Wunschliste“) wünschen. Neue Wünsche erst **freigeben**, dann sind sie sichtbar und es kann abgestimmt werden. Status *Geplant* / *Im Laden* erscheinen als Hinweis auf der Webseite, *Abgelehnt* blendet aus. Tippfehler korrigieren, Doppelte **zusammenführen** (Stimmen werden übernommen). |
@@ -183,7 +183,7 @@ Adresse automatisch.
 - Vergangene Events werden automatisch archiviert (`EVENT_ARCHIVE` in `server/lib/publicSite.js`). Ein Event
   ohne Ende gilt bis Mitternacht als laufend.
 - Die 12 zusätzlichen Markenprodukte des Chat-Assistenten (Takis, Red Bull, Monster, Marlboro) wurden als
-  Produkte mit „Auf der Produktseite anzeigen = aus“ übernommen. Sie waren im alten Code als
+  Produkte mit „Im Produktkatalog anzeigen = aus“ übernommen. Sie waren im alten Code als
   *Beispieldaten* markiert – bitte prüfen.
 
 ---

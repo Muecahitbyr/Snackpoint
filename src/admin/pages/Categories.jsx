@@ -33,7 +33,7 @@ function GroupModal({ group, onClose, onSaved }) {
   return (
     <Modal title={group ? 'Bereich bearbeiten' : 'Neuer Bereich'} onClose={onClose}>
       <form onSubmit={save}>
-        <p className="modal-intro">Bereiche sind die großen Reiter auf der Produktseite, z. B. „Getränke“.</p>
+        <p className="modal-intro">Bereiche sind die großen Reiter im Produktkatalog (Seite „Produkte“), z. B. „Getränke“.</p>
         <div className="field-row">
           <TextField label="Name" required value={form.name} onChange={set('name')} error={errors.name} maxLength={80} />
           <TextField label="Emoji" value={form.emoji} onChange={set('emoji')} error={errors.emoji} maxLength={16} />
@@ -140,7 +140,7 @@ export default function Categories() {
     <>
       <PageHeader
         title="Kategorien"
-        description="Bereiche (Reiter auf der Produktseite) und ihre Kategorien (Filter darunter)."
+        description="Bereiche (Reiter im Produktkatalog, der Seite „Produkte“) und ihre Kategorien (Filter darunter)."
         actions={
           <>
             <Button variant="ghost" onClick={() => setModal({ type: 'group' })}><Icon name="plus" size={16} /> Neuer Bereich</Button>
