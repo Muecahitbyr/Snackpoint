@@ -56,13 +56,6 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
     cta: { label: 'Leistungen ansehen', href: '#services' },
   },
   {
-    id: 'ihle',
-    keywords: ['ihle'],
-    getResponse: () =>
-      getSite()?.services.find((service: { id: string }) => service.id === 'ihle')?.text ?? 'Ihle gibt es bei uns im Kiosk.',
-    cta: { label: 'Leistungen ansehen', href: '#services' },
-  },
-  {
     id: 'ueber-uns',
     kind: 'faq',
     keywords: ['wer seid ihr', 'wer bist du', 'ueber euch', 'ueber uns', 'was ist snackpoint', 'was ist das hier'],

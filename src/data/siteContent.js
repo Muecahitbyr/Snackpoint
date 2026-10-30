@@ -105,7 +105,7 @@ export const SETTINGS = {
   },
 };
 
-// The service cards ("Leistungen"). id is used by the chat assistant (ihle).
+// The service cards ("Leistungen").
 // badge = optional diagonal ticker, e.g. 'BALD VERFÜGBAR'.
 export const SERVICES = [
   {
@@ -131,15 +131,6 @@ export const SERVICES = [
     gradient: 'deep',
     title: 'Lotto',
     text: 'Offizielle Lotto-Annahmestelle: Tippscheine abgeben, Gewinne prüfen und dein Glück versuchen.',
-  },
-  {
-    id: 'ihle',
-    icon: '🥪',
-    logo: '/logos/ihle.png',
-    gradient: 'red',
-    title: 'Ihle',
-    text: 'Frische Sandwiches, Wraps & Gebäck von Ihle direkt bei uns im Kiosk.',
-    badge: 'BALD VERFÜGBAR',
   },
 ];
 
