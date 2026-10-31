@@ -32,6 +32,8 @@
   perspective: 1000px;
 }
 .product-card-wrap { perspective: 1000px; }
+/* Cards in a row share the height of the tallest one. */
+.product-card-wrap > .product-card { height: 100%; }
 .product-card {
   position: relative;
   background: var(--card);
