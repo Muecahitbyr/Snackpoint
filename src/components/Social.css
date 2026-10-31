@@ -1,0 +1,243 @@
+/* TikTok + Instagram as two phones on a dark stage between the reviews and
+   the location. */
+.social {
+  padding: 150px 24px 140px;
+  background: radial-gradient(120% 80% at 50% 0%, #2a0d0d 0%, #140707 55%, #0d0606 100%);
+  color: #fff;
+  overflow: hidden;
+  isolation: isolate;
+}
+.social-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(420px 320px at 28% 62%, rgba(254,44,85,0.28), transparent 70%),
+    radial-gradient(420px 320px at 72% 62%, rgba(240,172,35,0.26), transparent 70%);
+}
+.social .section-title { color: #fff; }
+.social .section-title.center { margin-bottom: 24px; }
+.social-lead {
+  margin: 0 auto 70px;
+  text-align: center;
+  color: rgba(255,255,255,0.72);
+}
+
+.social-phones {
+  max-width: var(--max);
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: clamp(28px, 7vw, 110px);
+}
+.social-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+}
+.social-col:first-child .phone { --tilt: -5deg; }
+.social-col:last-child .phone { --tilt: 5deg; animation-delay: -3s; }
+
+/* ── The phone ───────────────────────────────────────────────── */
+.phone {
+  --tilt: 0deg;
+  width: 270px;
+  aspect-ratio: 9 / 19;
+  border-radius: 46px;
+  padding: 11px;
+  background: linear-gradient(145deg, #3a3a3e, #0e0e10 40%, #2a2a2e);
+  box-shadow:
+    0 0 0 2px #4a4a50,
+    0 40px 80px rgba(0,0,0,0.55),
+    0 0 60px rgba(224,32,31,0.18);
+  rotate: var(--tilt);
+  animation: phone-float 6s ease-in-out infinite;
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes phone-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -14px; }
+}
+.phone-screen {
+  position: relative;
+  height: 100%;
+  border-radius: 36px;
+  overflow: hidden;
+  background: #000;
+}
+.phone-island {
+  position: absolute;
+  z-index: 3;
+  top: 9px;
+  left: 50%;
+  translate: -50% 0;
+  width: 86px;
+  height: 24px;
+  border-radius: 100px;
+  background: #000;
+}
+.phone-status {
+  position: absolute;
+  z-index: 2;
+  inset: 0 0 auto;
+  height: 42px;
+  padding: 13px 24px 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.phone-tiktok .phone-status { color: #fff; }
+.phone-insta .phone-status { color: #111; }
+
+/* ── Screen content shared by both apps ─────────────────────── */
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 46px 0 0;
+  font-size: 0.72rem;
+  overflow: hidden;
+}
+.screen-bar {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 16px 10px;
+}
+.screen-bar-icon { width: 18px; height: 18px; }
+.profile-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.profile-avatar {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-name { font-size: 0.9rem; }
+.profile-handle { opacity: 0.6; }
+.profile-follow {
+  margin: 10px 0 8px;
+  padding: 7px 34px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.74rem;
+  color: #fff;
+  transition: filter 0.2s, transform 0.2s;
+}
+.screen:hover .profile-follow { filter: brightness(1.12); transform: scale(1.05); }
+.profile-bio { padding: 0 18px; text-align: center; line-height: 1.35; opacity: 0.85; }
+.profile-grid {
+  width: 100%;
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+.tile {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tile img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); transition: transform 0.5s cubic-bezier(0.16,1,0.3,1); }
+.screen:hover .tile img { transform: scale(1.25); }
+.social .grad-1 { background: linear-gradient(135deg, #f7cf5b, #f0ac23); }
+.social .grad-2 { background: linear-gradient(135deg, #ff6b4a, #e0201f); }
+.social .grad-3 { background: linear-gradient(135deg, #ffd166, #f0ac23); }
+.social .grad-4 { background: linear-gradient(135deg, #c4181c, #7a0000); }
+
+/* ── TikTok: dark, 9:16 videos ──────────────────────────────── */
+.tiktok-screen { background: #000; color: #fff; }
+.tiktok-screen .profile-avatar { box-shadow: 0 0 0 2px #000, 0 0 0 4px #25f4ee, 3px 3px 0 4px #fe2c55; }
+.tiktok-follow { background: #fe2c55; }
+.tiktok-grid .tile { aspect-ratio: 9 / 13; }
+.tile-play {
+  position: absolute;
+  left: 6px;
+  bottom: 4px;
+  font-size: 0.6rem;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+
+/* ── Instagram: light, story ring, highlights, square posts ─── */
+.insta-screen { background: #fff; color: #111; }
+.insta-bar { justify-content: space-between; font-size: 0.82rem; }
+.insta-screen .profile-avatar {
+  padding: 3px;
+  background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
+}
+.insta-screen .profile-avatar img { border-radius: 50%; border: 2px solid #fff; }
+.insta-follow { background: #0095f6; }
+.insta-highlights { display: flex; gap: 14px; margin-top: 10px; }
+.insta-highlight { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 0.6rem; }
+.insta-highlight-ring {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px #dbdbdb;
+}
+.insta-highlight-ring img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.3); }
+.insta-grid .tile { aspect-ratio: 1; }
+
+/* ── Buttons below the phones ───────────────────────────────── */
+.social-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  padding: 14px 26px;
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.social-btn:hover { transform: translateY(-3px) scale(1.03); }
+.social-btn-icon { width: 20px; height: 20px; }
+.social-btn-tiktok {
+  background: #000;
+  box-shadow: -3px -3px 0 #25f4ee, 3px 3px 0 #fe2c55;
+}
+.social-btn-tiktok:hover { box-shadow: -4px -4px 0 #25f4ee, 4px 4px 0 #fe2c55, 0 14px 30px rgba(254,44,85,0.35); }
+.social-btn-insta {
+  background: linear-gradient(45deg, #fa7e1e, #d62976 45%, #962fbf 75%, #4f5bd5);
+  box-shadow: 0 10px 30px rgba(214,41,118,0.35);
+}
+
+@media (max-width: 700px) {
+  .social { padding: 110px 16px 100px; }
+  .social-lead { margin-bottom: 50px; }
+  .social-phones { gap: 14px; }
+  .phone { width: min(44vw, 210px); border-radius: 34px; padding: 7px; }
+  .phone-screen { border-radius: 28px; }
+  /* The screens are drawn for a 270px phone; scale them down as a whole. */
+  .screen { zoom: 0.78; }
+  .phone-island { width: 60px; height: 18px; top: 7px; }
+  .phone-status { display: none; }
+  .social-col { gap: 22px; }
+  .social-btn { padding: 11px 18px; font-size: 0.85rem; gap: 7px; white-space: nowrap; }
+  .social-btn-long { display: none; }
+  .social-btn-icon { width: 16px; height: 16px; }
+}
+@media (max-width: 380px) {
+  .screen { zoom: 0.68; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .phone { animation: none; }
+}

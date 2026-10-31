@@ -10,6 +10,7 @@ import Promotions from './components/Promotions';
 import Wishes from './components/Wishes';
 import Events from './components/events/Events';
 import Reviews from './components/Reviews';
+import Social from './components/Social';
 import Location from './components/Location';
 import Footer from './components/Footer';
 import CookieConsent from './components/CookieConsent';
@@ -45,6 +46,7 @@ export default function App() {
         <NewProducts />
         <Wishes />
         <Reviews />
+        <Social />
         <Location />
       </main>
       <Footer />

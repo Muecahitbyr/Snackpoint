@@ -151,9 +151,11 @@ export default function Datenschutz() {
 
         <h2>11. Links zu sozialen Netzwerken</h2>
         <p>
-          Im Footer verlinken wir auf unsere Profile bei Instagram (Meta Platforms Ireland Ltd.) und TikTok
-          (TikTok Technology Ltd., Irland). Es handelt sich um einfache Links: Beim Aufruf unserer Website
-          werden keine Inhalte dieser Dienste geladen und keine Daten an sie übertragen. Erst wenn Sie einen
+          Auf der Startseite und im Footer verlinken wir auf unsere Profile bei Instagram (Meta Platforms
+          Ireland Ltd.) und TikTok (TikTok Technology Ltd., Irland). Es handelt sich um einfache Links; die
+          Vorschau der Profile auf der Startseite ist eine eigene Grafik aus unseren Produktbildern. Beim
+          Aufruf unserer Website werden keine Inhalte dieser Dienste geladen und keine Daten an sie
+          übertragen. Erst wenn Sie einen
           Link anklicken, gelangen Sie auf die Seite des jeweiligen Anbieters; dort gelten dessen
           Datenschutzbestimmungen.
         </p>

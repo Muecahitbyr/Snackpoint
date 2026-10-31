@@ -50,6 +50,10 @@ export const CONTENT = {
   // Bewertungen
   'reviews.eyebrow': 'Bewertungen',
   'reviews.title': 'Das sagen unsere Kunden.',
+  // Social Media (TikTok + Instagram as two phones)
+  'social.eyebrow': 'Social Media',
+  'social.title': 'Folg uns.',
+  'social.text': 'Neue Snacks, Drinks und alles, was gerade im Laden los ist: zuerst auf TikTok und Instagram.',
   // Standort
   'location.eyebrow': 'Standort',
   'location.title': 'Besuch uns.',

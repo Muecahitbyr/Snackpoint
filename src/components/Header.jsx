@@ -34,6 +34,7 @@ const LINKS = [
   { href: '/#services', label: 'Leistungen' },
   { href: '/#new', label: 'Neue Waren' },
   { href: '/#reviews', label: 'Bewertungen' },
+  { href: '/#social', label: 'Social Media' },
   { href: '/#location', label: 'Standort' },
 ];
 // Only listed while events are planned — first, like the section on the page.
