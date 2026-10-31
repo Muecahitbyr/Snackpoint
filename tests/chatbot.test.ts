@@ -6,6 +6,7 @@ import { PRODUCTS, getProductName } from '../src/data/products';
 import type { ChatContext, Intent } from '../src/components/chatbot/types';
 import { loadSeedSiteData } from './fixtures/siteData';
 import { OPENING_HOURS, setOpeningHours } from '../src/data/hours';
+import { SETTINGS } from '../src/data/siteContent.js';
 
 // The chat reads products, hours and the address from the database at page
 // load; here they come from the original seed content instead.
@@ -309,8 +310,9 @@ describe('other intents', () => {
     expectIntent('Wie komme ich zu euch?', 'directions', 'Route');
   });
   it('does not know phone, payment, delivery or parking unless the data says so', () => {
-    expectIntent('Wie ist eure Telefonnummer?', 'phone', 'nicht hinterlegt');
-    expectIntent('Wie kann ich euch erreichen?', 'contact', 'nicht hinterlegt');
+    // The phone number is on record; the answers give exactly that one.
+    expectIntent('Wie ist eure Telefonnummer?', 'phone', SETTINGS.contact.phone);
+    expectIntent('Wie kann ich euch erreichen?', 'contact', SETTINGS.contact.phone);
     expectIntent('Kann ich mit Karte zahlen?', 'payment_methods', 'nicht sicher');
     expectIntent('Liefert ihr auch?', 'delivery', 'Team vor Ort');
     expectIntent('Gibt es Parkplätze?', 'parking', 'Team vor Ort');
@@ -472,7 +474,7 @@ describe('tone: facts stay correct in every variant', () => {
   });
 
   it('unknown information: honest and calm', () => {
-    for (const text of ['Wer wird Weltmeister?', 'Wie ist das Wetter?', 'Kann ich mit Karte zahlen?', 'Wie ist eure Telefonnummer?']) {
+    for (const text of ['Wer wird Weltmeister?', 'Wie ist das Wetter?', 'Kann ich mit Karte zahlen?']) {
       forEveryVariant(text, (reply) => {
         assert.ok(/Team vor Ort|vor Ort/.test(reply) || /nicht hinterlegt/.test(reply), reply);
         assert.ok(!SLANG_ADDRESS.test(reply) && !reply.includes('🔥'), reply);
