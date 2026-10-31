@@ -240,6 +240,9 @@ const de = {
   },
   whichProduct: 'Meinst du ein bestimmtes Produkt? Frag z. B. „Habt ihr Red Bull?“ 😎',
   noProducts: 'Dazu hab ich gerade nichts hinterlegt 😅 Frag am besten kurz unser Team vor Ort.',
+  /** Tobacco isn't listed on the website (no advertising), but sold in the shop. Fixed, neutral wording. */
+  tobaccoInStore:
+    'Zigaretten und Tabakwaren sind bei uns im Laden erhältlich. Der Verkauf erfolgt ausschließlich an Personen ab 18 Jahren. Bitte halte bei Bedarf einen gültigen Ausweis bereit.',
   /** Appended to every answer that mentions cigarettes or tobacco. Fixed wording, no tone tiers. */
   ageNote: 'Wichtig: Zigaretten und Tabakwaren gibt es nur für Personen ab 18 Jahren.',
 

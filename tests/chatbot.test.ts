@@ -498,6 +498,20 @@ describe('age restriction', () => {
       assert.ok(respond('Was kosten die?', ctx, SAT_NOON, () => roll).reply.text.includes('ab 18 Jahren'));
     }
   });
+  it('without tobacco products on record: neutral "available in the shop" answer', () => {
+    const saved = [...PRODUCTS];
+    PRODUCTS.splice(0, PRODUCTS.length, ...saved.filter((product) => product.category !== 'zigaretten'));
+    try {
+      for (const question of ['Habt ihr Zigaretten?', 'Verkauft ihr Tabak?', 'Gibt es Zigaretten bei euch?', 'Habt ihr Tabak?', 'habt ihr kippen']) {
+        forEveryVariant(question, (reply) => {
+          assert.ok(reply.startsWith('Zigaretten und Tabakwaren sind bei uns im Laden erhältlich.'), `${question}: ${reply}`);
+          assert.ok(reply.includes('ab 18 Jahren') && reply.includes('Ausweis'), reply);
+        });
+      }
+    } finally {
+      PRODUCTS.splice(0, PRODUCTS.length, ...saved);
+    }
+  });
   it('other products do not carry the note', () => {
     for (const question of ['Habt ihr Takis?', 'Habt ihr Red Bull?', 'Welche Getränke habt ihr?', 'Was habt ihr im Sortiment?']) {
       forEveryVariant(question, (reply) => assert.ok(!reply.includes('ab 18 Jahren') || question.includes('Sortiment'), `${question}: ${reply}`));

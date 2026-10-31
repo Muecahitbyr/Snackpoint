@@ -94,6 +94,7 @@ function priceReply(products: Product[], rng: Rng): string {
 function categoryReply(categoryId: string, rng: Rng): { text: string; offer?: ChatContext['offer'] } {
   const category = CATEGORIES.find((entry) => entry.id === categoryId);
   const all = categoryProducts(categoryId).filter(isAvailable);
+  if (category && !all.length && categoryId === 'zigaretten') return { text: M.tobaccoInStore };
   if (!category || !all.length) return { text: M.noProducts };
 
   if (all.length <= MAX_LIST) return { text: `${say(M.available.intro[flavorOfCategory(categoryId)], rng)}\n${bulletList(all, MAX_LIST)}` };
