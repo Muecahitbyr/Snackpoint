@@ -124,6 +124,7 @@ export const SERVICES = [
   {
     id: 'hermes',
     icon: '🚚',
+    logo: '/logos/hermes.png',
     gradient: 'gold',
     title: 'Hermes PaketShop',
     text: 'Hermes Pakete und Retouren abgeben oder Sendungen abholen, direkt bei uns im Laden.',
