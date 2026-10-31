@@ -69,7 +69,7 @@ export const SETTINGS = {
   siteUrl: (import.meta.env?.VITE_SITE_URL || 'https://snackpoint.mucahitbayar.workers.dev').replace(/\/$/, ''),
   contact: {
     address: 'Neugablonzer Str. 25, 87600 Kaufbeuren',
-    phone: '',
+    phone: '0177 4657426',
     email: '',
     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Snack+Point+Kaufbeuren+Neugablonzer+Str.+25+87600+Kaufbeuren',
     mapsEmbedUrl: 'https://maps.google.com/maps?q=Snack+Point+Kaufbeuren,+Neugablonzer+Str.+25,+87600+Kaufbeuren&output=embed',
@@ -96,7 +96,7 @@ export const SETTINGS = {
   // Impressum: operator, legal form, representative (GmbH/UG), VAT ID and register
   // only if they exist; responsible = person responsible for the content (§ 18 MStV).
   legal: {
-    operator: '',
+    operator: 'Bilal Ergül',
     legalForm: '',
     representative: '',
     vatId: '',
