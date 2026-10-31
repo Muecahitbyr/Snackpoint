@@ -110,7 +110,8 @@ export const SETTINGS = {
 };
 
 // The service cards ("Leistungen").
-// badge = optional diagonal ticker, e.g. 'BALD VERFÜGBAR'.
+// badge = optional diagonal ticker, e.g. 'BALD VERFÜGBAR'. note = small print
+// below the text (e.g. the legally required gambling notice for Lotto).
 export const SERVICES = [
   {
     id: 'kiosk',
@@ -121,19 +122,20 @@ export const SERVICES = [
     text: 'Süßigkeiten, Getränke, Zeitschriften und alles für den kleinen Hunger täglich frisch sortiert.',
   },
   {
-    id: 'dhl',
-    icon: '📦',
-    logo: '/logos/dhl.png',
-    gradient: 'gold',
-    title: 'DHL Paketshop',
-    text: 'Pakete abgeben und abholen — schnell, freundlich und unkompliziert, ganz ohne Warteschlangen im Postamt.',
-  },
-  {
     id: 'hermes',
     icon: '🚚',
-    gradient: 'deep',
+    gradient: 'gold',
     title: 'Hermes PaketShop',
     text: 'Hermes Pakete und Retouren abgeben oder Sendungen abholen, direkt bei uns im Laden.',
+  },
+  {
+    id: 'lotto',
+    icon: '🎰',
+    logo: '/logos/lotto.png',
+    gradient: 'deep',
+    title: 'Lotto',
+    text: 'Offizielle Lotto-Annahmestelle: Tippscheine abgeben, Gewinne prüfen und dein Glück versuchen.',
+    note: 'Spielteilnahme ab 18 Jahren. Glücksspiel kann süchtig machen. Hilfe: BZgA 0800 1 37 27 00 (kostenlos).',
   },
 ];
 

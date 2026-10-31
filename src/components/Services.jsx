@@ -22,6 +22,7 @@ function ServiceCard({ service, delay }) {
         </div>
         <h3>{service.title}</h3>
         <p>{service.text}</p>
+        {service.note && <p className="service-note">{service.note}</p>}
       </div>
     </Reveal>
   );

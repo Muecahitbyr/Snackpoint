@@ -10,6 +10,7 @@
   gap: 24px;
 }
 .service-card-wrap { perspective: 1000px; }
+.service-card-wrap > .service-card { height: 100%; }
 .service-card {
   background: var(--card);
   border: 1px solid var(--card-border);
@@ -37,7 +38,7 @@
 .icon-gold { background: linear-gradient(135deg, #f7cf5b, var(--accent-2)); }
 .icon-deep { background: linear-gradient(135deg, var(--accent), var(--accent-3)); }
 
-/* Real partner logos (DHL) get a plain tile instead of the
+/* Real partner logos (Lotto) get a plain tile instead of the
    colorful gradient — their own brand color already carries the icon, a
    second competing color behind it would just clash. */
 .service-icon.has-logo {
@@ -51,6 +52,7 @@
 .service-card.has-badge { overflow: hidden; }
 .service-card h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 10px; color: var(--text); }
 .service-card p { color: var(--text-dim); font-size: 0.95rem; }
+.service-card p.service-note { margin-top: 12px; font-size: 0.75rem; line-height: 1.45; }
 
 @media (max-width: 980px) {
   .service-grid { grid-template-columns: repeat(2, 1fr); }
