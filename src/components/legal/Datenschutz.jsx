@@ -112,7 +112,8 @@ export default function Datenschutz() {
           Browsers (sessionStorage), damit er nicht auf jeder Seite erneut erscheint. Diese Einträge verlassen
           Ihr Gerät nicht und werden nicht an uns übertragen. Sie sind für die von Ihnen gewünschten Funktionen
           unbedingt erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 6 Abs. 1 lit. f DSGVO). Erst wenn Sie der
-          Google-Maps-Einbindung zustimmen, kann Google eigene Cookies setzen (siehe Punkt 6).
+          Google-Maps-Einbindung bzw. dem TikTok-Profil zustimmen, können Google bzw. TikTok eigene Cookies
+          setzen (siehe Punkte 6 und 11).
         </p>
 
         <h2>8. SnackPoint Assistent (Chat-Widget)</h2>
@@ -149,15 +150,28 @@ export default function Datenschutz() {
           gesetzlichen Aufbewahrungspflichten entgegenstehen.
         </p>
 
-        <h2>11. Links zu sozialen Netzwerken</h2>
+        <h2>11. TikTok und Instagram</h2>
         <p>
           Auf der Startseite und im Footer verlinken wir auf unsere Profile bei Instagram (Meta Platforms
-          Ireland Ltd.) und TikTok (TikTok Technology Ltd., Irland). Es handelt sich um einfache Links; die
-          Vorschau der Profile auf der Startseite ist eine eigene Grafik aus unseren Produktbildern. Beim
-          Aufruf unserer Website werden keine Inhalte dieser Dienste geladen und keine Daten an sie
-          übertragen. Erst wenn Sie einen
+          Ireland Ltd., Merrion Road, Dublin 4, Irland) und TikTok (TikTok Technology Ltd., 10 Earlsfort
+          Terrace, Dublin, Irland). Die Vorschau der Profile auf der Startseite ist zunächst eine eigene Grafik
+          aus unseren Produktbildern; dabei werden keine Daten an diese Dienste übertragen. Erst wenn Sie einen
           Link anklicken, gelangen Sie auf die Seite des jeweiligen Anbieters; dort gelten dessen
           Datenschutzbestimmungen.
+        </p>
+        <p>
+          <strong>Eingebettetes TikTok-Profil:</strong> Nur wenn Sie im Cookie-Banner zustimmen oder in der
+          TikTok-Vorschau auf „Echtes Profil laden“ klicken, binden wir unser echtes TikTok-Profil über die
+          Einbettungsfunktion von TikTok ein. Dabei überträgt Ihr Browser Daten (u. a. Ihre IP-Adresse,
+          Geräte- und Browserinformationen sowie die aufgerufene Seite) an TikTok, auch an Server außerhalb der
+          EU, und TikTok kann Cookies oder ähnliche Technologien einsetzen. Rechtsgrundlage ist Ihre
+          Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG). Ihre Entscheidung speichern wir lokal in
+          Ihrem Browser (siehe Punkt 7); widerrufen können Sie sie jederzeit über „Cookie-Einstellungen“ im
+          Footer. Weitere Informationen:{' '}
+          <a href="https://www.tiktok.com/legal/privacy-policy-eea" target="_blank" rel="noopener noreferrer">
+            tiktok.com/legal/privacy-policy-eea
+          </a>
+          .
         </p>
 
         <h2>12. Verwaltungsbereich</h2>

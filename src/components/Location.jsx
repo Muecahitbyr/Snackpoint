@@ -114,7 +114,7 @@ function OpeningHours() {
 }
 
 export default function Location() {
-  const { consent, accept } = useCookieConsent();
+  const { consent, acceptMaps } = useCookieConsent();
   const mapsButton = useMagnetic();
   const content = useContent();
   const { contact, rating } = useSite().settings;
@@ -187,7 +187,7 @@ export default function Location() {
                 Beim Laden der Karte werden Daten an Google übertragen. Wir zeigen sie erst nach deiner
                 Zustimmung.
               </p>
-              <button type="button" className="btn btn-primary" onClick={accept}>
+              <button type="button" className="btn btn-primary" onClick={acceptMaps}>
                 Karte laden
               </button>
               <a className="map-placeholder-link" href={MAPS_URL} target="_blank" rel="noopener noreferrer">

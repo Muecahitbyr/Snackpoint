@@ -12,8 +12,9 @@ export default function CookieConsent() {
     <div className="cookie-banner" role="dialog" aria-label="Cookie-Einstellungen" aria-live="polite">
       <div className="cookie-banner-inner">
         <p className="cookie-banner-text">
-          Diese Website bindet eine Google-Maps-Karte ein. Dabei werden Daten (u. a. deine IP-Adresse) an
-          Google übertragen. Die Karte laden wir erst, wenn du zustimmst. Mehr dazu in unserer{' '}
+          Diese Website bindet eine Google-Maps-Karte und unser TikTok-Profil ein. Dabei werden Daten (u. a.
+          deine IP-Adresse) an Google bzw. TikTok übertragen. Beides laden wir erst, wenn du zustimmst. Mehr dazu
+          in unserer{' '}
           <a href="/datenschutz">Datenschutzerklärung</a>.
         </p>
         <div className="cookie-banner-actions">

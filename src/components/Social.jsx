@@ -1,13 +1,15 @@
+import { useEffect, useRef, useState } from 'react';
+import { useCookieConsent } from '../hooks/useCookieConsent';
 import { useTilt } from '../hooks/useTilt';
 import { useContent, useSite } from '../site/SiteProvider';
 import Reveal from './Reveal';
 import SplitWords from './SplitWords';
 import './Social.css';
 
-// Two phone mockups that show our TikTok and Instagram profiles. Everything is
-// drawn here from our own product pictures: nothing is loaded from TikTok or
-// Instagram, so there's no tracking and no consent needed. No follower counts
-// or likes — we don't invent numbers.
+// Two phone mockups that show our TikTok and Instagram profiles, drawn from our
+// own product pictures (no follower counts or likes — we don't invent numbers).
+// After consent the TikTok phone shows the real profile (TikTok's official
+// creator embed). Instagram has no embeddable profile view, so it stays drawn.
 
 const TILE_GRADIENTS = ['grad-1', 'grad-2', 'grad-3', 'grad-4'];
 
@@ -47,6 +49,42 @@ function Phone({ className, children }) {
         <div className="phone-status" aria-hidden="true"><span>9:41</span><span>●●● ▮</span></div>
         {children}
       </div>
+    </div>
+  );
+}
+
+// TikTok's creator embed needs about 325px; it's rendered at that size and
+// scaled down to the phone screen. Its card (profile + a row of videos) is
+// shorter than the screen, so it sits centered on TikTok's dark background.
+const EMBED_WIDTH = 325;
+const EMBED_HEIGHT = 420;
+
+function TikTokEmbed({ url }) {
+  const handle = handleFrom(url);
+  const box = useRef(null);
+  const [scale, setScale] = useState(0);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return undefined;
+    const observer = new ResizeObserver(([entry]) => setScale(entry.contentRect.width / EMBED_WIDTH));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <div className="tiktok-embed-box" ref={box}>
+      <TikTokIcon className="tiktok-embed-logo" />
+      <div className="tiktok-embed-card" style={{ height: EMBED_HEIGHT * scale }}>
+        {scale > 0 && (
+          <iframe
+            title={`TikTok-Profil @${handle}`}
+            src={`https://www.tiktok.com/embed/@${encodeURIComponent(handle)}?lang=de-DE&embedFrom=oembed`}
+            style={{ width: EMBED_WIDTH, height: EMBED_HEIGHT, transform: `scale(${scale})` }}
+            allow="encrypted-media; fullscreen"
+            loading="lazy"
+          />
+        )}
+      </div>
+      <a className="tiktok-embed-more" href={url} target="_blank" rel="noopener noreferrer">Alle Videos auf TikTok ↗</a>
     </div>
   );
 }
@@ -109,6 +147,7 @@ function InstagramScreen({ url, logo, name, images, highlights }) {
 export default function Social() {
   const site = useSite();
   const content = useContent();
+  const { social: embedAllowed, acceptSocial } = useCookieConsent();
   const { tiktok, instagram } = site.settings.social;
   if (!tiktok && !instagram) return null;
 
@@ -132,7 +171,17 @@ export default function Social() {
         {tiktok && (
           <Reveal className="social-col" delay={0.1}>
             <Phone className="phone-tiktok">
-              <TikTokScreen url={tiktok} logo={logo} name={name} images={pick(0, 6)} />
+              {embedAllowed ? (
+                <TikTokEmbed url={tiktok} />
+              ) : (
+                <>
+                  <TikTokScreen url={tiktok} logo={logo} name={name} images={pick(0, 6)} />
+                  <div className="embed-gate">
+                    <button type="button" className="embed-gate-btn" onClick={acceptSocial}>Echtes Profil laden</button>
+                    <small>Dabei werden Daten an TikTok übertragen.</small>
+                  </div>
+                </>
+              )}
             </Phone>
             <a className="social-btn social-btn-tiktok" href={tiktok} target="_blank" rel="noopener noreferrer">
               <TikTokIcon className="social-btn-icon" />
