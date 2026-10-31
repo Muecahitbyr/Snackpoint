@@ -320,7 +320,8 @@ describe('other intents', () => {
   it('services and FAQ', () => {
     expectIntent('DHL', 'services', 'DHL Paketshop');
     expectIntent('Kann ich ein Paket abgeben?', 'services', 'Pakete');
-    expectIntent('Lotto', 'services', 'Lotto');
+    expectIntent('Hermes', 'services', 'Hermes PaketShop');
+    expectIntent('Kann ich eine Retoure abgeben?', 'services', 'Hermes');
     expectIntent('Was verkauft ihr?', 'services', 'alles unter einem Dach');
     expectIntent('Ab wie viel Jahren gibt es Zigaretten?', 'faq', '18');
     expectIntent('Wer seid ihr?', 'faq', 'SnackPoint');
@@ -528,7 +529,7 @@ describe('tone: restraint', () => {
     'Welche Snacks habt ihr?', 'Habt ihr Energy Drinks?', 'Habt ihr was scharfes?', 'Was könnt ihr empfehlen?', 'Habt ihr Cola?',
     'Was kostet Red Bull?', 'Wie lange habt ihr heute offen?', 'Habt ihr gerade offen?', 'Wann öffnet ihr morgen?', 'Wie sind eure Öffnungszeiten?',
     'Wo seid ihr?', 'Wie komme ich zu euch?', 'Kann ich mit Karte zahlen?', 'Danke', 'Tschüss', 'Habt ihr Blumen?', 'Wer wird Weltmeister?',
-    'Habt ihr Zigaretten?', 'Habt ihr Marlboro?', 'DHL', 'Lotto', 'Was verkauft ihr?', 'Was kannst du?', 'Ist gerade offen?',
+    'Habt ihr Zigaretten?', 'Habt ihr Marlboro?', 'DHL', 'Hermes', 'Was verkauft ihr?', 'Was kannst du?', 'Ist gerade offen?',
   ];
 
   it('never more than two emojis per reply', () => {
@@ -539,13 +540,13 @@ describe('tone: restraint', () => {
     for (const question of QUESTIONS) forEveryVariant(question, (reply) => assert.ok(!/^(Bro|Bra|Bruder)\b/.test(reply), reply));
   });
 
-  it('tobacco and Lotto stay matter-of-fact', () => {
+  it('tobacco stays matter-of-fact', () => {
     const salesy = /\b(Bro|Bra|Bruder)\b|gönn|hol dir|Kiosk, der dich|Wiederbelebung|Notfall|🔥|😭/i;
     const marlbGold = PRODUCTS.find((product) => getProductName(product) === 'Marlboro Gold');
     assert.ok(marlbGold);
     marlbGold.price = 8.5;
     try {
-      for (const question of ['Habt ihr Zigaretten?', 'Habt ihr Marlboro?', 'Habt ihr Marlboro Gold?', 'Was kostet Marlboro Gold?', 'habt ihr kippen', 'Lotto', 'Ab wie viel Jahren gibt es Zigaretten?']) {
+      for (const question of ['Habt ihr Zigaretten?', 'Habt ihr Marlboro?', 'Habt ihr Marlboro Gold?', 'Was kostet Marlboro Gold?', 'habt ihr kippen', 'Ab wie viel Jahren gibt es Zigaretten?']) {
         forEveryVariant(question, (reply) => assert.ok(!salesy.test(reply), `${question}: ${reply}`));
       }
     } finally {

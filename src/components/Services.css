@@ -37,7 +37,7 @@
 .icon-gold { background: linear-gradient(135deg, #f7cf5b, var(--accent-2)); }
 .icon-deep { background: linear-gradient(135deg, var(--accent), var(--accent-3)); }
 
-/* Real partner logos (DHL/Lotto) get a plain tile instead of the
+/* Real partner logos (DHL) get a plain tile instead of the
    colorful gradient — their own brand color already carries the icon, a
    second competing color behind it would just clash. */
 .service-icon.has-logo {

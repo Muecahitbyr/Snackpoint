@@ -19,7 +19,7 @@ export const CONTENT = {
   // Über uns
   'about.eyebrow': 'Über uns',
   'about.title': 'Mehr als nur ein Kiosk.',
-  'about.text': 'Bei SnackPoint Kaufbeuren erwartet dich ein herzlicher Empfang, frische Ware und ein Service, der weit über den klassischen Kiosk hinausgeht. Ob schneller Snack zwischendurch, Paket abholen oder Lottoschein abgeben: Hier bist du in besten Händen.',
+  'about.text': 'Bei SnackPoint Kaufbeuren erwartet dich ein herzlicher Empfang, frische Ware und ein Service, der weit über den klassischen Kiosk hinausgeht. Ob schneller Snack zwischendurch, Kaffee to go oder Paket abholen: Hier bist du in besten Händen.',
   'about.image': '/logo.jpg',
   // Leistungen
   'services.eyebrow': 'Leistungen',
@@ -57,7 +57,7 @@ export const CONTENT = {
   // Produktseite
   'products.eyebrow': 'Sortiment',
   'products.title': 'Alle Produkte.',
-  'products.text': 'Snacks, Getränke, Tabakwaren, Lotto und mehr. Eine Auswahl aus unserem Sortiment, oft in mehreren Sorten und Marken. Genaue Verfügbarkeit direkt bei uns in Kaufbeuren.',
+  'products.text': 'Snacks, Süßes, Getränke, Essen to go, Spielzeug und mehr. Eine Auswahl aus unserem Sortiment, oft in mehreren Sorten und Marken. Genaue Verfügbarkeit direkt bei uns in Kaufbeuren.',
 };
 
 // Address, contact, links and legal details (Impressum / Datenschutz).
@@ -76,16 +76,16 @@ export const SETTINGS = {
   },
   // Empty links are not shown (footer).
   social: {
-    instagram: '',
+    instagram: 'https://www.instagram.com/snackpointkf',
     facebook: '',
-    tiktok: '',
+    tiktok: 'https://www.tiktok.com/@snackpoint13',
     whatsapp: '',
     google: '',
   },
   // Google rating shown in the hero and the location section.
   rating: {
     value: 4.9,
-    count: 48,
+    count: 53,
   },
   // Answers of the chat assistant; empty = it says it does not know.
   info: {
@@ -125,12 +125,11 @@ export const SERVICES = [
     text: 'Pakete abgeben und abholen — schnell, freundlich und unkompliziert, ganz ohne Warteschlangen im Postamt.',
   },
   {
-    id: 'lotto',
-    icon: '🎰',
-    logo: '/logos/lotto.png',
+    id: 'hermes',
+    icon: '🚚',
     gradient: 'deep',
-    title: 'Lotto',
-    text: 'Offizielle Lotto-Annahmestelle: Tippscheine abgeben, Gewinne prüfen und dein Glück versuchen.',
+    title: 'Hermes PaketShop',
+    text: 'Hermes Pakete und Retouren abgeben oder Sendungen abholen, direkt bei uns im Laden.',
   },
 ];
 

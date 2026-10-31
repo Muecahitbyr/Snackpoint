@@ -30,7 +30,7 @@ export interface QuickAction {
   query: string;
 }
 
-/** Topics without product data behind them: the range in general, DHL, Lotto, FAQ. */
+/** Topics without product data behind them: the range in general, parcels (DHL, Hermes), FAQ. */
 export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   {
     id: 'sortiment',
@@ -39,33 +39,41 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
       'auswahl', 'alles unter einem dach', 'was bietet ihr', 'was fuehrt ihr',
     ],
     getResponse: () =>
-      'Bei uns gibt’s alles unter einem Dach 😎 Süßigkeiten, Snacks, Getränke, Zeitschriften, Tabakwaren, Lotto und einen DHL Paketshop. Frag mich einfach nach einem bestimmten Produkt!',
+      'Bei uns gibt’s alles unter einem Dach 😎 Süßigkeiten, Snacks, Getränke, Zeitschriften, Tabakwaren und einen DHL und Hermes Paketshop. Frag mich einfach nach einem bestimmten Produkt!',
     cta: { label: 'Alle Produkte ansehen', href: '/produkte' },
   },
   {
+    // Parcels in general: both carriers.
+    id: 'pakete',
+    keywords: ['paket', 'versand', 'paketshop', 'abholen', 'abgeben', 'paeckchen', 'päckchen', 'retoure', 'ruecksendung'],
+    getResponse: () =>
+      'Wir sind DHL Paketshop und Hermes PaketShop 📦 Du kannst bei uns Pakete und Retouren abgeben oder abholen – schnell und ohne Schlange im Postamt.',
+    cta: { label: 'Leistungen ansehen', href: '#services' },
+  },
+  {
     id: 'dhl',
-    keywords: ['dhl', 'paket', 'post', 'versand', 'paketshop', 'abholen', 'abgeben', 'paeckchen', 'päckchen'],
+    keywords: ['dhl', 'post', 'packstation'],
     getResponse: () =>
       'Wir sind auch DHL Paketshop 📦 Du kannst bei uns Pakete abgeben oder abholen – schnell und ohne Schlange im Postamt.',
     cta: { label: 'Leistungen ansehen', href: '#services' },
   },
   {
-    id: 'lotto',
-    keywords: ['lotto', 'toto', 'tipp', 'tippschein', 'gewinn', 'glueck', 'glück', 'spielen'],
-    getResponse: () => 'Bei uns kannst du auch Lotto spielen – Tippscheine abgeben und Gewinne prüfen.',
+    id: 'hermes',
+    keywords: ['hermes'],
+    getResponse: () => 'Wir sind auch Hermes PaketShop 📦 Hermes Pakete und Retouren kannst du bei uns abgeben oder abholen.',
     cta: { label: 'Leistungen ansehen', href: '#services' },
   },
   {
     id: 'ueber-uns',
     kind: 'faq',
     keywords: ['wer seid ihr', 'wer bist du', 'ueber euch', 'ueber uns', 'was ist snackpoint', 'was ist das hier'],
-    getResponse: () => `Wir sind SnackPoint in der ${ADDRESS} – Kiosk, DHL Paketshop und Lotto unter einem Dach 😎`,
+    getResponse: () => `Wir sind SnackPoint in der ${ADDRESS} – Kiosk, DHL und Hermes Paketshop unter einem Dach 😎`,
   },
   {
     id: 'alter',
     kind: 'faq',
     keywords: ['ab 18', 'ab wie viel', 'ab wieviel', 'wie alt', 'mindestalter', 'ausweis', 'jugendschutz', 'alterskontrolle'],
-    getResponse: () => 'Tabakwaren und Lotto gibt’s in Deutschland nur ab 18 Jahren – bring dafür bitte einen Ausweis mit.',
+    getResponse: () => 'Tabakwaren und Mischgetränke mit Spirituosen gibt’s in Deutschland nur ab 18 Jahren, Bier ab 16 – bring dafür bitte einen Ausweis mit.',
   },
 ];
 
@@ -73,7 +81,7 @@ export const QUICK_ACTIONS: QuickAction[] = [
   { id: 'qa-sortiment', label: 'Was gibt es im Laden?', query: 'Was habt ihr im Sortiment?' },
   { id: 'qa-hours', label: 'Öffnungszeiten', query: 'Wie sind eure Öffnungszeiten?' },
   { id: 'qa-dhl', label: 'DHL Paketshop', query: 'DHL Paketshop' },
-  { id: 'qa-lotto', label: 'Lotto', query: 'Lotto' },
+  { id: 'qa-hermes', label: 'Hermes PaketShop', query: 'Hermes' },
   { id: 'qa-tabak', label: 'Zigaretten & Tabak', query: 'Habt ihr Zigaretten?' },
   { id: 'qa-standort', label: 'Standort', query: 'Wo seid ihr?' },
 ];

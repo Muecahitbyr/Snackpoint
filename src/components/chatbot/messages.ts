@@ -150,12 +150,12 @@ const de = {
   // Problems and unknowns: friendly, not cheeky.
   unknown: {
     plain: [
-      'Dazu hab ich gerade leider keine sichere Info 😅 Frag am besten kurz unser Team vor Ort.\nBei Produkten, Öffnungszeiten, Standort, DHL und Lotto helf ich dir gern.',
-      'Da bin ich überfragt 😅 Frag am besten kurz unser Team vor Ort.\nBei Produkten, Öffnungszeiten, Standort, DHL und Lotto helf ich dir gern.',
+      'Dazu hab ich gerade leider keine sichere Info 😅 Frag am besten kurz unser Team vor Ort.\nBei Produkten, Öffnungszeiten, Standort, DHL und Hermes helf ich dir gern.',
+      'Da bin ich überfragt 😅 Frag am besten kurz unser Team vor Ort.\nBei Produkten, Öffnungszeiten, Standort, DHL und Hermes helf ich dir gern.',
     ],
   } as Tones<string>,
   help:
-    'Ich check für dich:\n• Produkte – z. B. „Habt ihr blaue Takis?“ oder „Was kostet Red Bull?“\n• Öffnungszeiten – z. B. „Habt ihr gerade offen?“\n• Adresse & Route\n• DHL Paketshop & Lotto\n• Kontakt & Zahlungsarten',
+    'Ich check für dich:\n• Produkte – z. B. „Habt ihr blaue Takis?“ oder „Was kostet Red Bull?“\n• Öffnungszeiten – z. B. „Habt ihr gerade offen?“\n• Adresse & Route\n• DHL & Hermes Paketshop\n• Kontakt & Zahlungsarten',
 
   available: {
     one: oneByFlavor,

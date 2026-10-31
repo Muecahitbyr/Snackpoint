@@ -70,7 +70,7 @@ export default function SnackBotPanel({ messages, onSend, onQuickAction, onClose
         <div className="snackbot-panel-heading">
           <p className="snackbot-panel-title">SnackPoint Assistent</p>
           <p className="snackbot-panel-subtitle">
-            Frag mich z. B. nach Snacks, Zigaretten, DHL, Lotto oder Öffnungszeiten.
+            Frag mich z. B. nach Snacks, Getränke, DHL, Hermes oder Öffnungszeiten.
           </p>
         </div>
         <button type="button" className="snackbot-panel-close" onClick={onClose} aria-label="Chat schließen">
