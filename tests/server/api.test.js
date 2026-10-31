@@ -244,6 +244,188 @@ describe('authentication & access control', () => {
   });
 });
 
+describe('Cloudflare Turnstile on the login', () => {
+  // Siteverify is mocked: no request ever leaves this machine.
+  const SITE_KEY = 'test-site-key-0000';
+  const SECRET = 'test-secret-should-never-be-logged';
+  const SITEVERIFY = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+  const realFetch = globalThis.fetch;
+  const saved = { site: config.turnstileSiteKey, secret: config.turnstileSecretKey, hosts: config.turnstileHostnames };
+  let calls;
+  let logs;
+  const realWarn = console.warn;
+
+  /** answer(params) → JSON body of the mocked Siteverify reply, or throws (network down). */
+  function mockSiteverify(answer) {
+    calls = [];
+    globalThis.fetch = async (url, init) => {
+      if (String(url) !== SITEVERIFY) return realFetch(url, init);
+      const params = Object.fromEntries(new URLSearchParams(String(init.body)));
+      calls.push(params);
+      const body = answer(params);
+      return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+  }
+  const keys = (site, secret) => {
+    config.turnstileSiteKey = site;
+    config.turnstileSecretKey = secret;
+  };
+  const login = (token, ip) => client().send('/api/auth/login', {
+    method: 'POST',
+    body: { email: EMAIL, password: PASSWORD, ...(token === undefined ? {} : { turnstileToken: token }) },
+    // Own IPs: these tests must not touch the login lock of the others.
+    headers: { 'X-Client-IP': ip ?? '198.51.100.10' },
+  });
+  const siteKeyForForm = async () => (await request('/api/auth/config')).json();
+  const ok = (hostname = 'snackpointkf.de') => () => ({ success: true, hostname, 'error-codes': [] });
+
+  before(() => {
+    config.turnstileHostnames = ['snackpointkf.de'];
+    logs = [];
+    console.warn = (...args) => logs.push(args.join(' '));
+  });
+  after(() => {
+    globalThis.fetch = realFetch;
+    console.warn = realWarn;
+    config.turnstileSiteKey = saved.site;
+    config.turnstileSecretKey = saved.secret;
+    config.turnstileHostnames = saved.hosts;
+  });
+
+  it('1. both keys missing: no widget, normal login', async () => {
+    keys('', '');
+    mockSiteverify(ok());
+    assert.deepEqual(await siteKeyForForm(), { turnstileSiteKey: null });
+    assert.equal((await login()).status, 200);
+    assert.equal(calls.length, 0);
+  });
+
+  it('2. only the site key: check stays off, login still works', async () => {
+    keys(SITE_KEY, '');
+    mockSiteverify(ok());
+    assert.deepEqual(await siteKeyForForm(), { turnstileSiteKey: null }, 'no widget without a way to verify it');
+    assert.equal((await login()).status, 200);
+    assert.equal(calls.length, 0);
+  });
+
+  it('3. only the secret key: check stays off — no lockout', async () => {
+    keys('', SECRET);
+    mockSiteverify(ok());
+    assert.deepEqual(await siteKeyForForm(), { turnstileSiteKey: null });
+    assert.equal((await login()).status, 200, 'the old code locked everybody out here');
+    assert.equal(calls.length, 0);
+  });
+
+  it('4. both keys and a valid token: widget shown, login works, token verified server-side', async () => {
+    keys(SITE_KEY, SECRET);
+    mockSiteverify(ok());
+    assert.deepEqual(await siteKeyForForm(), { turnstileSiteKey: SITE_KEY });
+    const result = await login('valid-token-1', '198.51.100.11');
+    assert.equal(result.status, 200);
+    assert.ok(result.data.csrfToken, '11. regular admin login: session created');
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].secret, SECRET);
+    assert.equal(calls[0].response, 'valid-token-1');
+    assert.equal(calls[0].remoteip, '198.51.100.11');
+  });
+
+  it('5. missing token is refused without asking Cloudflare', async () => {
+    keys(SITE_KEY, SECRET);
+    mockSiteverify(ok());
+    const result = await login();
+    assert.equal(result.status, 400);
+    assert.equal(calls.length, 0);
+    assert.equal((await login('')).status, 400, 'empty token too');
+  });
+
+  it('6. invalid token is refused', async () => {
+    keys(SITE_KEY, SECRET);
+    mockSiteverify(() => ({ success: false, 'error-codes': ['invalid-input-response'] }));
+    const result = await login('forged-token');
+    assert.equal(result.status, 400);
+    assert.equal(result.data.error, 'Die Sicherheitsprüfung ist fehlgeschlagen. Bitte lade die Seite neu und versuche es erneut.');
+  });
+
+  it('7. expired token is refused', async () => {
+    keys(SITE_KEY, SECRET);
+    mockSiteverify(() => ({ success: false, 'error-codes': ['timeout-or-duplicate'] }));
+    assert.equal((await login('expired-token')).status, 400);
+  });
+
+  it('8. an already used token is refused the second time', async () => {
+    keys(SITE_KEY, SECRET);
+    const used = new Set();
+    mockSiteverify(({ response }) => {
+      if (used.has(response)) return { success: false, 'error-codes': ['timeout-or-duplicate'] };
+      used.add(response);
+      return { success: true, hostname: 'snackpointkf.de' };
+    });
+    assert.equal((await login('one-time-token')).status, 200);
+    assert.equal((await login('one-time-token')).status, 400);
+  });
+
+  it('9. a token issued on another host name is refused', async () => {
+    keys(SITE_KEY, SECRET);
+    for (const hostname of ['evil.example', 'snackpoint.mucahitbayar.workers.dev', 'www.snackpointkf.de', '', undefined]) {
+      mockSiteverify(() => ({ success: true, hostname }));
+      assert.equal((await login('token-from-elsewhere')).status, 400, String(hostname));
+    }
+  });
+
+  it('10. Siteverify unreachable: refused with a temporary error, no details', async () => {
+    keys(SITE_KEY, SECRET);
+    globalThis.fetch = async (url, init) => {
+      if (String(url) === SITEVERIFY) throw new TypeError('fetch failed');
+      return realFetch(url, init);
+    };
+    const result = await login('any-token');
+    assert.equal(result.status, 503);
+    assert.doesNotMatch(result.data.error, /fetch|TypeError|siteverify/i);
+    globalThis.fetch = async (url, init) =>
+      (String(url) === SITEVERIFY ? new Response('<html>Bad gateway</html>', { status: 502 }) : realFetch(url, init));
+    assert.equal((await login('any-token')).status, 503, 'error page instead of JSON');
+  });
+
+  it('refused Turnstile checks do not count towards the login lock', async () => {
+    keys(SITE_KEY, SECRET);
+    mockSiteverify(() => ({ success: false, 'error-codes': ['invalid-input-response'] }));
+    for (let i = 0; i < 7; i += 1) assert.equal((await login(`bad-${i}`, '198.51.100.30')).status, 400);
+    mockSiteverify(ok());
+    assert.equal((await login('good-token', '198.51.100.30')).status, 200);
+  });
+
+  it('reports the configuration state once at startup, without the keys', async () => {
+    const { reportTurnstileConfig } = await import('../../server/auth/turnstile.js');
+    const lines = [];
+    const log = { log: (line) => lines.push(['log', line]), warn: (line) => lines.push(['warn', line]) };
+    keys('', '');
+    reportTurnstileConfig(log);
+    assert.equal(lines.length, 0, 'off: nothing to report');
+    keys('', SECRET);
+    reportTurnstileConfig(log);
+    keys(SITE_KEY, '');
+    reportTurnstileConfig(log);
+    keys(SITE_KEY, SECRET);
+    reportTurnstileConfig(log);
+    assert.deepEqual(lines.map(([level]) => level), ['warn', 'warn', 'log']);
+    assert.match(lines[0][1], /TURNSTILE_SITE_KEY fehlt.*AUS/);
+    assert.match(lines[1][1], /TURNSTILE_SECRET_KEY fehlt.*AUS/);
+    assert.match(lines[2][1], /Aktiv.*snackpointkf\.de/);
+    assert.ok(lines.every(([, line]) => !line.includes(SECRET) && !line.includes(SITE_KEY)));
+  });
+
+  it('logs only reasons and error codes, never secrets or tokens, and no flood', async () => {
+    const text = logs.join('\n');
+    for (const secret of [SECRET, SITE_KEY, 'forged-token', 'expired-token', 'one-time-token', 'any-token', PASSWORD, EMAIL, '198.51.100']) {
+      assert.ok(!text.includes(secret), `"${secret}" must not be logged`);
+    }
+    assert.match(text, /invalid-input-response/);
+    assert.match(text, /hostname \[evil\.example\]/, 'the rejected host name helps to fix the widget setup');
+    const rejectedLines = logs.filter((line) => line.includes(': rejected'));
+    assert.ok(rejectedLines.length <= 2, `repeated failures are throttled (got ${rejectedLines.length} lines)`);
+  });
+});
+
 describe('products & categories', () => {
   let categoryId;
   let productId;

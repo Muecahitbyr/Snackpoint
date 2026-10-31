@@ -8,6 +8,7 @@ import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import { app as api } from './app.js';
+import { reportTurnstileConfig } from './auth/turnstile.js';
 
 const apiOnly = process.argv.includes('--api-only');
 const server = new Hono();
@@ -38,6 +39,7 @@ if (!apiOnly && existsSync('dist')) {
 server.notFound((c) => c.text('Nicht gefunden', 404));
 
 const port = Number(process.env.PORT || 3000);
-serve({ fetch: server.fetch, port }, () =>
-  console.log(`SnackPoint ${apiOnly ? 'API' : 'Webseite + API'} läuft auf Port ${port}`)
-);
+serve({ fetch: server.fetch, port }, () => {
+  console.log(`SnackPoint ${apiOnly ? 'API' : 'Webseite + API'} läuft auf Port ${port}`);
+  reportTurnstileConfig();
+});

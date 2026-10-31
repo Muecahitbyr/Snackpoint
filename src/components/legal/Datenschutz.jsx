@@ -190,6 +190,22 @@ export default function Datenschutz() {
           jedem Anmeldeversuch die IP-Adresse, die eingegebene E-Mail-Adresse und den Zeitpunkt für 7 Tage
           (Art. 6 Abs. 1 lit. f DSGVO, berechtigtes Interesse an der Sicherheit unserer Systeme).
         </p>
+        <p>
+          Zusätzlich kann die Anmeldeseite des Verwaltungsbereichs durch Cloudflare Turnstile (Cloudflare, Inc.,
+          101 Townsend St., San Francisco, CA 94107, USA) geschützt sein. Turnstile prüft, ob die Anmeldung von
+          einem Menschen und nicht von einem automatisierten Programm stammt. Dafür verarbeitet Cloudflare beim
+          Aufruf der Anmeldeseite technische Daten wie die IP-Adresse sowie Browser- und Geräteeigenschaften;
+          unser Server übermittelt das Prüfergebnis und die IP-Adresse zur Bestätigung an Cloudflare. Turnstile
+          wird nur auf der Anmeldeseite des Verwaltungsbereichs geladen, nicht auf den öffentlichen Seiten.
+          Rechtsgrundlage ist unser berechtigtes Interesse am Schutz der Anmeldung vor Missbrauch (Art. 6
+          Abs. 1 lit. f DSGVO); soweit dabei Informationen auf dem Endgerät gelesen werden, ist dies für den
+          Schutz der von der Person ausdrücklich gewünschten Anmeldung unbedingt erforderlich (§ 25 Abs. 2 Nr. 2
+          TDDDG). Cloudflare ist unter dem EU-US Data Privacy Framework zertifiziert. Weitere Informationen:{' '}
+          <a href="https://www.cloudflare.com/turnstile-privacy-policy/" target="_blank" rel="noopener noreferrer">
+            cloudflare.com/turnstile-privacy-policy
+          </a>
+          .
+        </p>
 
         <h2>13. Änderung dieser Datenschutzerklärung</h2>
         <p>

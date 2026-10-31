@@ -17,7 +17,8 @@
       "/", "/produkte", "/impressum", "/datenschutz",
       "/index.html", "/produkte.html", "/impressum.html", "/datenschutz.html",
       "/produkte/", "/impressum/", "/datenschutz/",
-      "/robots.txt", "/sitemap.xml"
+      "/robots.txt", "/sitemap.xml",
+      "/admin", "/admin/*"
     ]
   },
   "vars": {

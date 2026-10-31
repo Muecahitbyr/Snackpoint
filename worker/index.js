@@ -15,12 +15,17 @@
 //             and dropped right after a successful change in the admin panel.
 //   /index.html, /produkte.html, /produkte/, …   301 to the clean URL.
 //   /robots.txt, /sitemap.xml        for preview URLs and old domains.
+//   /admin, /admin/*                 only so old domains can redirect it too;
+//             otherwise served from dist/ as before (see ADMIN_HEADERS).
 //
 // Configuration (see ADMIN.md):
 //   API_ORIGIN      var     e.g. https://snackpoint-api.up.railway.app
 //   PROXY_SECRET    secret  same value as on Railway (wrangler secret put PROXY_SECRET)
 //   REDIRECT_HOSTS  var     optional, after moving to an own domain: old host
-//                           names (comma-separated) whose pages 301 to SETTINGS.siteUrl
+//                           names (comma-separated, exact) that 301 to SETTINGS.siteUrl
+//                           with path and query — pages, /admin, robots.txt and
+//                           sitemap.xml; /api/* keeps working there (a 301 would
+//                           turn the admin's POSTs into GETs).
 import { EMPTY_SITE, PUBLIC_PAGES, REGION_END, REGION_START, SETTINGS, renderRegion, warmUp } from '../build/ssr/prerender.js';
 
 const SITE = new URL(SETTINGS.siteUrl);
@@ -55,6 +60,30 @@ const PAGE_HEADERS = {
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
 };
+
+// The admin panel's headers from public/_headers ("/admin*"). Cloudflare may
+// not apply _headers to what this script returns, so they're added here if
+// they're missing — never twice.
+const ADMIN_HEADERS = {
+  'X-Frame-Options': 'DENY',
+  'X-Robots-Tag': 'noindex, nofollow',
+  'Referrer-Policy': 'same-origin',
+  'Cache-Control': 'no-store',
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'X-Content-Type-Options': 'nosniff',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Content-Security-Policy':
+    "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+};
+const isAdminPath = (path) => path === '/admin' || path.startsWith('/admin/') || path === '/admin.html';
+
+async function adminAsset(request, env) {
+  const response = await env.ASSETS.fetch(request);
+  if (response.headers.has('content-security-policy')) return response;
+  const withHeaders = new Response(response.body, response);
+  for (const [name, value] of Object.entries(ADMIN_HEADERS)) withHeaders.headers.set(name, value);
+  return withHeaders;
+}
 
 // What the public pages may load: own files (incl. fonts) and, after consent,
 // the Google Maps embed (maps.google.com redirects to www.google.com) and the
@@ -106,7 +135,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/api/')) return proxyApi(request, env, ctx, url);
 
-    const redirectHosts = (env.REDIRECT_HOSTS ?? '').split(',').map((host) => host.trim()).filter(Boolean);
+    const redirectHosts = (env.REDIRECT_HOSTS ?? '').split(',').map((host) => host.trim().toLowerCase()).filter(Boolean);
     if (redirectHosts.includes(url.hostname) && url.hostname !== SITE.hostname) {
       // Concatenated, not resolved: a path like "//other.host" must stay a path.
       return Response.redirect(`${SITE.origin}${url.pathname}${url.search}`, 301);
@@ -120,6 +149,8 @@ export default {
         headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Robots-Tag': 'noindex' },
       });
     }
+
+    if (isAdminPath(url.pathname)) return adminAsset(request, env);
 
     const page = PAGE_BY_PATH.get(url.pathname);
     if (!page || request.method !== 'GET') return env.ASSETS.fetch(request);

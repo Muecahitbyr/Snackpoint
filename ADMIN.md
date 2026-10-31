@@ -71,7 +71,7 @@ npm run test:server    # API-Tests (46 Tests) gegen die Test-Datenbank aus TEST_
 npm run test:all       # beides
 npm run test:seo       # robots.txt, Sitemap, Meta-Tags, JSON-LD, Statuscodes, Links (nur lesend)
                        # gegen den laufenden Worker (wrangler dev, Port 8787); andere Adresse:
-                       # node scripts/check-seo.mjs https://snackpoint.mucahitbayar.workers.dev
+                       # node scripts/check-seo.mjs https://snackpointkf.de
 ```
 
 `test:server` **löscht** die Datenbank in `TEST_DATABASE_URL` vor jedem Lauf vollständig und verweigert den Start,
@@ -93,7 +93,8 @@ wenn deren Name nicht „test“ enthält. Niemals auf eine echte Datenbank zeig
 | `SESSION_IDLE_HOURS` | nein | Automatisches Abmelden nach Inaktivität (Standard 24 h) |
 | `SESSION_MAX_DAYS` | nein | Maximale Sitzungsdauer (Standard 7 Tage) |
 | `LOGIN_MIN_MS` | nein | Mindestdauer jeder Login-Antwort in ms (Standard 800) |
-| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | nein | Cloudflare-Turnstile-Botschutz für den Login (nur aktiv, wenn beide gesetzt sind) |
+| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | nein | Cloudflare-Turnstile-Botschutz für den Admin-Login. Aktiv **nur, wenn beide gesetzt sind**; ist nur einer gesetzt, bleibt die Prüfung aus (Warnung im Log beim Start). Siehe „Bot-Schutz“ unten |
+| `TURNSTILE_HOSTNAMES` | nein | Host-Namen, auf denen ein Turnstile-Token ausgestellt sein darf, kommagetrennt (Standard `snackpointkf.de`) |
 | `DATABASE_SSL` | nein | `true` / `false` / `no-verify`. Standard: aus für `localhost` und `*.railway.internal`, sonst an. Für die *öffentliche* Railway-DB-URL vom eigenen Rechner: `no-verify`. |
 | `ALLOWED_ORIGINS` | nein | Nur nötig für Sonderfälle (zusätzliche Domains, die die Admin-API direkt aufrufen) |
 
@@ -103,7 +104,7 @@ wenn deren Name nicht „test“ enthält. Niemals auf eine echte Datenbank zeig
 | --- | --- | --- |
 | `API_ORIGIN` | Variable | Öffentliche URL des Railway-API-Dienstes, z. B. `https://snackpoint-api-production.up.railway.app` |
 | `PROXY_SECRET` | **Secret** | Derselbe Wert wie auf Railway (`npx wrangler secret put PROXY_SECRET`) |
-| `REDIRECT_HOSTS` | Variable, optional | Erst nach dem Umzug auf eine eigene Domain: alte Hostnamen (kommagetrennt, z. B. `snackpoint.mucahitbayar.workers.dev`), deren Seiten per 301 auf `SETTINGS.siteUrl` umleiten |
+| `REDIRECT_HOSTS` | Variable, optional | Alte Hostnamen (kommagetrennt, exakt, z. B. `snackpoint.mucahitbayar.workers.dev`), die per 301 auf `SETTINGS.siteUrl` umleiten, mit Pfad und Query: alle Seiten, `/admin`, `robots.txt`, `sitemap.xml`. `/api/*` bleibt dort erreichbar (eine 301 würde POSTs zu GETs machen); Vorschau-Adressen (`<version>-snackpoint.…`) sind nicht betroffen |
 
 **Lokal** (`.env`, siehe `.env.example`): `DATABASE_URL`, `TEST_DATABASE_URL`.
 
@@ -217,7 +218,11 @@ Webseite aus und reicht `/api/*` an Railway weiter. Beide deployen automatisch b
    Danach `SETTINGS.siteUrl` in `src/data/siteContent.js` auf die neue Domain setzen: daraus entstehen
    Canonical-Links, `sitemap.xml`, `robots.txt`, strukturierte Daten und Link-Vorschauen. Nach dem
    Deploy die Variable `REDIRECT_HOSTS` mit der alten `workers.dev`-Adresse setzen, damit sie per 301
-   auf die neue Domain zeigt (siehe `docs/seo-geo-final-audit.md`).
+   auf die neue Domain zeigt (siehe `docs/seo-geo-final-audit.md`). **Stand 31.10.2026:** Domain
+   `snackpointkf.de` verbunden, `www` leitet per Cloudflare-Regel um, `siteUrl` umgestellt.
+
+   `vercel.json` stammt aus der Zeit vor Cloudflare. Das Vercel-Projekt ist nicht mehr aktiv
+   (`snackpoint-kappa.vercel.app` liefert 404), die Datei hat keine Wirkung und kann gelöscht werden.
 
 Alternativ per Kommandozeile: `npx wrangler login`, `npx wrangler secret put PROXY_SECRET`, `npm run deploy`.
 
@@ -301,9 +306,41 @@ rm /tmp/app-pw
 
 ### Bot-Schutz (optional): Cloudflare Turnstile
 
-Cloudflare-Dashboard → *Turnstile* → *Add widget* → Hostname der Seite (z. B.
-`snackpoint.mucahitbayar.workers.dev`, später die eigene Domain), Modus „Managed“. Den *Site Key* als
-`TURNSTILE_SITE_KEY` und den *Secret Key* als `TURNSTILE_SECRET_KEY` beim Railway-Dienst eintragen.
+**So funktioniert es** (`server/auth/turnstile.js`):
+
+| `TURNSTILE_SITE_KEY` | `TURNSTILE_SECRET_KEY` | Zustand | Login |
+| --- | --- | --- | --- |
+| – | – | aus | normal |
+| gesetzt | – | **unvollständig → aus**, Warnung im Log | normal, kein Widget |
+| – | gesetzt | **unvollständig → aus**, Warnung im Log | normal, kein Widget |
+| gesetzt | gesetzt | aktiv | Widget im Login-Formular, Token wird geprüft |
+
+Aktiv prüft der Server jedes Token bei Cloudflare (Siteverify). Abgelehnt werden fehlende, ungültige,
+abgelaufene und bereits verwendete Tokens sowie Tokens, die nicht auf einem Host aus `TURNSTILE_HOSTNAMES`
+ausgestellt wurden (HTTP 400). Ist Cloudflare nicht erreichbar, lehnt der Login mit HTTP 503 ab, die
+Anmeldung ist dann so lange nicht möglich. Abgelehnte Prüfungen zählen nicht zur Login-Sperre. Ins Log
+kommen nur Grund, Cloudflare-Fehlercodes und ein abgelehnter Host-Name (`missing-token`,
+`rejected [invalid-input-response]`, `hostname [evil.example]`, `unreachable [timeout]`), höchstens einmal
+pro Minute und Grund, nie Schlüssel, Token, IP oder E-Mail.
+
+**Einrichten:** Cloudflare-Dashboard → *Turnstile* → Widget mit Hostname `snackpointkf.de`, Modus
+„Managed“. `www.snackpointkf.de` leitet auf die Hauptdomain um und braucht keinen Eintrag; die alte
+`*.workers.dev`-Adresse nur eintragen (und in `TURNSTILE_HOSTNAMES` aufnehmen), wenn der Admin-Login dort
+noch benutzt werden soll. Beide Schlüssel beim Railway-Dienst `snackpoint-api`, in dieser Reihenfolge:
+
+1. Im Adminpanel angemeldet bleiben (Sitzungen überstehen ein Neu-Deployment) — das ist der Notausgang.
+2. `TURNSTILE_SITE_KEY` setzen. Allein ändert das nichts (Log: „Unvollständig konfiguriert“).
+3. Secret ohne Shell-Verlauf setzen: `pbpaste | railway variable set TURNSTILE_SECRET_KEY --stdin --service snackpoint-api`.
+   Railway startet neu; im Log steht „[turnstile] Aktiv für den Admin-Login“.
+4. In einem privaten Fenster anmelden: Widget erscheint, Login klappt.
+5. **Zurück:** `TURNSTILE_SECRET_KEY` löschen → nach dem Neustart ist die Prüfung aus.
+
+Lokal testen mit den offiziellen Testschlüsseln von Cloudflare (bestehen immer: Site Key
+`1x00000000000000000000AA`, Secret `1x0000000000000000000000000000000AA`; scheitern immer: Secret
+`2x0000000000000000000000000000000AA`; „Token schon verbraucht“: `3x0000000000000000000000000000000AA`)
+in `.env`, dazu `TURNSTILE_HOSTNAMES=localhost`. Liefert Cloudflare einen anderen Host-Namen, steht er bei
+der Ablehnung im Log (`hostname [...]`). Die automatischen Tests (`npm run test:server`) bilden Siteverify
+nach und brauchen kein Netz.
 
 **Rechtliches:** Betreiber, Rechtsform, Vertretung, USt-IdNr., Registereintrag und Inhaltsverantwortlicher
 stehen in `src/data/siteContent.js` (`SETTINGS.legal`) und werden automatisch in Impressum und

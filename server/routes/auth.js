@@ -11,6 +11,7 @@ import {
 import { audit } from '../lib/audit.js';
 import { HttpError, badRequest } from '../lib/errors.js';
 import { clientIp } from '../lib/request.js';
+import { turnstileSiteKeyForLogin, verifyTurnstile } from '../auth/turnstile.js';
 import { parse, readJson } from '../lib/validation.js';
 import { config } from '../config.js';
 
@@ -21,22 +22,6 @@ const loginSchema = z.object({
 });
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/** Cloudflare Turnstile: is this login coming from a human browser? */
-async function verifyTurnstile(token, ip) {
-  if (!config.turnstileSecretKey) return true;
-  if (!token) return false;
-  try {
-    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      body: new URLSearchParams({ secret: config.turnstileSecretKey, response: token, remoteip: ip }),
-      signal: AbortSignal.timeout(8000),
-    });
-    return (await response.json()).success === true;
-  } catch {
-    return false;
-  }
-}
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1).max(200),
@@ -51,7 +36,7 @@ auth.use('*', async (c, next) => {
 });
 
 // What the login page needs to know before showing the form.
-auth.get('/config', (c) => c.json({ turnstileSiteKey: config.turnstileSiteKey || null }));
+auth.get('/config', (c) => c.json({ turnstileSiteKey: turnstileSiteKeyForLogin() }));
 
 auth.post('/login', async (c) => {
   const started = Date.now();
@@ -68,8 +53,13 @@ async function login(c) {
   const { email, password, turnstileToken } = parse(loginSchema, await readJson(c));
   const ip = clientIp(c);
   const attempt = await startLoginAttempt(ip, email);
-  if (!(await verifyTurnstile(turnstileToken, ip))) {
+  const check = await verifyTurnstile(turnstileToken, ip);
+  if (!check.ok) {
+    // Not a password guess: doesn't count towards the login lock.
     await discardLoginAttempt(attempt);
+    if (check.reason === 'unreachable') {
+      throw new HttpError(503, 'Die Sicherheitsprüfung ist gerade nicht erreichbar. Bitte versuche es in ein paar Minuten erneut.');
+    }
     throw new HttpError(400, 'Die Sicherheitsprüfung ist fehlgeschlagen. Bitte lade die Seite neu und versuche es erneut.');
   }
 

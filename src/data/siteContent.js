@@ -70,7 +70,7 @@ export const SETTINGS = {
   // link previews and structured data are built from it (scripts/prerender.mjs,
   // worker/index.js). Change it once the own domain is live. A local test
   // build can override it: VITE_SITE_URL=http://localhost:8790 npm run build
-  siteUrl: (import.meta.env?.VITE_SITE_URL || 'https://snackpoint.mucahitbayar.workers.dev').replace(/\/$/, ''),
+  siteUrl: (import.meta.env?.VITE_SITE_URL || 'https://snackpointkf.de').replace(/\/$/, ''),
   contact: {
     address: 'Neugablonzer Str. 25, 87600 Kaufbeuren',
     phone: '0177 4657426',

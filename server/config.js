@@ -41,9 +41,12 @@ export const config = {
   // Every login answer takes at least this long (success or not), so timing
   // reveals nothing and password guessing is slowed down.
   loginMinMs: Number(env.LOGIN_MIN_MS ?? 800),
-  // Optional Cloudflare Turnstile bot check on the login (both keys needed).
+  // Optional Cloudflare Turnstile bot check on the login: active only when
+  // both keys are set (see server/auth/turnstile.js). Tokens are accepted
+  // only from these host names (comma separated).
   turnstileSiteKey: env.TURNSTILE_SITE_KEY ?? '',
   turnstileSecretKey: env.TURNSTILE_SECRET_KEY ?? '',
+  turnstileHostnames: (env.TURNSTILE_HOSTNAMES || 'snackpointkf.de').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
   // Extra origins allowed to call the admin API, comma separated (the
   // site's own origin is always allowed).
   allowedOrigins: (env.ALLOWED_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean),
