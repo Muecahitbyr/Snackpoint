@@ -94,6 +94,9 @@
 
 @media (max-width: 980px) {
   .product-grid { grid-template-columns: repeat(2, 1fr); }
+  /* Tiles get wider than the 16:10 product pictures here: give the picture
+     area their shape, so cover never cuts off a cup's lid or a bottle cap. */
+  .product-media.has-image { height: auto; aspect-ratio: 16 / 10; }
 }
 @media (max-width: 560px) {
   .product-grid { grid-template-columns: 1fr; }
