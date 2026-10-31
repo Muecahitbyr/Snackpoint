@@ -30,7 +30,7 @@ export const CONTENT = {
   // Zitat-Bereich
   'highlight.eyebrow': 'Immer einen Besuch wert',
   'highlight.quote': '„Der beste Kiosk den ich je gesehen habe … man wird herzlich empfangen und hat einfach Spaß beim Einkaufen!“',
-  'highlight.author': '— Can Sadri, Google Rezension ★★★★★',
+  'highlight.author': '— Can S., Google Rezension ★★★★★',
   // Neu eingetroffen
   'new.eyebrow': 'Neu eingetroffen',
   'new.title': 'Frisch im Regal.',
@@ -133,11 +133,11 @@ export const SERVICES = [
   },
 ];
 
-// Google reviews in the marquee.
+// Google reviews in the marquee. Reviewers appear as first name + initial only.
 export const REVIEWS = [
   {
     id: 'review-1',
-    name: 'sabri can soyalp',
+    name: 'Sabri S.',
     initials: 'SS',
     color: '#f0ac23',
     time: 'vor einem Monat',
@@ -145,7 +145,7 @@ export const REVIEWS = [
   },
   {
     id: 'review-2',
-    name: 'Cigdem Fidan',
+    name: 'Cigdem F.',
     initials: 'CF',
     color: '#e0201f',
     time: 'vor 2 Monaten',
@@ -153,7 +153,7 @@ export const REVIEWS = [
   },
   {
     id: 'review-3',
-    name: 'Sarah Petzold',
+    name: 'Sarah P.',
     initials: 'SP',
     color: '#c4181c',
     time: 'vor 5 Monaten',
@@ -161,7 +161,7 @@ export const REVIEWS = [
   },
   {
     id: 'review-4',
-    name: 'Can Sadri',
+    name: 'Can S.',
     initials: 'CS',
     color: '#b9861f',
     time: 'vor 2 Monaten',
@@ -169,7 +169,7 @@ export const REVIEWS = [
   },
   {
     id: 'review-5',
-    name: 'Moritz Betz',
+    name: 'Moritz B.',
     initials: 'MB',
     color: '#7a0000',
     time: 'vor 3 Monaten',

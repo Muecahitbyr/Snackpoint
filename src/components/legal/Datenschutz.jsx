@@ -139,7 +139,26 @@ export default function Datenschutz() {
           (Art. 6 Abs. 1 lit. f DSGVO).
         </p>
 
-        <h2>10. Verwaltungsbereich</h2>
+        <h2>10. Kontaktaufnahme</h2>
+        <p>
+          Wenn Sie uns per E-Mail oder Telefon kontaktieren, verarbeiten wir Ihre Angaben (z. B. Name,
+          E-Mail-Adresse oder Telefonnummer und den Inhalt Ihrer Anfrage), um Ihr Anliegen zu bearbeiten.
+          Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, soweit Ihre Anfrage mit einem Einkauf oder einer
+          Leistung zusammenhängt, ansonsten unser berechtigtes Interesse an der Beantwortung von Anfragen
+          (Art. 6 Abs. 1 lit. f DSGVO). Wir löschen die Daten, sobald Ihr Anliegen erledigt ist und keine
+          gesetzlichen Aufbewahrungspflichten entgegenstehen.
+        </p>
+
+        <h2>11. Links zu sozialen Netzwerken</h2>
+        <p>
+          Im Footer verlinken wir auf unsere Profile bei Instagram (Meta Platforms Ireland Ltd.) und TikTok
+          (TikTok Technology Ltd., Irland). Es handelt sich um einfache Links: Beim Aufruf unserer Website
+          werden keine Inhalte dieser Dienste geladen und keine Daten an sie übertragen. Erst wenn Sie einen
+          Link anklicken, gelangen Sie auf die Seite des jeweiligen Anbieters; dort gelten dessen
+          Datenschutzbestimmungen.
+        </p>
+
+        <h2>12. Verwaltungsbereich</h2>
         <p>
           Die Inhalte dieser Website pflegen wir über einen passwortgeschützten Verwaltungsbereich, der nur
           unseren Mitarbeitenden zugänglich ist. Für Besucherinnen und Besucher der Website werden dabei keine
@@ -150,7 +169,7 @@ export default function Datenschutz() {
           (Art. 6 Abs. 1 lit. f DSGVO, berechtigtes Interesse an der Sicherheit unserer Systeme).
         </p>
 
-        <h2>11. Änderung dieser Datenschutzerklärung</h2>
+        <h2>13. Änderung dieser Datenschutzerklärung</h2>
         <p>
           Wir behalten uns vor, diese Datenschutzerklärung anzupassen, damit sie stets den aktuellen
           rechtlichen Anforderungen entspricht oder um Änderungen unserer Leistungen umzusetzen.
