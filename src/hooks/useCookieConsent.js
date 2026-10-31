@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'snackpoint_cookie_consent';
-// Separate, so the earlier Maps-only consent doesn't cover the TikTok embed.
-const SOCIAL_KEY = 'snackpoint_social_consent';
+// One consent per embedded profile, separate from the earlier Maps-only one.
+// (The TikTok key keeps its first name, so consents already given stay valid.)
+const EMBED_KEYS = { tiktok: 'snackpoint_social_consent', instagram: 'snackpoint_instagram_consent' };
+const readEmbeds = () =>
+  Object.fromEntries(Object.entries(EMBED_KEYS).map(([name, key]) => [name, read(key) === 'accepted']));
 const EVENT_NAME = 'snackpoint-consent-changed';
 
 function read(key) {
@@ -26,17 +29,17 @@ function store(key, value) {
 /** Shared consent state, kept in sync across every mounted instance (the
  * banner, the Maps embed gate, the footer's "Cookie-Einstellungen" link) via
  * a window event + localStorage — no context/provider needed for a single
- * flag. 'accepted' | 'rejected' | null (not yet decided). `social` is the
- * consent for the TikTok profile embed: given with the banner's "Akzeptieren"
- * or the button in the TikTok phone. */
+ * flag. 'accepted' | 'rejected' | null (not yet decided). `embeds` holds the
+ * consent per embedded profile ({ tiktok, instagram }): given all at once with
+ * the banner's "Akzeptieren", or one by one with the button in each phone. */
 export function useCookieConsent() {
   const [consent, setConsent] = useState(readConsent);
-  const [social, setSocial] = useState(() => read(SOCIAL_KEY) === 'accepted');
+  const [embeds, setEmbeds] = useState(() => readEmbeds());
 
   useEffect(() => {
     function handleChange() {
       setConsent(readConsent());
-      setSocial(read(SOCIAL_KEY) === 'accepted');
+      setEmbeds(readEmbeds());
     }
     window.addEventListener(EVENT_NAME, handleChange);
     window.addEventListener('storage', handleChange);
@@ -46,18 +49,19 @@ export function useCookieConsent() {
     };
   }, []);
 
-  const write = useCallback((value, socialValue) => {
+  // value: Maps/banner decision; embedValue goes to the listed embeds.
+  const write = useCallback((value, embedValue, names = Object.keys(EMBED_KEYS)) => {
     if (value !== undefined) store(STORAGE_KEY, value);
-    if (socialValue !== undefined) store(SOCIAL_KEY, socialValue);
+    if (embedValue !== undefined) names.forEach((name) => store(EMBED_KEYS[name], embedValue));
     window.dispatchEvent(new Event(EVENT_NAME));
   }, []);
 
   // Banner: everything at once. Single buttons: only what they load.
   const accept = useCallback(() => write('accepted', 'accepted'), [write]);
   const acceptMaps = useCallback(() => write('accepted'), [write]);
-  const acceptSocial = useCallback(() => write(undefined, 'accepted'), [write]);
+  const acceptEmbed = useCallback((name) => write(undefined, 'accepted', [name]), [write]);
   const reject = useCallback(() => write('rejected', null), [write]);
   const reset = useCallback(() => write(null, null), [write]);
 
-  return { consent, social, accept, acceptMaps, acceptSocial, reject, reset };
+  return { consent, embeds, accept, acceptMaps, acceptEmbed, reject, reset };
 }

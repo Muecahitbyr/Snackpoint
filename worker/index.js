@@ -58,7 +58,7 @@ const PAGE_HEADERS = {
 
 // What the public pages may load: own files (incl. fonts) and, after consent,
 // the Google Maps embed (maps.google.com redirects to www.google.com) and the
-// TikTok profile embed. Inline
+// TikTok and Instagram profile embeds. Inline
 // scripts only by hash (scriptHashes); the JSON blocks aren't executed.
 // data: and blob: only cover URLs the page creates itself (e.g. textures of
 // the 3D character, if it's switched on again).
@@ -71,7 +71,7 @@ const contentSecurityPolicy = (scriptHashes) =>
     "img-src 'self' data: blob:",
     "connect-src 'self' data: blob:",
     "worker-src 'self' blob:",
-    'frame-src https://maps.google.com https://www.google.com https://www.tiktok.com',
+    'frame-src https://maps.google.com https://www.google.com https://www.tiktok.com https://www.instagram.com',
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

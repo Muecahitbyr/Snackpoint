@@ -8,8 +8,8 @@ import './Social.css';
 
 // Two phone mockups that show our TikTok and Instagram profiles, drawn from our
 // own product pictures (no follower counts or likes — we don't invent numbers).
-// After consent the TikTok phone shows the real profile (TikTok's official
-// creator embed). Instagram has no embeddable profile view, so it stays drawn.
+// After consent each phone shows the real profile instead: TikTok's creator
+// embed and Instagram's profile embed.
 
 const TILE_GRADIENTS = ['grad-1', 'grad-2', 'grad-3', 'grad-4'];
 
@@ -53,39 +53,70 @@ function Phone({ className, children }) {
   );
 }
 
-// TikTok's creator embed needs about 325px; it's rendered at that size and
-// scaled down to the phone screen. Its card (profile + a row of videos) is
-// shorter than the screen, so it sits centered on TikTok's dark background.
-const EMBED_WIDTH = 325;
-const EMBED_HEIGHT = 420;
+// The embeds are rendered at the size they're made for and scaled down to the
+// phone screen. Their card (profile + latest posts) is shorter than the
+// screen, so it sits centered on the app's background.
+const EMBEDS = {
+  tiktok: {
+    app: 'TikTok',
+    width: 325,
+    height: 420,
+    src: (handle) => `https://www.tiktok.com/embed/@${encodeURIComponent(handle)}?lang=de-DE&embedFrom=oembed`,
+    Icon: TikTokIcon,
+    more: 'Alle Videos auf TikTok ↗',
+  },
+  instagram: {
+    app: 'Instagram',
+    width: 360,
+    height: 395,
+    src: (handle) => `https://www.instagram.com/${encodeURIComponent(handle)}/embed/`,
+    Icon: InstagramIcon,
+    more: 'Alle Beiträge auf Instagram ↗',
+  },
+};
 
-function TikTokEmbed({ url }) {
+function ProfileEmbed({ kind, url }) {
+  const { app, width, height, src, Icon, more } = EMBEDS[kind];
   const handle = handleFrom(url);
   const box = useRef(null);
   const [scale, setScale] = useState(0);
   useEffect(() => {
     const el = box.current;
     if (!el) return undefined;
-    const observer = new ResizeObserver(([entry]) => setScale(entry.contentRect.width / EMBED_WIDTH));
+    const observer = new ResizeObserver(([entry]) => setScale(entry.contentRect.width / width));
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [width]);
   return (
-    <div className="tiktok-embed-box" ref={box}>
-      <TikTokIcon className="tiktok-embed-logo" />
-      <div className="tiktok-embed-card" style={{ height: EMBED_HEIGHT * scale }}>
+    <div className={`embed-box embed-${kind}`} ref={box}>
+      <Icon className="embed-logo" />
+      <div className="embed-card" style={{ height: height * scale }}>
         {scale > 0 && (
           <iframe
-            title={`TikTok-Profil @${handle}`}
-            src={`https://www.tiktok.com/embed/@${encodeURIComponent(handle)}?lang=de-DE&embedFrom=oembed`}
-            style={{ width: EMBED_WIDTH, height: EMBED_HEIGHT, transform: `scale(${scale})` }}
+            title={`${app}-Profil @${handle}`}
+            src={src(handle)}
+            style={{ width, height, transform: `scale(${scale})` }}
             allow="encrypted-media; fullscreen"
             loading="lazy"
           />
         )}
       </div>
-      <a className="tiktok-embed-more" href={url} target="_blank" rel="noopener noreferrer">Alle Videos auf TikTok ↗</a>
+      <a className="embed-more" href={url} target="_blank" rel="noopener noreferrer">{more}</a>
     </div>
+  );
+}
+
+/** The drawn screen until the visitor agrees, then the real profile. */
+function PhoneContent({ kind, url, allowed, onAllow, children }) {
+  if (allowed) return <ProfileEmbed kind={kind} url={url} />;
+  return (
+    <>
+      {children}
+      <div className={`embed-gate embed-gate-${kind}`}>
+        <button type="button" className="embed-gate-btn" onClick={onAllow}>Echtes Profil laden</button>
+        <small>Dabei werden Daten an {kind === 'instagram' ? 'Instagram (Meta)' : 'TikTok'} übertragen.</small>
+      </div>
+    </>
   );
 }
 
@@ -147,7 +178,7 @@ function InstagramScreen({ url, logo, name, images, highlights }) {
 export default function Social() {
   const site = useSite();
   const content = useContent();
-  const { social: embedAllowed, acceptSocial } = useCookieConsent();
+  const { embeds, acceptEmbed } = useCookieConsent();
   const { tiktok, instagram } = site.settings.social;
   if (!tiktok && !instagram) return null;
 
@@ -171,17 +202,9 @@ export default function Social() {
         {tiktok && (
           <Reveal className="social-col" delay={0.1}>
             <Phone className="phone-tiktok">
-              {embedAllowed ? (
-                <TikTokEmbed url={tiktok} />
-              ) : (
-                <>
-                  <TikTokScreen url={tiktok} logo={logo} name={name} images={pick(0, 6)} />
-                  <div className="embed-gate">
-                    <button type="button" className="embed-gate-btn" onClick={acceptSocial}>Echtes Profil laden</button>
-                    <small>Dabei werden Daten an TikTok übertragen.</small>
-                  </div>
-                </>
-              )}
+              <PhoneContent kind="tiktok" url={tiktok} allowed={embeds.tiktok} onAllow={() => acceptEmbed('tiktok')}>
+                <TikTokScreen url={tiktok} logo={logo} name={name} images={pick(0, 6)} />
+              </PhoneContent>
             </Phone>
             <a className="social-btn social-btn-tiktok" href={tiktok} target="_blank" rel="noopener noreferrer">
               <TikTokIcon className="social-btn-icon" />
@@ -192,17 +215,19 @@ export default function Social() {
         {instagram && (
           <Reveal className="social-col" delay={0.2}>
             <Phone className="phone-insta">
-              <InstagramScreen
-                url={instagram}
-                logo={logo}
-                name={name}
-                images={pick(1, 9)}
-                highlights={[
-                  { label: 'Snacks', src: highlightPicture('snacks') },
-                  { label: 'Drinks', src: highlightPicture('getraenke') },
-                  { label: 'To go', src: highlightPicture('essen') },
-                ]}
-              />
+              <PhoneContent kind="instagram" url={instagram} allowed={embeds.instagram} onAllow={() => acceptEmbed('instagram')}>
+                <InstagramScreen
+                  url={instagram}
+                  logo={logo}
+                  name={name}
+                  images={pick(1, 9)}
+                  highlights={[
+                    { label: 'Snacks', src: highlightPicture('snacks') },
+                    { label: 'Drinks', src: highlightPicture('getraenke') },
+                    { label: 'To go', src: highlightPicture('essen') },
+                  ]}
+                />
+              </PhoneContent>
             </Phone>
             <a className="social-btn social-btn-insta" href={instagram} target="_blank" rel="noopener noreferrer">
               <InstagramIcon className="social-btn-icon" />

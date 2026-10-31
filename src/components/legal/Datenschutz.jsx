@@ -112,8 +112,8 @@ export default function Datenschutz() {
           Browsers (sessionStorage), damit er nicht auf jeder Seite erneut erscheint. Diese Einträge verlassen
           Ihr Gerät nicht und werden nicht an uns übertragen. Sie sind für die von Ihnen gewünschten Funktionen
           unbedingt erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 6 Abs. 1 lit. f DSGVO). Erst wenn Sie der
-          Google-Maps-Einbindung bzw. dem TikTok-Profil zustimmen, können Google bzw. TikTok eigene Cookies
-          setzen (siehe Punkte 6 und 11).
+          Google-Maps-Einbindung bzw. den eingebetteten Profilen zustimmen, können Google, TikTok bzw. Meta
+          eigene Cookies setzen (siehe Punkte 6 und 11).
         </p>
 
         <h2>8. SnackPoint Assistent (Chat-Widget)</h2>
@@ -160,16 +160,22 @@ export default function Datenschutz() {
           Datenschutzbestimmungen.
         </p>
         <p>
-          <strong>Eingebettetes TikTok-Profil:</strong> Nur wenn Sie im Cookie-Banner zustimmen oder in der
-          TikTok-Vorschau auf „Echtes Profil laden“ klicken, binden wir unser echtes TikTok-Profil über die
-          Einbettungsfunktion von TikTok ein. Dabei überträgt Ihr Browser Daten (u. a. Ihre IP-Adresse,
-          Geräte- und Browserinformationen sowie die aufgerufene Seite) an TikTok, auch an Server außerhalb der
-          EU, und TikTok kann Cookies oder ähnliche Technologien einsetzen. Rechtsgrundlage ist Ihre
-          Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG). Ihre Entscheidung speichern wir lokal in
-          Ihrem Browser (siehe Punkt 7); widerrufen können Sie sie jederzeit über „Cookie-Einstellungen“ im
-          Footer. Weitere Informationen:{' '}
+          <strong>Eingebettete Profile:</strong> Nur wenn Sie im Cookie-Banner zustimmen oder in der jeweiligen
+          Vorschau auf „Echtes Profil laden“ klicken, binden wir unser echtes TikTok- bzw. Instagram-Profil über
+          die Einbettungsfunktion des Anbieters ein; beide Einwilligungen können Sie getrennt erteilen. Dabei
+          überträgt Ihr Browser Daten (u. a. Ihre IP-Adresse, Geräte- und Browserinformationen sowie die
+          aufgerufene Seite) an TikTok bzw. Meta, auch an Server außerhalb der EU, und die Anbieter können
+          Cookies oder ähnliche Technologien einsetzen. Für die Erhebung und Übermittlung dieser Daten sind wir
+          gemeinsam mit dem jeweiligen Anbieter verantwortlich (Art. 26 DSGVO); für die weitere Verarbeitung
+          ist allein der Anbieter verantwortlich. Rechtsgrundlage ist Ihre Einwilligung (Art. 6 Abs. 1 lit. a
+          DSGVO, § 25 Abs. 1 TDDDG). Ihre Entscheidung speichern wir lokal in Ihrem Browser (siehe Punkt 7);
+          widerrufen können Sie sie jederzeit über „Cookie-Einstellungen“ im Footer. Weitere Informationen:{' '}
           <a href="https://www.tiktok.com/legal/privacy-policy-eea" target="_blank" rel="noopener noreferrer">
             tiktok.com/legal/privacy-policy-eea
+          </a>{' '}
+          und{' '}
+          <a href="https://privacycenter.instagram.com/policy" target="_blank" rel="noopener noreferrer">
+            privacycenter.instagram.com/policy
           </a>
           .
         </p>
