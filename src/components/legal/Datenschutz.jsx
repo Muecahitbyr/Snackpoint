@@ -81,15 +81,11 @@ export default function Datenschutz() {
           „https://" beginnt.
         </p>
 
-        <h2>5. Google Fonts</h2>
+        <h2>5. Schriftarten</h2>
         <p>
-          Diese Website bindet Schriftarten (Google Fonts) von Google ein, die über einen Server von Google
-          in den USA geladen werden. Dabei kann Ihre IP-Adresse an Google übertragen werden. Weitere
-          Informationen finden Sie in der Datenschutzerklärung von Google:{' '}
-          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
-            policies.google.com/privacy
-          </a>
-          .
+          Die auf dieser Website verwendeten Schriftarten liegen auf unserem eigenen Server und werden von
+          dort geladen. Eine Verbindung zu Servern von Google oder anderen Anbietern wird dafür nicht
+          aufgebaut.
         </p>
 
         <h2>6. Google Maps</h2>

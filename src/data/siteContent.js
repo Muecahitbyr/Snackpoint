@@ -70,7 +70,7 @@ export const SETTINGS = {
   contact: {
     address: 'Neugablonzer Str. 25, 87600 Kaufbeuren',
     phone: '0177 4657426',
-    email: '',
+    email: 'saginsq7@icloud.com',
     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Snack+Point+Kaufbeuren+Neugablonzer+Str.+25+87600+Kaufbeuren',
     mapsEmbedUrl: 'https://maps.google.com/maps?q=Snack+Point+Kaufbeuren,+Neugablonzer+Str.+25,+87600+Kaufbeuren&output=embed',
   },

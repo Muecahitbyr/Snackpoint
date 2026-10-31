@@ -238,7 +238,7 @@ stehen und in den Meta-Daten der Startseite.
 | Bilder | Klein (Logo 150 px, Logos ≤ 240 px), Produkt- und Eventbilder mit `loading="lazy"`, Medien-URLs mit Prüfsumme und `immutable` |
 | JavaScript | Startseite ca. 78 KB gzip (React 46 KB + App 32 KB), keine Bibliotheken für 3D mehr im Bundle |
 | Caching | `/assets/*` ein Jahr `immutable`, HTML `max-age=0, must-revalidate` (damit immer aktuell) |
-| Fonts | Google Fonts mit `preconnect` und `display=swap` (unverändert, Design bleibt) |
+| Fonts | Selbst gehostet über `@fontsource` (Inter, Knewave, Sedgwick Ave Display), `font-display: swap`, keine Verbindung zu Google |
 | Barrierefreiheit | Eine `<h1>` pro Seite, saubere Hierarchie h1 → h2 → h3, Landmarks (`header`, `nav`, `main`, `footer`), `lang="de"`, Alt-Texte, `aria-label` am Schriftzug |
 
 **Ladezeit-Messung** (lokal, Handy-Emulation: 4-fache CPU-Drosselung, 150 ms Latenz, ca. 1,6 Mbit/s, gzip, je 5 bis 7 Läufe, Median):

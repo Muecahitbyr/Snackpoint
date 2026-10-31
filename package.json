@@ -26,6 +26,9 @@
     "test:seo": "node scripts/check-seo.mjs"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/knewave": "^5.3.0",
+    "@fontsource/sedgwick-ave-display": "^5.3.0",
     "@hono/node-server": "^2.1.5",
     "@node-rs/argon2": "^2.2.2",
     "@react-three/drei": "^9.122.0",

@@ -56,7 +56,7 @@ const PAGE_HEADERS = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
 };
 
-// What the public pages may load: own files, Google Fonts and, after consent,
+// What the public pages may load: own files (incl. fonts) and, after consent,
 // the Google Maps embed (maps.google.com redirects to www.google.com). Inline
 // scripts only by hash (scriptHashes); the JSON blocks aren't executed.
 // data: and blob: only cover URLs the page creates itself (e.g. textures of
@@ -65,8 +65,8 @@ const contentSecurityPolicy = (scriptHashes) =>
   [
     "default-src 'self'",
     `script-src 'self' ${scriptHashes.map((hash) => `'sha256-${hash}'`).join(' ')}`.trim(),
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    'font-src https://fonts.gstatic.com',
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
     "img-src 'self' data: blob:",
     "connect-src 'self' data: blob:",
     "worker-src 'self' blob:",
