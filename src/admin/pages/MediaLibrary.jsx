@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { api, formatDateTime, uploadImage, useApi } from '../api';
 import {
-  Badge, Button, EmptyState, ErrorBox, Modal, PageHeader, SearchInput, Spinner, TextField, UploadButton, formatBytes,
+  Badge, Button, EmptyState, ErrorBox, Modal, PageHeader, SearchInput, Spinner, TextField, Toggle, UploadButton, formatBytes,
   useAction, useConfirm, useToast,
 } from '../ui';
 
@@ -20,6 +20,15 @@ function MediaDetail({ id, maxBytes, onClose, onChanged, onDeleted }) {
   async function saveAlt() {
     const result = await run(() => api(`/admin/media/${id}`, { method: 'PATCH', body: { altText } }), 'Beschreibung gespeichert.');
     if (result?.item) onChanged(result.item);
+  }
+
+  async function setAiGenerated(aiGenerated) {
+    const message = aiGenerated ? 'Wird jetzt als KI-generiertes Symbolbild gekennzeichnet.' : 'KI-Kennzeichnung entfernt.';
+    const result = await run(() => api(`/admin/media/${id}`, { method: 'PATCH', body: { aiGenerated } }), message);
+    if (result?.item) {
+      onChanged(result.item);
+      reload();
+    }
   }
 
   async function replace(file) {
@@ -57,6 +66,13 @@ function MediaDetail({ id, maxBytes, onClose, onChanged, onDeleted }) {
                 ) : 'Nirgends — kann gelöscht werden.'}
               </dd>
             </dl>
+            <Toggle
+              label="KI-generiertes Bild"
+              hint="Komplett mit KI erstellt (z. B. ChatGPT): Die Webseite zeigt dann unter dem Bild „KI-generiertes Symbolbild“."
+              checked={item.aiGenerated}
+              onChange={setAiGenerated}
+              disabled={busy}
+            />
             <TextField label="Bildbeschreibung (für Barrierefreiheit & Google)" value={altText} onChange={setAlt} maxLength={200} />
             <div className="button-row">
               <Button variant="ghost" size="small" busy={busy} onClick={saveAlt} disabled={altText === item.altText}>Beschreibung speichern</Button>

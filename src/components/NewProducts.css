@@ -110,5 +110,17 @@
   padding: 0 20px 22px;
   margin-top: -12px;
 }
+/* Sits above the picture, so the hover zoom never covers it. */
+.product-card p.product-ai-note {
+  position: relative;
+  z-index: 1;
+  background: var(--card);
+  padding: 7px 20px 0;
+  margin-bottom: -12px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--text-dim);
+}
 .product-price { font-weight: 800; font-size: 1.05rem; color: var(--accent-3); }
 .product-info { font-size: 0.78rem; color: var(--text-dim); }

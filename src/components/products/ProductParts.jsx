@@ -8,11 +8,16 @@ export const GRADIENTS = ['grad-1', 'grad-2', 'grad-3', 'grad-4'];
 const PRICE = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
 export const formatPrice = (cents) => PRICE.format(cents / 100);
 
+// Images marked as AI-generated in the media library carry a visible label
+// right below them (Art. 50 EU AI Act): always shown, not only on hover.
 export function ProductMedia({ product }) {
   return (
-    <div className={`product-media ${product.gradient} ${product.image ? 'has-image' : ''}`.trim()}>
-      {product.image ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" /> : <span>{product.emoji}</span>}
-    </div>
+    <>
+      <div className={`product-media ${product.gradient} ${product.image ? 'has-image' : ''}`.trim()}>
+        {product.image ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" /> : <span>{product.emoji}</span>}
+      </div>
+      {product.image && product.imageAi && <p className="product-ai-note">KI-generiertes Symbolbild</p>}
+    </>
   );
 }
 

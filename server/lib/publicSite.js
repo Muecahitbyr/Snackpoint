@@ -25,7 +25,8 @@ async function loadCatalog() {
         GROUP BY g.id ORDER BY g.sort_order, g.name`
     ),
     query(
-      `SELECT p.*, c.name AS category_name, c.chat_category AS category_chat, g.slug AS group_slug, m.checksum AS image_checksum
+      `SELECT p.*, c.name AS category_name, c.chat_category AS category_chat, g.slug AS group_slug, m.checksum AS image_checksum,
+              m.ai_generated AS image_ai
          FROM products p
          JOIN product_categories c ON c.id = p.category_id
          JOIN product_groups g ON g.id = c.group_id
@@ -52,6 +53,7 @@ async function loadCatalog() {
       text: row.description,
       emoji: row.emoji,
       image: mediaUrl(row.image_media_id, row.image_checksum),
+      imageAi: row.image_ai || undefined,
       price: row.price_cents,
       availability: row.availability,
       showInCatalog: row.show_in_catalog,

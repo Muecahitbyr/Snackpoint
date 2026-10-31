@@ -89,6 +89,14 @@ export default function Impressum() {
           Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes
           bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
         </p>
+
+        <h2>Bildnachweis &amp; KI-generierte Inhalte</h2>
+        <p>
+          Abbildungen, die auf dieser Website mit „KI-generiertes Symbolbild“ gekennzeichnet sind, wurden
+          vollständig mit künstlicher Intelligenz erstellt (ChatGPT, OpenAI). Sie dienen nur der
+          Veranschaulichung und zeigen nicht das konkrete Produkt; Aussehen, Belag und Portionsgröße der
+          angebotenen Ware können abweichen.
+        </p>
       </main>
       <Footer />
       <CookieConsent />

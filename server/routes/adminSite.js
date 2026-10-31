@@ -196,6 +196,7 @@ const mediaJson = (row) => ({
   id: row.id,
   originalName: row.original_name,
   altText: row.alt_text,
+  aiGenerated: row.ai_generated,
   mimeType: row.mime_type,
   width: row.width,
   height: row.height,
@@ -207,7 +208,7 @@ const mediaJson = (row) => ({
   updatedAt: iso(row.updated_at),
 });
 
-const MEDIA_COLUMNS = `m.id, m.original_name, m.alt_text, m.mime_type, m.width, m.height, m.size_bytes, m.checksum,
+const MEDIA_COLUMNS = `m.id, m.original_name, m.alt_text, m.ai_generated, m.mime_type, m.width, m.height, m.size_bytes, m.checksum,
   m.created_at, m.updated_at, (${USAGE_COUNT_SQL})::int AS usage_count`;
 
 async function fetchMedia(id) {
@@ -298,13 +299,18 @@ mediaAdmin.put('/:id/file', uploadLimit, async (c) => {
 
 mediaAdmin.patch('/:id', async (c) => {
   const id = parseId(c.req.param('id'));
-  const data = parse(z.object({ altText: text(200).optional(), originalName: text(200).min(1).optional() }), await readJson(c));
+  const data = parse(
+    z.object({ altText: text(200).optional(), originalName: text(200).min(1).optional(), aiGenerated: z.boolean().optional() }),
+    await readJson(c)
+  );
   await fetchMedia(id);
   await query(
-    'UPDATE media SET alt_text = coalesce($2, alt_text), original_name = coalesce($3, original_name) WHERE id = $1',
-    [id, data.altText ?? null, data.originalName ?? null]
+    `UPDATE media SET alt_text = coalesce($2, alt_text), original_name = coalesce($3, original_name),
+       ai_generated = coalesce($4, ai_generated) WHERE id = $1`,
+    [id, data.altText ?? null, data.originalName ?? null, data.aiGenerated ?? null]
   );
-  await audit(c, 'update', 'media', id, 'Bildinfo geändert');
+  const summary = data.aiGenerated === undefined ? 'Bildinfo geändert' : `KI-Kennzeichnung ${data.aiGenerated ? 'an' : 'aus'}`;
+  await audit(c, 'update', 'media', id, summary);
   return c.json({ item: await fetchMedia(id) });
 });
 

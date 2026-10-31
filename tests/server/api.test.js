@@ -307,6 +307,18 @@ describe('products & categories', () => {
     assert.equal(blocked.status, 409, 'an image in use cannot be deleted');
   });
 
+  it('labels AI-generated images on the website', async () => {
+    const product = async () => (await site()).products.find((p) => p.id === productId);
+    assert.equal((await product()).imageAi, undefined, 'not labelled by default');
+    const mediaId = (await product()).image.match(/\/api\/media\/([^/?]+)/)[1];
+    const marked = await admin.send(`/api/admin/media/${mediaId}`, { method: 'PATCH', body: { aiGenerated: true } });
+    assert.equal(marked.status, 200);
+    assert.equal(marked.data.item.aiGenerated, true);
+    assert.equal((await product()).imageAi, true);
+    await admin.send(`/api/admin/media/${mediaId}`, { method: 'PATCH', body: { aiGenerated: false } });
+    assert.equal((await product()).imageAi, undefined);
+  });
+
   it('validates input', async () => {
     const result = await admin.send('/api/admin/products', { method: 'POST', body: { categoryId, name: '', priceCents: -5 } });
     assert.equal(result.status, 400);

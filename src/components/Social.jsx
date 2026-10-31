@@ -114,10 +114,12 @@ export default function Social() {
 
   const logo = content['brand.logo'] ?? '/logo.jpg';
   const name = content['brand.name'];
-  // Real product pictures, spread over both phones.
-  const pictures = site.products.filter((p) => p.image && p.showInCatalog).map((p) => thumb(p.image));
+  // Real product pictures, spread over both phones. AI-generated ones are left
+  // out: the tiles are too small to carry their label.
+  const photos = site.products.filter((p) => p.image && !p.imageAi);
+  const pictures = photos.filter((p) => p.showInCatalog).map((p) => thumb(p.image));
   const pick = (start, count) => Array.from({ length: Math.min(count, pictures.length) }, (_, i) => pictures[(start + i * 3) % pictures.length]);
-  const highlightPicture = (group) => thumb(site.products.find((p) => p.image && p.group === group)?.image ?? '') || pictures[0];
+  const highlightPicture = (group) => thumb(photos.find((p) => p.group === group)?.image ?? '') || pictures[0];
 
   return (
     <section className="social" id="social">
