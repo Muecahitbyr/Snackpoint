@@ -101,7 +101,7 @@ export const SETTINGS = {
     representative: '',
     vatId: '',
     register: '',
-    responsible: 'Mücahit Bayar',
+    responsible: '',
   },
 };
 
