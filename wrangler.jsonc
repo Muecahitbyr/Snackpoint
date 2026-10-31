@@ -23,7 +23,9 @@
   },
   "vars": {
     // Public URL of the Railway API service (Settings → Networking).
-    "API_ORIGIN": "https://snackpoint-api-production.up.railway.app"
+    "API_ORIGIN": "https://snackpoint-api-production.up.railway.app",
+    // Old address: 301 to SETTINGS.siteUrl (https://snackpointkf.de), see worker/index.js.
+    "REDIRECT_HOSTS": "snackpoint.mucahitbayar.workers.dev"
   },
   "observability": { "enabled": true }
 }
