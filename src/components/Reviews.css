@@ -11,33 +11,16 @@
   display: flex;
   gap: 24px;
   width: max-content;
-  animation: marquee 45s linear infinite;
+  animation: marquee 80s linear infinite;
 }
 .marquee:hover .marquee-track,
 .marquee:focus-within .marquee-track,
-.marquee.is-paused .marquee-track,
 .reviews.is-offscreen .marquee-track { animation-play-state: paused; }
 
-/* Stops the moving reviews for good (WCAG 2.2.2), not only while hovered. */
-.marquee-toggle {
-  display: block;
-  margin: 0 auto 28px;
-  padding: 8px 18px;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text);
-  background: #fff;
-  border: 1px solid var(--card-border);
-  border-radius: 100px;
-  cursor: pointer;
-}
-.marquee-toggle:hover { border-color: rgba(224,32,31,0.3); }
-.marquee-toggle:focus-visible { outline: 3px solid var(--accent-3); outline-offset: 2px; }
-
+/* Left to right: starts shifted by one set of reviews and slides back. */
 @keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
 }
 
 .review-card {

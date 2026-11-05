@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useInView } from '../hooks/useInView';
 import { useContent, useSite } from '../site/SiteProvider';
 import Reveal from './Reveal';
@@ -27,7 +26,6 @@ export default function Reviews() {
   const content = useContent();
   const loopedReviews = [...reviews, ...reviews];
   const { ref, inView } = useInView();
-  const [paused, setPaused] = useState(false);
 
   if (!reviews.length) return null;
 
@@ -41,10 +39,7 @@ export default function Reviews() {
       <Reveal as="p" className="eyebrow center">{content['reviews.eyebrow']}</Reveal>
       <Reveal as="h2" className="section-title center"><SplitWords text={content['reviews.title']} /></Reveal>
 
-      <button type="button" className="marquee-toggle" onClick={() => setPaused((p) => !p)} aria-pressed={paused}>
-        {paused ? '▶ Bewertungen weiterlaufen lassen' : '❚❚ Bewertungen anhalten'}
-      </button>
-      <div className={`marquee ${paused ? 'is-paused' : ''}`}>
+      <div className="marquee">
         <div className="marquee-track">
           {loopedReviews.map((review, i) => (
             <ReviewCard key={`${review.id}-${i}`} review={review} />
