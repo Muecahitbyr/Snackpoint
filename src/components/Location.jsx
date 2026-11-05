@@ -156,7 +156,7 @@ export default function Location() {
             <span className="info-icon">⭐</span>
             <div>
               <strong>Bewertung</strong>
-              <p>{rating.value} von 5 · {rating.count} Rezensionen auf Google</p>
+              <p>{rating.value.toFixed(1)} von 5 · {rating.count} Rezensionen auf Google</p>
             </div>
           </div>
           <a

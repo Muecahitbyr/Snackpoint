@@ -51,7 +51,7 @@ export const CONTENT = {
   'reviews.eyebrow': 'Bewertungen',
   'reviews.title': 'Das sagen unsere Kunden.',
   // Information on how the reviews are checked (§ 5b Abs. 3 UWG).
-  'reviews.note': 'Ausgewählte Bewertungen aus unserem Google-Profil, gekürzt auf Vorname und Initial. Wir prüfen nicht, ob die Verfasser bei uns eingekauft haben.',
+  'reviews.note': 'Ausgewählte Bewertungen aus unserem Google-Profil, gekürzt auf Vorname und Initial.',
   // Social Media (TikTok + Instagram as two phones)
   'social.eyebrow': 'Social Media',
   'social.title': 'Folg uns.',
@@ -90,8 +90,8 @@ export const SETTINGS = {
   },
   // Google rating shown in the hero and the location section.
   rating: {
-    value: 4.9,
-    count: 58,
+    value: 5.0,
+    count: 83,
   },
   // Answers of the chat assistant; empty = it says it does not know.
   info: {
