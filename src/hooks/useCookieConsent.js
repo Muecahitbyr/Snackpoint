@@ -31,7 +31,8 @@ function store(key, value) {
  * a window event + localStorage — no context/provider needed for a single
  * flag. 'accepted' | 'rejected' | null (not yet decided). `embeds` holds the
  * consent per embedded profile ({ tiktok, instagram }): given all at once with
- * the banner's "Akzeptieren", or one by one with the button in each phone. */
+ * the banner's "Alle akzeptieren", one by one in its settings, or with the
+ * button in each phone. */
 export function useCookieConsent() {
   const [consent, setConsent] = useState(readConsent);
   const [embeds, setEmbeds] = useState(() => readEmbeds());
@@ -62,6 +63,13 @@ export function useCookieConsent() {
   const acceptEmbed = useCallback((name) => write(undefined, 'accepted', [name]), [write]);
   const reject = useCallback(() => write('rejected', null), [write]);
   const reset = useCallback(() => write(null, null), [write]);
+  // Banner settings: { maps, tiktok, instagram } chosen one by one. The Maps
+  // key doubles as "decided", so it is 'rejected' when only Maps is off.
+  const save = useCallback((choice) => {
+    store(STORAGE_KEY, choice.maps ? 'accepted' : 'rejected');
+    Object.entries(EMBED_KEYS).forEach(([name, key]) => store(key, choice[name] ? 'accepted' : null));
+    window.dispatchEvent(new Event(EVENT_NAME));
+  }, []);
 
-  return { consent, embeds, accept, acceptMaps, acceptEmbed, reject, reset };
+  return { consent, embeds, accept, acceptMaps, acceptEmbed, reject, reset, save };
 }

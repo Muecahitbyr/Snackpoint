@@ -163,7 +163,7 @@
 /* ── TikTok: dark, 9:16 videos ──────────────────────────────── */
 .tiktok-screen { background: #000; color: #fff; }
 .tiktok-screen .profile-avatar { box-shadow: 0 0 0 2px #000, 0 0 0 4px #25f4ee, 3px 3px 0 4px #fe2c55; }
-.tiktok-follow { background: #fe2c55; }
+.tiktok-follow { background: #d90f3d; }
 .tiktok-grid .tile { aspect-ratio: 9 / 13; }
 .tile-play {
   position: absolute;
@@ -182,7 +182,7 @@
   background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
 }
 .insta-screen .profile-avatar img { border-radius: 50%; border: 2px solid #fff; }
-.insta-follow { background: #0095f6; }
+.insta-follow { background: #0070d6; }
 .insta-highlights { display: flex; gap: 14px; margin-top: 10px; }
 .insta-highlight { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 0.6rem; }
 .insta-highlight-ring {
@@ -229,7 +229,7 @@
 .embed-instagram { background: #fafafa; }
 .embed-instagram .embed-logo { color: #d62976; }
 .embed-instagram .embed-card { box-shadow: 0 0 0 1px #dbdbdb, 0 10px 30px rgba(214,41,118,0.18); }
-.embed-instagram .embed-more { color: #0095f6; }
+.embed-instagram .embed-more { color: #0070d6; }
 /* Consent gate over the lower part of the drawn TikTok screen. */
 .embed-gate {
   position: absolute;
@@ -244,14 +244,14 @@
   background: linear-gradient(180deg, transparent, rgba(0,0,0,0.88) 38%);
 }
 .embed-gate-instagram { background: linear-gradient(180deg, transparent, rgba(255,255,255,0.95) 38%); }
-.embed-gate-instagram .embed-gate-btn { background: #0095f6; }
+.embed-gate-instagram .embed-gate-btn { background: #0070d6; }
 .embed-gate.embed-gate-instagram small { color: rgba(0,0,0,0.6); }
 .embed-gate-btn {
   font: inherit;
   font-size: 0.78rem;
   font-weight: 700;
   color: #fff;
-  background: #fe2c55;
+  background: #d90f3d;
   border: 0;
   border-radius: 100px;
   padding: 9px 18px;

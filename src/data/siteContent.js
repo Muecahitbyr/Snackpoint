@@ -14,29 +14,29 @@ export const CONTENT = {
   'hero.title': 'SnackPoint',
   'hero.tag': 'Kaufbeuren',
   'hero.subtitle': 'Der Kiosk, der dich zum Leben erweckt.',
-  'hero.ctaPrimary': 'Neue Waren entdecken',
+  'hero.ctaPrimary': 'Neu im Regal',
   'hero.ctaSecondary': 'Öffnungszeiten & Adresse',
   // Über uns
   'about.eyebrow': 'Über uns',
-  'about.title': 'Mehr als nur ein Kiosk.',
-  'about.text': 'Bei SnackPoint Kaufbeuren erwartet dich ein herzlicher Empfang, frische Ware und ein Service, der weit über den klassischen Kiosk hinausgeht. Ob schneller Snack zwischendurch, Kaffee to go oder Paket abholen: Hier bist du in besten Händen.',
+  'about.title': 'Dein Kiosk in Kaufbeuren.',
+  'about.text': 'SnackPoint ist ein Kiosk in der Neugablonzer Straße. Bei uns holst du dir Snacks, Süßes, Getränke oder einen Kaffee to go. Hermes-Pakete kannst du hier abgeben und abholen, und Lotto spielen geht auch. Schau einfach vorbei.',
   'about.image': '/logo.jpg',
   // Leistungen
   'services.eyebrow': 'Leistungen',
-  'services.title': 'Alles unter einem Dach.',
+  'services.title': 'Das bekommst du bei uns.',
   // Aktionen & Angebote
   'promotions.eyebrow': 'Aktionen',
   'promotions.title': 'Nur für kurze Zeit.',
   // Zitat-Bereich
   'highlight.eyebrow': 'Immer einen Besuch wert',
   'highlight.quote': '„Der beste Kiosk den ich je gesehen habe … man wird herzlich empfangen und hat einfach Spaß beim Einkaufen!“',
-  'highlight.author': '— Can S., Google Rezension ★★★★★',
+  'highlight.author': 'Can S., Google-Rezension ★★★★★',
   // Neu eingetroffen
   'new.eyebrow': 'Neu eingetroffen',
   'new.title': 'Frisch im Regal.',
-  'new.text': 'Jede Woche neue Süßigkeiten-Trends aus aller Welt, von internationalen Klassikern bis zu den heißesten Newcomern.',
+  'new.text': 'Ein paar Sachen, die gerade neu bei uns sind. Alles andere findest du auf der Produktseite.',
   'new.tag': 'Snacks',
-  'new.moreLink': 'Hier klicken, um alle Produkte zu sehen →',
+  'new.moreLink': 'Alle Produkte ansehen →',
   // Wunschliste (product wishes)
   'wishes.eyebrow': 'Wunschliste',
   'wishes.title': 'Was fehlt dir?',
@@ -46,10 +46,12 @@ export const CONTENT = {
   // Events
   'events.eyebrow': 'Events',
   'events.title': 'Bald bei uns.',
-  'events.text': 'Aktionstage, Verkostungen und mehr — komm vorbei und feier mit uns.',
+  'events.text': 'Hier stehen unsere nächsten Aktionen. Komm vorbei!',
   // Bewertungen
   'reviews.eyebrow': 'Bewertungen',
   'reviews.title': 'Das sagen unsere Kunden.',
+  // Information on how the reviews are checked (§ 5b Abs. 3 UWG).
+  'reviews.note': 'Ausgewählte Bewertungen aus unserem Google-Profil, gekürzt auf Vorname und Initial. Wir prüfen nicht, ob die Verfasser bei uns eingekauft haben.',
   // Social Media (TikTok + Instagram as two phones)
   'social.eyebrow': 'Social Media',
   'social.title': 'Folg uns.',
@@ -61,7 +63,7 @@ export const CONTENT = {
   // Produktseite
   'products.eyebrow': 'Sortiment',
   'products.title': 'Alle Produkte.',
-  'products.text': 'Snacks, Süßes, Getränke, Essen to go, Spielzeug und mehr. Eine Auswahl aus unserem Sortiment, oft in mehreren Sorten und Marken. Genaue Verfügbarkeit direkt bei uns in Kaufbeuren.',
+  'products.text': 'Hier siehst du einen Teil von unserem Sortiment: Snacks, Süßes, Getränke, Essen to go und Spielzeug. Vieles gibt es in mehreren Sorten. Ob gerade alles da ist, erfährst du bei uns im Laden.',
 };
 
 // Address, contact, links and legal details (Impressum / Datenschutz).
@@ -89,7 +91,7 @@ export const SETTINGS = {
   // Google rating shown in the hero and the location section.
   rating: {
     value: 4.9,
-    count: 53,
+    count: 58,
   },
   // Answers of the chat assistant; empty = it says it does not know.
   info: {
@@ -119,7 +121,7 @@ export const SERVICES = [
     logo: '/logo.jpg',
     gradient: 'red',
     title: 'Kiosk',
-    text: 'Süßigkeiten, Getränke, Zeitschriften und alles für den kleinen Hunger täglich frisch sortiert.',
+    text: 'Süßigkeiten, Snacks, Getränke, Kaffee to go und Zeitschriften.',
   },
   {
     id: 'hermes',
@@ -127,7 +129,7 @@ export const SERVICES = [
     logo: '/logos/hermes.png',
     gradient: 'gold',
     title: 'Hermes PaketShop',
-    text: 'Hermes Pakete und Retouren abgeben oder Sendungen abholen, direkt bei uns im Laden.',
+    text: 'Hermes-Pakete und Retouren gibst du bei uns ab, deine Sendungen holst du hier ab.',
   },
   {
     id: 'lotto',
@@ -135,7 +137,7 @@ export const SERVICES = [
     logo: '/logos/lotto.png',
     gradient: 'deep',
     title: 'Lotto',
-    text: 'Offizielle Lotto-Annahmestelle: Tippscheine abgeben, Gewinne prüfen und dein Glück versuchen.',
+    text: 'Offizielle Lotto-Annahmestelle: Tippschein abgeben und Gewinne prüfen lassen.',
     note: 'Spielteilnahme ab 18 Jahren. Glücksspiel kann süchtig machen. Hilfe: BZgA 0800 1 37 27 00 (kostenlos).',
   },
 ];
@@ -146,7 +148,7 @@ export const REVIEWS = [
     id: 'review-1',
     name: 'Sabri S.',
     initials: 'SS',
-    color: '#f0ac23',
+    color: '#9a6a00',
     time: 'vor einem Monat',
     text: 'Das Café ist wirklich sehr schön. Das Personal ist freundlich und kümmert sich gut um die Kunden. Die Produkte sind frisch, besonders der Kaffee ist sehr lecker. Ich kann das Café nur weiterempfehlen.',
   },
@@ -170,7 +172,7 @@ export const REVIEWS = [
     id: 'review-4',
     name: 'Can S.',
     initials: 'CS',
-    color: '#b9861f',
+    color: '#946b12',
     time: 'vor 2 Monaten',
     text: 'Der beste Kiosk den ich je gesehen habe … man wird herzlich empfangen und hat einfach Spaß beim Einkaufen! Immer einen Besuch wert. Top top top 👍',
   },

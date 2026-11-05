@@ -15,7 +15,7 @@ export default function Datenschutz() {
       <main className="legal-content">
         <p className="eyebrow">Rechtliches</p>
         <h1>Datenschutzerklärung</h1>
-        <p className="legal-updated">Stand: Oktober 2026</p>
+        <p className="legal-updated">Stand: November 2026</p>
 
         <h2>1. Verantwortlicher</h2>
         <div className="legal-card">
@@ -46,6 +46,10 @@ export default function Datenschutz() {
           <li>die Einschränkung der Verarbeitung zu verlangen (Art. 18 DSGVO),</li>
           <li>der Verarbeitung zu widersprechen (Art. 21 DSGVO),</li>
           <li>Ihre Daten in einem gängigen Format zu erhalten (Datenübertragbarkeit, Art. 20 DSGVO),</li>
+          <li>
+            eine erteilte Einwilligung jederzeit mit Wirkung für die Zukunft zu widerrufen (Art. 7 Abs. 3
+            DSGVO); die bis dahin erfolgte Verarbeitung bleibt rechtmäßig,
+          </li>
           <li>
             sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren, z. B. beim Bayerischen Landesamt für
             Datenschutzaufsicht.
@@ -90,13 +94,15 @@ export default function Datenschutz() {
 
         <h2>6. Google Maps</h2>
         <p>
-          Im Bereich „Standort" binden wir eine Karte des Dienstes Google Maps ein. Beim Laden der Karte
-          überträgt Google Daten (u. a. Ihre IP-Adresse) an Server in den USA und kann eigene Cookies
-          setzen. Aus diesem Grund laden wir die Karte <strong>erst, nachdem Sie im Cookie-Banner bzw.
+          Im Bereich „Standort" binden wir eine Karte des Dienstes Google Maps ein. Anbieter ist die Google
+          Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. Beim Laden der Karte werden Daten
+          (u. a. Ihre IP-Adresse) an Google übertragen, auch an Server der Google LLC in den USA, und Google
+          kann eigene Cookies setzen. Aus diesem Grund laden wir die Karte <strong>erst, nachdem Sie im Cookie-Banner bzw.
           direkt an der Karte aktiv zugestimmt haben</strong>. Ihre Zustimmung speichern wir lokal in Ihrem
           Browser (siehe Punkt 7) und können Sie jederzeit über den Link „Cookie-Einstellungen" im Footer
           widerrufen. Alternativ können Sie den Standort auch ohne eingebettete Karte über den Button
-          „In Google Maps öffnen" direkt bei Google ansehen. Informationen zum Umgang mit Ihren Daten bei
+          „In Google Maps öffnen" direkt bei Google ansehen. Google LLC ist unter dem EU-US Data Privacy
+          Framework zertifiziert. Informationen zum Umgang mit Ihren Daten bei
           Google finden Sie unter{' '}
           <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
             policies.google.com/privacy
@@ -191,8 +197,8 @@ export default function Datenschutz() {
           (Art. 6 Abs. 1 lit. f DSGVO, berechtigtes Interesse an der Sicherheit unserer Systeme).
         </p>
         <p>
-          Zusätzlich kann die Anmeldeseite des Verwaltungsbereichs durch Cloudflare Turnstile (Cloudflare, Inc.,
-          101 Townsend St., San Francisco, CA 94107, USA) geschützt sein. Turnstile prüft, ob die Anmeldung von
+          Zusätzlich ist die Anmeldeseite des Verwaltungsbereichs durch Cloudflare Turnstile (Cloudflare, Inc.,
+          101 Townsend St., San Francisco, CA 94107, USA) geschützt. Turnstile prüft, ob die Anmeldung von
           einem Menschen und nicht von einem automatisierten Programm stammt. Dafür verarbeitet Cloudflare beim
           Aufruf der Anmeldeseite technische Daten wie die IP-Adresse sowie Browser- und Geräteeigenschaften;
           unser Server übermittelt das Prüfergebnis und die IP-Adresse zur Bestätigung an Cloudflare. Turnstile

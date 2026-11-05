@@ -35,6 +35,9 @@
   gap: 20px;
   flex-wrap: wrap;
   pointer-events: auto;
+  /* With the settings open it can get taller than a phone screen. */
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
 }
 
 .cookie-banner-text {
@@ -54,8 +57,35 @@
 
 .cookie-btn { padding: 11px 18px; font-size: 0.85rem; }
 
+/* "Einstellungen": one checkbox per embed, all off until ticked. */
+.cookie-settings {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.cookie-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.cookie-option input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent-3); flex-shrink: 0; }
+.cookie-option input:focus-visible { outline: 3px solid var(--accent-3); outline-offset: 2px; }
+.cookie-option span { display: grid; gap: 2px; }
+.cookie-option strong { color: var(--text); }
+.cookie-option small { color: var(--text-dim); font-size: 0.8rem; }
+
 @media (max-width: 480px) {
   .cookie-banner-inner { padding: 18px; flex-direction: column; align-items: stretch; }
-  .cookie-banner-actions { justify-content: stretch; }
-  .cookie-btn { flex: 1; text-align: center; }
+  /* Reject and accept side by side, same size; settings below. */
+  .cookie-banner-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .cookie-btn { text-align: center; padding: 11px 10px; }
+  .cookie-btn:last-child { grid-column: 1 / -1; }
 }

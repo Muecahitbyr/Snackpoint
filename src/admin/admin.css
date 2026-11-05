@@ -64,6 +64,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .login-turnstile { display: flex; justify-content: center; min-height: 65px; margin: 4px 0; }
 .login-submit { width: 100%; justify-content: center; margin-top: 8px; padding: 13px; }
 .login-back { text-align: center; margin-top: 16px; font-size: 0.88rem; color: var(--a-dim); text-decoration: none; }
+.login-legal { text-align: center; margin-top: 10px; font-size: 0.8rem; color: var(--a-dim); }
+.login-legal a { color: inherit; }
 
 /* ── Shell ─────────────────────────────────────────────────────────────── */
 .shell { min-height: 100vh; }

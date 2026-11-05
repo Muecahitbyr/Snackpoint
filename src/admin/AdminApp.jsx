@@ -153,6 +153,7 @@ function Login({ onLoggedIn }) {
         {turnstile.enabled && <div className="login-turnstile" ref={turnstileRef} />}
         <Button type="submit" busy={busy} className="login-submit">Anmelden</Button>
         <a href="/" className="login-back"><Icon name="arrowLeft" size={15} /> Zur Webseite</a>
+        <p className="login-legal"><a href="/impressum">Impressum</a> · <a href="/datenschutz">Datenschutz</a></p>
       </form>
     </div>
   );
