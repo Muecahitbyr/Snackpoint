@@ -13,6 +13,7 @@ export const PUBLIC_PAGES = [
   { name: 'produkte', file: 'produkte.html', path: '/produkte', label: 'Sortiment', type: 'CollectionPage' },
   { name: 'impressum', file: 'impressum.html', path: '/impressum', label: 'Impressum', type: 'WebPage' },
   { name: 'datenschutz', file: 'datenschutz.html', path: '/datenschutz', label: 'Datenschutzerklärung', type: 'WebPage' },
+  { name: 'nutzungsbedingungen', file: 'nutzungsbedingungen.html', path: '/nutzungsbedingungen', label: 'Nutzungsbedingungen', type: 'WebPage' },
 ];
 
 const SCHEMA_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

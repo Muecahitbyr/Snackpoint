@@ -5,7 +5,7 @@
 //   /api/*    passed on to the backend on Railway. To the browser everything
 //             stays on one domain, so the admin's session cookie
 //             (SameSite=Strict) and the CSRF checks work unchanged, no CORS.
-//   the public pages (/, /produkte, /impressum, /datenschutz)
+//   the public pages (/, /produkte, /impressum, /datenschutz, /nutzungsbedingungen)
 //             rendered with the current products, events and opening hours,
 //             so search engines and AI crawlers that don't run JavaScript see
 //             what the admin panel shows right now, not the state of the last

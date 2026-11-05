@@ -36,6 +36,8 @@ export default function Footer() {
           <span className="footer-legal-dot">·</span>
           <a href="/datenschutz">Datenschutz</a>
           <span className="footer-legal-dot">·</span>
+          <a href="/nutzungsbedingungen">Nutzungsbedingungen</a>
+          <span className="footer-legal-dot">·</span>
           <button type="button" className="footer-legal-btn" onClick={reset}>
             Cookie-Einstellungen
           </button>

@@ -11,6 +11,7 @@ const PAGE_REWRITES = {
   '/produkte': '/produkte.html',
   '/impressum': '/impressum.html',
   '/datenschutz': '/datenschutz.html',
+  '/nutzungsbedingungen': '/nutzungsbedingungen.html',
 };
 
 function rewritePages(req, _res, next) {
@@ -53,6 +54,7 @@ export default defineConfig(({ isSsrBuild }) => ({
         main: resolve(import.meta.dirname, 'index.html'),
         impressum: resolve(import.meta.dirname, 'impressum.html'),
         datenschutz: resolve(import.meta.dirname, 'datenschutz.html'),
+        nutzungsbedingungen: resolve(import.meta.dirname, 'nutzungsbedingungen.html'),
         produkte: resolve(import.meta.dirname, 'produkte.html'),
         admin: resolve(import.meta.dirname, 'admin.html'),
       },

@@ -12,6 +12,7 @@ import App from './App.jsx';
 import ProduktePage from './components/products/ProduktePage.jsx';
 import Impressum from './components/legal/Impressum.jsx';
 import Datenschutz from './components/legal/Datenschutz.jsx';
+import Nutzungsbedingungen from './components/legal/Nutzungsbedingungen.jsx';
 import { StaticSiteProvider, withCodeContent } from './site/SiteProvider';
 import { applySiteData } from './data/siteStore';
 import { PUBLIC_PAGES, structuredData } from './seo/structuredData';
@@ -19,7 +20,7 @@ import { PUBLIC_PAGES, structuredData } from './seo/structuredData';
 export { CONTENT, SETTINGS } from './data/siteContent';
 export { PUBLIC_PAGES };
 
-const COMPONENTS = { index: App, produkte: ProduktePage, impressum: Impressum, datenschutz: Datenschutz };
+const COMPONENTS = { index: App, produkte: ProduktePage, impressum: Impressum, datenschutz: Datenschutz, nutzungsbedingungen: Nutzungsbedingungen };
 
 // The part of each page that depends on the data lies between these two
 // markers: the root element with the rendered page, the JSON-LD and, when

@@ -14,9 +14,9 @@
     // Keep the page list in sync with PUBLIC_PAGES (src/seo/structuredData.js).
     "run_worker_first": [
       "/api/*",
-      "/", "/produkte", "/impressum", "/datenschutz",
-      "/index.html", "/produkte.html", "/impressum.html", "/datenschutz.html",
-      "/produkte/", "/impressum/", "/datenschutz/",
+      "/", "/produkte", "/impressum", "/datenschutz", "/nutzungsbedingungen",
+      "/index.html", "/produkte.html", "/impressum.html", "/datenschutz.html", "/nutzungsbedingungen.html",
+      "/produkte/", "/impressum/", "/datenschutz/", "/nutzungsbedingungen/",
       "/robots.txt", "/sitemap.xml",
       "/admin", "/admin/*"
     ]
