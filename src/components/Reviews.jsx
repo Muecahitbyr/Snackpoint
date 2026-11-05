@@ -44,7 +44,7 @@ export default function Reviews() {
       <button type="button" className="marquee-toggle" onClick={() => setPaused((p) => !p)} aria-pressed={paused}>
         {paused ? '▶ Bewertungen weiterlaufen lassen' : '❚❚ Bewertungen anhalten'}
       </button>
-      <div className="marquee">
+      <div className={`marquee ${paused ? 'is-paused' : ''}`}>
         <div className="marquee-track">
           {loopedReviews.map((review, i) => (
             <ReviewCard key={`${review.id}-${i}`} review={review} />
