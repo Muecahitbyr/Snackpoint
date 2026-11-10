@@ -91,7 +91,7 @@ export const SETTINGS = {
   // Google rating shown in the hero and the location section.
   rating: {
     value: 5.0,
-    count: 83,
+    count: 111,
   },
   // Answers of the chat assistant; empty = it says it does not know.
   info: {
