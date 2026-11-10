@@ -99,7 +99,7 @@ export const SETTINGS = {
     // Direct "write a review" link from the Google Business Profile
     // ("Rezensionen erhalten", g.page/r/…/review). Until it is set, the
     // review buttons open the Google Maps profile (contact.mapsUrl).
-    reviewUrl: '',
+    reviewUrl: 'https://g.page/r/CdaIP0PDidppEBM/review',
   },
   // Answers of the chat assistant; empty = it says it does not know.
   info: {
