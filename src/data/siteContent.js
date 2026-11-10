@@ -81,7 +81,10 @@ export const SETTINGS = {
     address: 'Neugablonzer Str. 25, 87600 Kaufbeuren',
     phone: '0177 4657426',
     email: 'info@snackpointkf.de',
-    mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Snack+Point+Kaufbeuren+Neugablonzer+Str.+25+87600+Kaufbeuren',
+    // The shop on Google Maps (place ID from the Google review link) and its
+    // position; both also go into the structured data for search engines.
+    mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Snack+Point+Kaufbeuren+Neugablonzer+Str.+25+87600+Kaufbeuren&query_place_id=ChIJuW9Gr4RrnEcR1og_Q8OJ2mk',
+    geo: { latitude: 47.88448, longitude: 10.62518 },
     mapsEmbedUrl: 'https://maps.google.com/maps?q=Snack+Point+Kaufbeuren,+Neugablonzer+Str.+25,+87600+Kaufbeuren&output=embed',
   },
   // Empty links are not shown (footer).
@@ -90,7 +93,7 @@ export const SETTINGS = {
     facebook: '',
     tiktok: 'https://www.tiktok.com/@snackpoint13',
     whatsapp: '',
-    google: '',
+    google: 'https://www.google.com/maps/place/?q=place_id:ChIJuW9Gr4RrnEcR1og_Q8OJ2mk',
   },
   // Google rating shown in the hero and the location section.
   rating: {
