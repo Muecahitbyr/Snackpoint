@@ -72,7 +72,9 @@ for (const page of PUBLIC_PAGES) {
   console.log(`✓ ${page.path.padEnd(13)} ${Math.round(region.length / 1024)} KB HTML`);
 }
 
-const urls = PUBLIC_PAGES.map((page) => `  <url><loc>${siteUrl}${page.path}</loc></url>`).join('\n');
+// lastmod = this build: every deploy may change texts, products or hours.
+const lastmod = new Date().toISOString().slice(0, 10);
+const urls = PUBLIC_PAGES.map((page) => `  <url><loc>${siteUrl}${page.path}</loc><lastmod>${lastmod}</lastmod></url>`).join('\n');
 await writeFile(new URL('sitemap.xml', DIST), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
 await writeFile(
   new URL('robots.txt', DIST),

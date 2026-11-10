@@ -19,7 +19,7 @@ export const CONTENT = {
   // Über uns
   'about.eyebrow': 'Über uns',
   'about.title': 'Dein Kiosk in Kaufbeuren.',
-  'about.text': 'SnackPoint ist ein Kiosk in der Neugablonzer Straße. Bei uns holst du dir Snacks, Süßes, Getränke oder einen Kaffee to go. Hermes-Pakete kannst du hier abgeben und abholen, und Lotto spielen geht auch. Schau einfach vorbei.',
+  'about.text': 'SnackPoint ist ein Kiosk in Kaufbeuren, in der Neugablonzer Straße 25. Bei uns holst du dir Snacks, Süßes, Getränke oder einen Kaffee to go. Hermes-Pakete kannst du hier abgeben und abholen, und Lotto spielen geht auch. Schau einfach vorbei.',
   'about.image': '/logo.jpg',
   // Leistungen
   'services.eyebrow': 'Leistungen',
