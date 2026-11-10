@@ -156,7 +156,12 @@ export default function Location() {
             <span className="info-icon">⭐</span>
             <div>
               <strong>Bewertung</strong>
-              <p>{rating.value.toFixed(1)} von 5 · {rating.count} Rezensionen auf Google</p>
+              <p>{rating.value.toFixed(1).replace('.', ',')} von 5 · {rating.count} Rezensionen auf Google</p>
+              <p>
+                <a className="location-review" href={rating.reviewUrl || contact.mapsUrl} target="_blank" rel="noopener noreferrer">
+                  {content['reviews.ctaButton']} →
+                </a>
+              </p>
             </div>
           </div>
           <a

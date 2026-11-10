@@ -52,6 +52,10 @@ export const CONTENT = {
   'reviews.title': 'Das sagen unsere Kunden.',
   // Information on how the reviews are checked (§ 5b Abs. 3 UWG).
   'reviews.note': 'Ausgewählte Bewertungen aus unserem Google-Profil, gekürzt auf Vorname und Initial.',
+  'reviews.ctaTitle': 'Warst du schon bei uns?',
+  'reviews.ctaText': 'Dann sag auf Google, wie es dir gefallen hat. Jede Bewertung hilft uns und anderen, uns zu finden.',
+  'reviews.ctaButton': 'Bewertung schreiben',
+  'reviews.ctaAll': 'Alle Bewertungen lesen',
   // Social Media (TikTok + Instagram as two phones)
   'social.eyebrow': 'Social Media',
   'social.title': 'Folg uns.',
@@ -92,6 +96,10 @@ export const SETTINGS = {
   rating: {
     value: 5.0,
     count: 111,
+    // Direct "write a review" link from the Google Business Profile
+    // ("Rezensionen erhalten", g.page/r/…/review). Until it is set, the
+    // review buttons open the Google Maps profile (contact.mapsUrl).
+    reviewUrl: '',
   },
   // Answers of the chat assistant; empty = it says it does not know.
   info: {

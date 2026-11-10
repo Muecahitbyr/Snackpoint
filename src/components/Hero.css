@@ -288,6 +288,7 @@
   color: transparent;
 }
 .stat-label { font-size: 0.82rem; color: var(--text-dim); margin-top: 4px; }
+.stat-link:hover .stat-label, .stat-link:focus-visible .stat-label { color: var(--accent); }
 .stat-divider { width: 1px; height: 40px; background: var(--card-border); }
 
 @media (max-width: 700px) {

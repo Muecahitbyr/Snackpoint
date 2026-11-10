@@ -23,6 +23,8 @@
 .info-row:hover .info-icon { transform: scale(1.25) rotate(-8deg); }
 .info-row strong { display: block; margin-bottom: 4px; color: var(--text); }
 .info-row p { color: var(--text-dim); font-size: 0.95rem; }
+.info-row .location-review { color: var(--accent); font-weight: 600; }
+.info-row .location-review:hover { text-decoration: underline; }
 
 .hours-block { flex: 1; min-width: 0; }
 /* Opening hours: live status, a sprayed summary line, seven day tiles and

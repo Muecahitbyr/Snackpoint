@@ -200,10 +200,10 @@ export default function Hero() {
         </Reveal>
 
         <Reveal className="hero-stats">
-          <div className="stat">
+          <a className="stat stat-link" href="#reviews">
             <span className="stat-number" ref={reviewCount.ref}>{reviewCount.formatted}</span>
-            <span className="stat-label">Google Bewertungen</span>
-          </div>
+            <span className="stat-label">Google Bewertungen →</span>
+          </a>
           <div className="stat-divider" />
           <div className="stat">
             <span className="stat-number" ref={rating.ref}>{rating.formatted}</span>

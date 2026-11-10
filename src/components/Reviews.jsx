@@ -22,7 +22,8 @@ function ReviewCard({ review }) {
 
 export default function Reviews() {
   // Render the review set twice so the CSS translateX(-50%) loop is seamless — no visible start or end.
-  const { reviews } = useSite();
+  const { reviews, settings } = useSite();
+  const { rating, contact } = settings;
   const content = useContent();
   const loopedReviews = [...reviews, ...reviews];
   const { ref, inView } = useInView();
@@ -46,6 +47,27 @@ export default function Reviews() {
           ))}
         </div>
       </div>
+
+      <Reveal className="review-cta">
+        <div className="review-cta-score">
+          <span className="review-cta-value">{rating.value.toFixed(1).replace('.', ',')}</span>
+          <span className="stars" aria-hidden="true">★★★★★</span>
+          <span className="review-cta-count">{rating.count} Bewertungen auf Google</span>
+        </div>
+        <div className="review-cta-body">
+          <h3>{content['reviews.ctaTitle']}</h3>
+          <p>{content['reviews.ctaText']}</p>
+          <div className="review-cta-actions">
+            <a className="btn btn-primary" href={rating.reviewUrl || contact.mapsUrl} target="_blank" rel="noopener noreferrer">
+              ★ {content['reviews.ctaButton']}
+            </a>
+            <a className="review-cta-link" href={contact.mapsUrl} target="_blank" rel="noopener noreferrer">
+              {content['reviews.ctaAll']} →
+            </a>
+          </div>
+        </div>
+      </Reveal>
+
       {content['reviews.note'] && <p className="reviews-note">{content['reviews.note']}</p>}
     </section>
   );

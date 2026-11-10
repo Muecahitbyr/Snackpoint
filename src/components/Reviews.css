@@ -51,4 +51,44 @@
 .stars { color: var(--accent-2); font-size: 0.85rem; letter-spacing: 1px; }
 .review-card p { font-size: 0.92rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 14px; }
 .review-time { font-size: 0.78rem; color: var(--text-dim); }
+
+/* Call to write a review on Google. */
+.review-cta {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  width: min(820px, calc(100% - 48px));
+  margin: 56px auto 0;
+  padding: 36px 40px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+.review-cta-score {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-right: 36px;
+  border-right: 1px solid var(--card-border);
+  text-align: center;
+}
+.review-cta-value { font-size: 3.2rem; font-weight: 800; line-height: 1; }
+.review-cta-score .stars { font-size: 1.15rem; letter-spacing: 2px; }
+.review-cta-count { max-width: 130px; font-size: 0.8rem; color: var(--text-dim); }
+.review-cta-body h3 { font-size: 1.35rem; margin-bottom: 6px; }
+.review-cta-body p { color: var(--text-dim); }
+.review-cta-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; margin-top: 20px; }
+.review-cta-link { font-weight: 600; font-size: 0.92rem; color: var(--accent); }
+.review-cta-link:hover { text-decoration: underline; }
+
+@media (max-width: 700px) {
+  .review-cta { flex-direction: column; gap: 20px; width: calc(100% - 32px); margin-top: 40px; padding: 28px 22px; text-align: center; }
+  .review-cta-score { padding: 0 0 20px; border-right: 0; border-bottom: 1px solid var(--card-border); }
+  .review-cta-count { max-width: none; }
+  .review-cta-actions { justify-content: center; }
+}
+
 .reviews-note { max-width: 640px; margin: 28px auto 0; padding: 0 24px; text-align: center; font-size: 0.78rem; color: var(--text-dim); }
