@@ -104,7 +104,9 @@ const contentSecurityPolicy = (scriptHashes) =>
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'self'",
+    // Only our own site and bayar-solutions.de may show the pages in an iframe.
+    // Browsers then ignore X-Frame-Options: SAMEORIGIN, which can't list domains.
+    "frame-ancestors 'self' https://bayar-solutions.de https://www.bayar-solutions.de",
   ].join('; ');
 
 async function scriptHashes(html) {
