@@ -98,7 +98,7 @@ export const SETTINGS = {
   // Google rating shown in the hero and the location section.
   rating: {
     value: 5.0,
-    count: 111,
+    count: 115,
     // Direct "write a review" link from the Google Business Profile
     // ("Rezensionen erhalten", g.page/r/…/review). Until it is set, the
     // review buttons open the Google Maps profile (contact.mapsUrl).
